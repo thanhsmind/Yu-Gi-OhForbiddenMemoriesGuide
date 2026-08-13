@@ -115,6 +115,18 @@
     outline: 1px solid var(--accent);
   }
 
+  /* iOS Safari zooms the whole page whenever a focused field's text is smaller
+     than 16px, which throws the layout off every time you start typing. On
+     touch screens the fields go to exactly 16px so focusing one never zooms;
+     pointer devices keep the denser sizing. Fixing it this way rather than with
+     maximum-scale=1 leaves pinch-zoom working for people who need it. */
+  @media (pointer: coarse) {
+    .controls input[type="text"],
+    .controls select {
+      font-size: 16px;
+    }
+  }
+
   #search-name { flex: 1 1 220px; min-width: 180px; }
   #search-number { flex: 0 1 160px; }
 

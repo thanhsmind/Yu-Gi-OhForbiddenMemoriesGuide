@@ -491,6 +491,28 @@ def main() -> int:
         "index.html không còn chứa 'quái thú' (thuật ngữ thống nhất là 'quái vật', cell fm-guide-site-15)",
         "quái thú" not in html_text,
     )
+    # iOS Safari phóng to cả trang khi ô nhập đang focus có cỡ chữ dưới 16px.
+    # Mọi ô gõ và dropdown đều nằm trong .controls, nên chỉ cần một khối media
+    # cho màn hình cảm ứng là đủ chặn; chỉnh cỡ chữ thay vì khoá maximum-scale
+    # để người dùng vẫn pinch-zoom được.
+    coarse_block = re.search(
+        r"@media \(pointer: coarse\)\s*\{(.*?)\n  \}", html_text, re.S
+    )
+    check(
+        "index.html có khối @media (pointer: coarse) đặt cỡ chữ ô nhập",
+        coarse_block is not None,
+    )
+    if coarse_block:
+        body = coarse_block.group(1)
+        for sel in ('.controls input[type="text"]', ".controls select"):
+            check(
+                f"khối cảm ứng phủ {sel} (không để iOS phóng to khi gõ)",
+                sel in body,
+            )
+        check(
+            "khối cảm ứng đặt font-size 16px (dưới 16px là iOS phóng to)",
+            "font-size: 16px" in body,
+        )
     check(
         "chuỗi 'chưa có dữ liệu' có mặt trong index.html (D4)",
         "chưa có dữ liệu" in html_text,
