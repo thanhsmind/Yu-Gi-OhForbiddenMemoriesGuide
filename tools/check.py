@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -20,6 +21,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXTRACTOR = REPO_ROOT / "tools" / "extract_cards.py"
+INDEX_HTML = REPO_ROOT / "index.html"
 
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 import extract_cards  # noqa: E402  (import after sys.path tweak, by design)
@@ -198,6 +200,94 @@ def main() -> int:
         isinstance(exact_missing_numbers, list),
         f"{len(exact_missing_numbers)} name-only result(s), e.g. {exact_missing_numbers[:3]}",
     )
+
+    # --- index.html invariants (cell fm-guide-site-2, D1/D2/D3/D4) ---
+    html_text = INDEX_HTML.read_text(encoding="utf-8")
+
+    check(
+        "index.html không chứa '<script src=' (D1/D2: không nạp script ngoài)",
+        "<script src=" not in html_text,
+    )
+    check(
+        "index.html không chứa 'fetch(' (D2: dữ liệu nhúng inline, không fetch)",
+        "fetch(" not in html_text,
+    )
+    check(
+        "index.html không chứa 'http://' hay 'https://' (D1: không phụ thuộc mạng)",
+        "http://" not in html_text and "https://" not in html_text,
+    )
+    check(
+        "chuỗi 'chưa có dữ liệu' có mặt trong index.html (D4)",
+        "chưa có dữ liệu" in html_text,
+    )
+
+    fm_begin = extract_cards.FM_DATA_BEGIN_MARKER
+    fm_end = extract_cards.FM_DATA_END_MARKER
+    has_markers = fm_begin in html_text and fm_end in html_text
+    check(
+        f"index.html chứa cả hai marker chính xác {fm_begin!r} và {fm_end!r}",
+        has_markers,
+    )
+    if has_markers:
+        block_start = html_text.index(fm_begin)
+        block_end = html_text.index(fm_end, block_start) + len(fm_end)
+        block = html_text[block_start:block_end]
+        try:
+            block_payload = block.split("window.FM_DATA = ", 1)[1].rsplit(";\n" + fm_end, 1)[0]
+            embedded = json.loads(block_payload)
+            embedded_parses = True
+        except (IndexError, json.JSONDecodeError) as exc:
+            embedded_parses = False
+            embedded = None
+            print(f"  index.html FM_DATA parse error: {exc}")
+        check(
+            "khối window.FM_DATA giữa hai marker trong index.html parse được thành JSON",
+            embedded_parses,
+        )
+        if embedded_parses:
+            check(
+                "khối FM_DATA nhúng trong index.html chứa đúng 653 lá (dữ liệu thật, không rỗng)",
+                len(embedded.get("cards", [])) == 653,
+                f"got {len(embedded.get('cards', []))}",
+            )
+
+    # --inject run twice in a row on a scratch copy of index.html (never the
+    # deliverable itself) must produce byte-identical output.
+    inject_dir = Path(tempfile.mkdtemp(prefix="fm-guide-check-inject-"))
+    inject_copy_1 = inject_dir / "index_1.html"
+    inject_copy_2 = inject_dir / "index_2.html"
+    shutil.copyfile(INDEX_HTML, inject_copy_1)
+    shutil.copyfile(INDEX_HTML, inject_copy_2)
+    inject_ok = True
+    for copy_path in (inject_copy_1, inject_copy_2):
+        result = subprocess.run(
+            [sys.executable, str(EXTRACTOR), "--inject", str(copy_path)],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            inject_ok = False
+            print(result.stdout)
+            print(result.stderr, file=sys.stderr)
+            print(f"[FAIL] --inject exited {result.returncode} on {copy_path}")
+    check("--inject exits 0 on both scratch copies", inject_ok)
+    if inject_ok:
+        check(
+            "chạy --inject hai lần liên tiếp (trên hai bản sao) cho ra byte y hệt",
+            inject_copy_1.read_bytes() == inject_copy_2.read_bytes(),
+        )
+        check(
+            "--inject trên bản sao đã inject rồi vẫn idempotent (chạy lại lần nữa cho ra byte y hệt)",
+            subprocess.run(
+                [sys.executable, str(EXTRACTOR), "--inject", str(inject_copy_1)],
+                cwd=str(REPO_ROOT),
+                capture_output=True,
+                text=True,
+            ).returncode
+            == 0
+            and inject_copy_1.read_bytes() == inject_copy_2.read_bytes(),
+        )
 
     print()
     print("Summary:")
