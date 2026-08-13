@@ -174,6 +174,12 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
   (vế trái, vế phải, kết quả) của bảng xung đột khớp nguồn theo đúng bội số —
   một công thức lặp lại nhiều lần trong nguồn phải xuất hiện đúng số lần đó.
 - Mọi tên trong bảng tên đồng nghĩa trỏ tới đúng một lá có thật.
+- Bản dịch giữ nguyên tên lá bài: tên lá **nhiều chữ** nào xuất hiện trong lore
+  tiếng Anh của một lá thì phải xuất hiện nguyên dạng trong bản dịch của chính
+  lá đó. Chỉ xét tên nhiều chữ để không bắt nhầm danh từ chung trùng tên lá
+  (`Dragon`, `Forest`, `Umi`).
+- Thuật ngữ thống nhất trên toàn trang: dùng "quái vật" cho *monster*, theo
+  đúng cách ba tài liệu nguồn dùng; không lẫn biến thể khác.
 - Chạy lại công cụ sinh dữ liệu cho kết quả không đổi.
 - Bản dịch tiếng Việt của lore luôn hiển thị kèm nguyên văn tiếng Anh có
   nhãn, không bao giờ giấu nguyên văn; không có bản dịch nào là chuỗi rỗng
