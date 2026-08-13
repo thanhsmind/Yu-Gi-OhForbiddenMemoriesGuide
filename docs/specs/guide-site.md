@@ -125,7 +125,10 @@ Hệ quả bắt buộc:
   neo bình thường, không bị định tuyến chiếm.
 
 Chỉ phần hash được đổi, không bao giờ đổi đường dẫn — vì đổi đường dẫn sẽ làm
-trang vỡ khi mở bằng cách nhấp đúp vào file.
+trang vỡ khi mở bằng cách nhấp đúp vào file. Nếu trình duyệt từ chối luôn cả việc
+ghi lịch sử (một số môi trường chặn khi mở từ file), định tuyến rơi về cách gán
+hash trực tiếp: mất khả năng gộp mục lịch sử khi gõ, nhưng không mất chức năng
+nào và không ném lỗi.
 
 ## Nguồn dữ liệu và ranh giới
 
