@@ -71914,6 +71914,23 @@ window.FM_DATA = {
       "Zombie Warrior"
     ]
   },
+  "nameAliases": {
+    "red eyes black dragon": "Red-eyes B. Dragon",
+    "spirit of the book": "Spirit of the Books",
+    "charubin the fire": "Charubin the Fire Knight",
+    "blue eyes silver zombie": "Blue-eyed Silver Zombie",
+    "black skull dragon": "B. Skull Dragon",
+    "one who hunts soul": "One Who Hunts Souls",
+    "blue eyes ultimate dragon": "Blue-eyes Ultimate Dragon",
+    "stone dragon": "Stone D.",
+    "millenium golem": "Millennium Golem",
+    "kuwagata a": "Kuwagata α",
+    "twin long rods #2": "Twin Long Rods 2",
+    "performance of swords": "Performance of Sword",
+    "meteor black dragon": "Meteor B. Dragon",
+    "lazer cannon armor": "Laser Cannon Armor",
+    "silver bow & arrow": "Silver Bow and Arrow"
+  },
   "meta": {
     "totalCards": 722,
     "cardsWithAtkDef": 621,
@@ -72263,6 +72280,21 @@ window.FM_DATA = {
   var byNameLower = {};
   CARDS.forEach(function (c) { byNameLower[c.name.toLowerCase()] = c; });
 
+  // Alias table (docs/guide spelling -> real spine name), sourced from
+  // tools/extract_cards.py's EQUIP_NAME_ALIASES via FM_DATA.nameAliases --
+  // never hand-copied here. Lets a formula operand name that is a real
+  // card, but spelled the docs/guide way, still resolve to its card.
+  var NAME_ALIASES = DATA.nameAliases || {};
+
+  function resolveCardByName(name) {
+    if (!name) return null;
+    var lower = String(name).toLowerCase();
+    if (byNameLower[lower]) return byNameLower[lower];
+    var aliasTarget = NAME_ALIASES[lower];
+    if (aliasTarget) return byNameLower[String(aliasTarget).toLowerCase()] || null;
+    return null;
+  }
+
   var state = { page: 1, filtered: CARDS };
 
   function escapeHtml(s) {
@@ -72292,13 +72324,23 @@ window.FM_DATA = {
     return card.fusionSystems.join(", ");
   }
 
+  // data/cards.json uses 999999 as a sentinel for "not purchasable with
+  // Star Chips" (98 of 722 cards), never a real price (D4: a value must
+  // never read as real when it is not) -- render it as plain Vietnamese
+  // text instead of the literal number.
+  function fmtStarChipCost(card) {
+    if (card.starChipCost === null || card.starChipCost === undefined) return "chưa có dữ liệu";
+    if (card.starChipCost === 999999) return "không mua được";
+    return String(card.starChipCost);
+  }
+
   // --- Fusion two-way lookup helpers (tab "Fusion", cell fm-guide-site-5) ---
   // A card name is a link only when it matches a real card in the lookup
   // table; an unmatched name renders as plain lowercase text — never a link,
   // never a fabricated row.
   function nameLinkHtml(name) {
     if (!name) return "chưa có dữ liệu";
-    var match = byNameLower[String(name).toLowerCase()];
+    var match = resolveCardByName(name);
     if (match) {
       return '<span class="card-link" data-cardname="' + escapeHtml(name) + '">' + escapeHtml(name) + "</span>";
     }
@@ -72724,7 +72766,7 @@ window.FM_DATA = {
             "<dt>Guardian Star</dt><dd>" + escapeHtml(fmtStars(card)) + "</dd>" +
             "<dt>Hệ fusion</dt><dd>" + escapeHtml(fmtFusion(card)) + "</dd>" +
             "<dt>Password</dt><dd>" + escapeHtml(fmt(card.password)) + "</dd>" +
-            "<dt>Star Chip Cost</dt><dd>" + fmt(card.starChipCost) + "</dd>" +
+            "<dt>Star Chip Cost</dt><dd>" + fmtStarChipCost(card) + "</dd>" +
             "<dt>Cách lấy</dt><dd>" + escapeHtml(fmtList(card.obtainedBy)) + "</dd>" +
             "<dt>Tên Nhật</dt><dd>" + escapeHtml(fmt(card.japaneseName)) + (card.romajiName ? " (" + escapeHtml(card.romajiName) + ")" : "") + "</dd>" +
             "<dt>Lore</dt><dd>" + escapeHtml(fmt(card.lore)) + "</dd>" +
@@ -72771,7 +72813,7 @@ window.FM_DATA = {
     );
     links.forEach(function (el) {
       el.setAttribute("data-wired", "1");
-      var card = byNameLower[el.dataset.cardname.toLowerCase()];
+      var card = resolveCardByName(el.dataset.cardname);
       if (!card) {
         el.classList.add("no-match");
         el.title = "Không có trong bảng tra cứu bài";

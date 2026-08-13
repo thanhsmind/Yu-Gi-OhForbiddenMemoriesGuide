@@ -119,7 +119,7 @@ def main() -> int:
     # parsing (column-splitting logic) is untouched.
     fusion_conflict_members = data["meta"]["fusionConflictMemberNames"]
     check(
-        "257 lá có hệ fusion (mục 'Dung hợp xung đột')",
+        "257 tên riêng biệt xuất hiện trong mục 'Dung hợp xung đột' (fusionConflictMemberNames — khác với 255 lá có fusionSystems, xem check bên dưới)",
         len(fusion_conflict_members) == 257,
         f"got {len(fusion_conflict_members)}",
     )
@@ -163,6 +163,12 @@ def main() -> int:
         f"got {data['meta']['cardsWithType']}",
     )
     check(
+        "meta.cardsWithFusionSystems (255, hiện trên tab Độ phủ dữ liệu) đúng bằng số lá "
+        "có fusionSystems != null trong spine đếm lại (khác 257 — số tên riêng biệt, không phải số lá)",
+        data["meta"]["cardsWithFusionSystems"] == sum(1 for c in cards if c["fusionSystems"]) == 255,
+        f"got {data['meta']['cardsWithFusionSystems']}",
+    )
+    check(
         "meta.fusionBasicCount/fusionExactCount/fusionConflictCount khớp đúng số phần tử thật của ba bảng công thức",
         (data["meta"]["fusionBasicCount"], data["meta"]["fusionExactCount"], data["meta"]["fusionConflictCount"])
         == (len(data["fusionBasic"]), len(data["fusionExact"]), len(data["fusionConflict"]))
@@ -200,6 +206,28 @@ def main() -> int:
         "alias 'Black Skull Dragon' (docs/guide) -> 'B. Skull Dragon' (Yugipedia) có equip đi kèm",
         b_skull is not None and bool(b_skull.get("equips")),
         f"got {b_skull}",
+    )
+
+    # --- FM_DATA.nameAliases (cell fm-guide-site-5 rework): the same
+    # EQUIP_NAME_ALIASES table emitted for index.html's nameLinkHtml so a
+    # formula operand spelled the docs/guide way (e.g. "Kuwagata a") still
+    # links to its real spine card (#480 "Kuwagata α"). Every emitted key
+    # must resolve to exactly one real spine card -- guards a dead/no-op
+    # link from ever shipping. ---
+    check(
+        "FM_DATA.nameAliases là chính EQUIP_NAME_ALIASES (không copy tay, không rơi rớt/thêm mục)",
+        data["nameAliases"] == extract_cards.EQUIP_NAME_ALIASES,
+        f"got {len(data.get('nameAliases', {}))} entries",
+    )
+    name_alias_misses = [
+        (guide_name, target_name)
+        for guide_name, target_name in data["nameAliases"].items()
+        if by_name_lower.get(target_name.lower()) is None
+    ]
+    check(
+        "mọi khóa trong FM_DATA.nameAliases trỏ tới đúng một lá có thật trong spine (guard FAIL formula-name-links)",
+        not name_alias_misses,
+        f"{name_alias_misses[:5]}",
     )
 
     # The #668 Bright Castle equip item line has fusion.md's own separator
@@ -308,6 +336,36 @@ def main() -> int:
     check(
         "chuỗi 'chưa có dữ liệu' có mặt trong index.html (D4)",
         "chưa có dữ liệu" in html_text,
+    )
+
+    # starChipCost's 999999 sentinel (D4: a value must never read as real
+    # when it is not — 98/722 cards use it for "not purchasable with Star
+    # Chips", never a real price) must render as Vietnamese text at the
+    # render layer, never the literal number. Pins the chosen behavior so a
+    # future edit can't silently reintroduce "999999" as a displayed price.
+    sentinel_count = sum(1 for c in cards if c["starChipCost"] == 999999)
+    check(
+        "starChipCost sentinel 999999 chỉ xuất hiện đúng ở 98/722 lá (không mua được bằng Star Chip, không phải giá thật)",
+        sentinel_count == 98,
+        f"got {sentinel_count}",
+    )
+    check(
+        "index.html có hàm fmtStarChipCost render sentinel 999999 thành 'không mua được', không in số 999999",
+        "function fmtStarChipCost(" in html_text and "không mua được" in html_text,
+    )
+    check(
+        "panel chi tiết dùng fmtStarChipCost(card) cho Star Chip Cost, không dùng fmt(card.starChipCost) trần",
+        'fmtStarChipCost(card) + "</dd>"' in html_text,
+    )
+    other_sentinel_fields = [
+        field
+        for field in ("atk", "def", "level", "password")
+        if any(isinstance(c[field], int) and c[field] >= 99999 for c in cards)
+    ]
+    check(
+        "không trường số nào khác trong spine mang sentinel kiểu 999999 mà chưa được xử lý (chỉ starChipCost dùng sentinel này)",
+        not other_sentinel_fields,
+        f"{other_sentinel_fields}",
     )
     check(
         "bộ lọc theo Type và theo Loại lá (cardType) có trong index.html",

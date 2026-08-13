@@ -523,6 +523,14 @@ def extract_all() -> dict:
         "fusionExact": fusion_exact,
         "fusionConflict": fusion_conflict,
         "fusionGroups": {tag: sorted(names) for tag, names in sorted(groups.items())},
+        # Emitted for index.html's nameLinkHtml (cell fm-guide-site-5 rework):
+        # the same EQUIP_NAME_ALIASES table used above to join docs/guide's
+        # equip headers onto the spine, so a formula operand spelled the
+        # docs/guide way (e.g. "Kuwagata a", "Twin Long Rods #2") still
+        # resolves to its real spine card (#480 "Kuwagata α", #606 "Twin
+        # Long Rods 2") instead of rendering as unlinked plain text. Single
+        # source of truth -- never hand-copied into index.html.
+        "nameAliases": dict(EQUIP_NAME_ALIASES),
         "meta": meta,
     }
 
