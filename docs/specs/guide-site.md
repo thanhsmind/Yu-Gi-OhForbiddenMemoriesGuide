@@ -131,6 +131,10 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
 - Trường thiếu dữ liệu lưu dạng rỗng thật sự, không phải `0` và không phải
   chuỗi trống.
 - Mọi con số hiển thị ở khu vực Độ phủ dữ liệu khớp với số đếm lại từ dữ liệu.
+- Cả ba bảng công thức phủ **hết** nguồn, đếm lại từ chính file nguồn chứ không
+  gõ cứng: số công thức mỗi bảng bằng số dòng tương ứng trong tài liệu, và bộ ba
+  (vế trái, vế phải, kết quả) của bảng xung đột khớp nguồn theo đúng bội số —
+  một công thức lặp lại nhiều lần trong nguồn phải xuất hiện đúng số lần đó.
 - Mọi tên trong bảng tên đồng nghĩa trỏ tới đúng một lá có thật.
 - Chạy lại công cụ sinh dữ liệu cho kết quả không đổi.
 
