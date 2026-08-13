@@ -73815,6 +73815,16 @@ window.FM_DATA = {
 
   var state = { page: 1, filtered: CARDS };
 
+  // --- Router state (cell fm-guide-site-7) ---
+  // Which card's detail panel is open (tab "tra-cuu"), and which guide
+  // section was last jumped to via the TOC (tab "huong-dan") -- both drive
+  // the hash but live outside `state` since they are UI concerns, not
+  // filter/pagination concerns.
+  var openCardNumber = null;
+  var currentGuideSection = null;
+  var hashDebounceTimer = null;
+  var typingBurstOpen = false;
+
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (ch) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
@@ -74114,6 +74124,7 @@ window.FM_DATA = {
       b.addEventListener("click", function () {
         state.page = page;
         render();
+        scheduleHashWrite(true);
       });
       return b;
     };
@@ -74226,7 +74237,9 @@ window.FM_DATA = {
     });
     populateDropdown(elFusionBasicFilter, fusionBasicTypesUsed(), "Tất cả hệ");
     elFusionSearch.addEventListener("input", onFusionSearchInput);
+    elFusionSearch.addEventListener("input", function () { scheduleHashWrite(false); });
     elFusionBasicFilter.addEventListener("change", renderFusionBasicTable);
+    elFusionBasicFilter.addEventListener("change", function () { scheduleHashWrite(true); });
     renderFusionBasicTable();
     renderFusionExactTable();
     renderFusionConflictTable();
@@ -74257,6 +74270,7 @@ window.FM_DATA = {
   }
 
   function showDetail(card) {
+    openCardNumber = card.number;
     var equipsHtml = "chưa có dữ liệu";
     if (card.equips && card.equips.length) {
       equipsHtml =
@@ -74297,6 +74311,8 @@ window.FM_DATA = {
       "</div>";
     elDetail.querySelector(".detail-close").addEventListener("click", function () {
       elDetail.hidden = true;
+      openCardNumber = null;
+      scheduleHashWrite(true);
     });
     wireCardLinks(elDetail);
     elDetail.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -74306,7 +74322,10 @@ window.FM_DATA = {
     var tr = ev.target.closest("tr[data-number]");
     if (!tr) return;
     var card = byNumber[tr.dataset.number];
-    if (card) showDetail(card);
+    if (card) {
+      showDetail(card);
+      scheduleHashWrite(true);
+    }
   });
 
   function jumpToCard(card) {
@@ -74322,6 +74341,7 @@ window.FM_DATA = {
     applyFilters();
     showDetail(card);
     elDetail.scrollIntoView({ behavior: "smooth", block: "start" });
+    scheduleHashWrite(true);
   }
 
   function wireCardLinks(root) {
@@ -74355,6 +74375,12 @@ window.FM_DATA = {
   elCardTypeFilter.addEventListener("change", applyFilters);
   elTypeFilter.addEventListener("change", applyFilters);
   elFusionFilter.addEventListener("change", applyFilters);
+  elSearchName.addEventListener("input", function () { scheduleHashWrite(false); });
+  elSearchNumber.addEventListener("input", function () { scheduleHashWrite(false); });
+  elOnlyAtkDef.addEventListener("change", function () { scheduleHashWrite(true); });
+  elCardTypeFilter.addEventListener("change", function () { scheduleHashWrite(true); });
+  elTypeFilter.addEventListener("change", function () { scheduleHashWrite(true); });
+  elFusionFilter.addEventListener("change", function () { scheduleHashWrite(true); });
 
   var tabButtons = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
   var tabPanels = Array.prototype.slice.call(document.querySelectorAll(".tab-panel"));
@@ -74367,6 +74393,11 @@ window.FM_DATA = {
       tabButtons.forEach(function (b) {
         b.classList.toggle("active", b === btn);
       });
+      // A direct tab-nav click (not a TOC #sec-N jump) means "no specific
+      // section requested" -- the guide tab's URL should read plain
+      // "#huong-dan", not keep whatever section was last viewed.
+      if (target === "tab-guide") currentGuideSection = null;
+      scheduleHashWrite(true);
     });
   });
 
@@ -74377,6 +74408,211 @@ window.FM_DATA = {
   initFusionTab();
   renderCoverage();
   wireCardLinks();
+
+  // --- Router (cell fm-guide-site-7): hash-only, works on file:// ---
+  // D1/D2 forbid pushState/replaceState with anything but the hash -- the
+  // path segment of the URL is never touched, only `location.hash`. Every
+  // viewable state (tab, filters, page, open card, fusion query, guide
+  // section) round-trips through the hash so Back/Forward and a pasted URL
+  // reproduce it exactly.
+
+  // encodeURIComponent turns a space into "%20"; swap it for "+" so the
+  // hash stays eyeball-readable (matches the query-string convention).
+  function toQueryValue(v) {
+    return encodeURIComponent(v).replace(/%20/g, "+");
+  }
+  function fromQueryValue(v) {
+    return decodeURIComponent(v.replace(/\+/g, "%20"));
+  }
+
+  function qsStringify(pairs) {
+    var parts = [];
+    pairs.forEach(function (p) {
+      var v = p[1];
+      if (v === undefined || v === null || v === "") return;
+      parts.push(p[0] + "=" + toQueryValue(String(v)));
+    });
+    return parts.length ? "?" + parts.join("&") : "";
+  }
+
+  function qsParse(qs) {
+    var out = {};
+    if (!qs) return out;
+    qs.split("&").forEach(function (pair) {
+      if (!pair) return;
+      var idx = pair.indexOf("=");
+      var k = idx === -1 ? pair : pair.slice(0, idx);
+      var v = idx === -1 ? "" : pair.slice(idx + 1);
+      out[decodeURIComponent(k)] = fromQueryValue(v);
+    });
+    return out;
+  }
+
+  // Reads the DOM controls of whichever tab is active and builds this
+  // page's hash-shape for it. Single source of truth is the DOM itself
+  // (never a second copy of the same values) -- see also the shapes
+  // documented on cell fm-guide-site-7:
+  //   #tra-cuu?q=..&so=..&loai=..&type=..&he=..&chiso=1&trang=..&la=..
+  //   #fusion?q=..&he=..
+  //   #huong-dan  or  #sec-N (bare TOC anchors keep working, see D-note below)
+  //   #do-phu
+  function currentHash() {
+    var activeBtn = tabButtons.filter(function (b) { return b.classList.contains("active"); })[0];
+    var tabId = activeBtn ? activeBtn.dataset.tab : "tab-cards";
+    if (tabId === "tab-fusion") {
+      return "#fusion" + qsStringify([
+        ["q", elFusionSearch.value.trim()],
+        ["he", elFusionBasicFilter.value],
+      ]);
+    }
+    if (tabId === "tab-guide") {
+      return currentGuideSection ? "#sec-" + currentGuideSection : "#huong-dan";
+    }
+    if (tabId === "tab-coverage") {
+      return "#do-phu";
+    }
+    // default / "tab-cards"
+    return "#tra-cuu" + qsStringify([
+      ["q", elSearchName.value.trim()],
+      ["so", elSearchNumber.value.trim()],
+      ["loai", elCardTypeFilter.value],
+      ["type", elTypeFilter.value],
+      ["he", elFusionFilter.value],
+      ["chiso", elOnlyAtkDef.checked ? "1" : ""],
+      ["trang", state.page > 1 ? String(state.page) : ""],
+      ["la", openCardNumber !== null && openCardNumber !== undefined ? String(openCardNumber) : ""],
+    ]);
+  }
+
+  // `commit` false -> replaceState (live-typing, never grows history);
+  // `commit` true  -> pushState (a real Back/Forward stop). Both pass only
+  // a hash-prefixed string as the URL argument -- file:// refuses a path
+  // argument, but a hash-only argument always resolves against the current
+  // path, so this works identically on file:// and http(s).
+  function writeHash(commit) {
+    var newHash = currentHash();
+    if (location.hash === newHash) return;
+    if (commit) {
+      history.pushState(null, "", newHash);
+    } else {
+      history.replaceState(null, "", newHash);
+    }
+  }
+
+  function scheduleHashWrite(commit) {
+    if (commit) {
+      if (hashDebounceTimer) {
+        clearTimeout(hashDebounceTimer);
+        hashDebounceTimer = null;
+      }
+      typingBurstOpen = false;
+      writeHash(true);
+      return;
+    }
+    // Typing: the FIRST keystroke of a burst opens its own checkpoint entry
+    // (pushState) so whatever hash was current before typing started is
+    // never overwritten -- Back must land there, not mid-typing text. Every
+    // further keystroke in the same burst replaces that same checkpoint in
+    // place (replaceState), so N keystrokes always cost exactly one history
+    // entry, never N. The debounce timer only marks the burst as settled;
+    // the checkpoint entry it already pushed already holds the final text.
+    writeHash(!typingBurstOpen);
+    typingBurstOpen = true;
+    if (hashDebounceTimer) clearTimeout(hashDebounceTimer);
+    hashDebounceTimer = setTimeout(function () {
+      hashDebounceTimer = null;
+      typingBurstOpen = false;
+    }, 500);
+  }
+
+  function switchToTab(tabId) {
+    tabPanels.forEach(function (panel) { panel.hidden = panel.id !== tabId; });
+    tabButtons.forEach(function (b) { b.classList.toggle("active", b.dataset.tab === tabId); });
+  }
+
+  // Parses `location.hash` into a state object. A bare "#sec-N" is the
+  // existing guide-section anchor (docs/history D1-era markup, unchanged) --
+  // it is read as "guide tab, viewing section N" so it coexists with the
+  // routed shapes below instead of being hijacked by them.
+  function readStateFromHash() {
+    var raw = location.hash || "";
+    if (!raw) return { tab: "tab-cards" };
+    var h = raw.slice(1);
+    var secMatch = /^sec-(\d+)$/.exec(h);
+    if (secMatch) return { tab: "tab-guide", section: secMatch[1] };
+    if (h === "huong-dan" || h.indexOf("huong-dan?") === 0) return { tab: "tab-guide", section: null };
+    if (h === "do-phu" || h.indexOf("do-phu?") === 0) return { tab: "tab-coverage" };
+    var qIdx = h.indexOf("?");
+    var path = qIdx === -1 ? h : h.slice(0, qIdx);
+    var qs = qIdx === -1 ? "" : h.slice(qIdx + 1);
+    var params = qsParse(qs);
+    if (path === "fusion") {
+      return { tab: "tab-fusion", q: params.q || "", he: params.he || "" };
+    }
+    if (path === "tra-cuu") {
+      return {
+        tab: "tab-cards",
+        q: params.q || "",
+        so: params.so || "",
+        loai: params.loai || "",
+        type: params.type || "",
+        he: params.he || "",
+        chiso: params.chiso === "1",
+        trang: params.trang ? parseInt(params.trang, 10) || 1 : 1,
+        la: params.la || null,
+      };
+    }
+    return { tab: "tab-cards" };
+  }
+
+  // Drives the DOM from a parsed state object -- the read side of the
+  // router, used for the initial load and every hashchange (address-bar
+  // edit, Back, Forward).
+  function applyState(st) {
+    switchToTab(st.tab);
+    if (st.tab === "tab-cards") {
+      elSearchName.value = st.q || "";
+      elSearchNumber.value = st.so || "";
+      elCardTypeFilter.value = st.loai || "";
+      elTypeFilter.value = st.type || "";
+      elFusionFilter.value = st.he || "";
+      elOnlyAtkDef.checked = !!st.chiso;
+      applyFilters();
+      var pageCount = Math.max(1, Math.ceil(state.filtered.length / PAGE_SIZE));
+      state.page = Math.min(Math.max(1, st.trang || 1), pageCount);
+      render();
+      var card = st.la ? byNumber[st.la] : null;
+      if (card) {
+        showDetail(card);
+      } else {
+        elDetail.hidden = true;
+        openCardNumber = null;
+      }
+    } else if (st.tab === "tab-fusion") {
+      elFusionSearch.value = st.q || "";
+      onFusionSearchInput();
+      elFusionBasicFilter.value = st.he || "";
+      renderFusionBasicTable();
+    } else if (st.tab === "tab-guide") {
+      currentGuideSection = st.section || null;
+      if (currentGuideSection) {
+        var secEl = document.getElementById("sec-" + currentGuideSection);
+        if (secEl) secEl.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    }
+  }
+
+  function onHashChange() {
+    applyState(readStateFromHash());
+  }
+  window.addEventListener("hashchange", onHashChange);
+
+  // Initial load: a pasted/reloaded URL with a hash wins over the default
+  // state applyFilters()/initFusionTab()/etc. already rendered above; a
+  // bare load normalizes to "#tra-cuu" via replaceState so the very first
+  // screen is deep-linkable too, without adding a spurious history entry.
+  if (location.hash) applyState(readStateFromHash());
+  history.replaceState(null, "", currentHash());
 })();
 </script>
 </body>

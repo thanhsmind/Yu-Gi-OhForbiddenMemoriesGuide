@@ -500,6 +500,35 @@ def main() -> int:
         and html_text.count("function wireCardLinks(") == 1,
     )
 
+    # --- Deep-link router (cell fm-guide-site-7, D1/D2) ---
+    check(
+        "index.html có addEventListener('hashchange', ...) để dựng lại trạng thái khi Back/Forward hoặc sửa URL",
+        re.search(r"""addEventListener\(\s*["']hashchange["']""", html_text) is not None,
+    )
+    check(
+        "index.html có hàm đọc trạng thái từ hash (readStateFromHash) và hàm ghi trạng thái vào hash (writeHash)",
+        "function readStateFromHash(" in html_text and "function writeHash(" in html_text,
+    )
+    # D1: file:// refuses history.pushState/replaceState given a path
+    # argument -- only the hash may ever change. A literal string argument
+    # containing '/' would be a path segment (a hash-only value built from
+    # this page's own vocabulary -- tab names, filter values, card
+    # numbers -- never contains a raw '/': search text is percent-encoded
+    # via encodeURIComponent before being placed in the hash).
+    push_or_replace_calls = re.findall(r"history\.(?:pushState|replaceState)\(([^)]*)\)", html_text)
+    bad_history_calls = [
+        c for c in push_or_replace_calls if re.search(r"""["'][^"']*/[^"']*["']""", c)
+    ]
+    check(
+        f"đủ {len(push_or_replace_calls)} lệnh gọi history.pushState/replaceState trong index.html (guard không chạy trên tập rỗng)",
+        len(push_or_replace_calls) > 0,
+    )
+    check(
+        "không lệnh pushState/replaceState nào trong index.html truyền chuỗi literal chứa dấu '/' làm URL (chỉ đổi hash, không đổi đường dẫn — bắt buộc để chạy được trên file://)",
+        not bad_history_calls,
+        f"{bad_history_calls}",
+    )
+
     fm_begin = extract_cards.FM_DATA_BEGIN_MARKER
     fm_end = extract_cards.FM_DATA_END_MARKER
     has_markers = fm_begin in html_text and fm_end in html_text
