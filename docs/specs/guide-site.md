@@ -25,7 +25,9 @@ Người chơi mở trang lên để trả lời bốn loại câu hỏi:
 
 Bảng liệt kê mọi lá bài. Người dùng lọc bằng:
 
-- gõ tên hoặc gõ số thứ tự vào một ô tìm kiếm chung,
+- gõ tên hoặc gõ số thứ tự vào một ô tìm kiếm chung — mỗi ô nhập có nút xoá
+  nhanh, chỉ hiện khi ô có chữ, bấm là xoá sạch và con trỏ ở lại trong ô;
+  xoá bằng nút là hành động dứt khoát nên Back trả lại từ khoá vừa xoá,
 - chọn loại lá (quái vật, phép, bẫy, trang bị, nghi lễ),
 - chọn Type quái vật,
 - bật tùy chọn chỉ hiện lá có chỉ số.
@@ -181,6 +183,12 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
 - Thuật ngữ thống nhất trên toàn trang: dùng "quái vật" cho *monster*, theo
   đúng cách ba tài liệu nguồn dùng; không lẫn biến thể khác.
 - Chạy lại công cụ sinh dữ liệu cho kết quả không đổi.
+- Trên màn hình cảm ứng, ô nhập và dropdown có cỡ chữ đúng 16px. Dưới ngưỡng
+  đó iOS Safari phóng to cả trang mỗi lần đặt con trỏ vào ô. Sửa bằng cỡ chữ
+  chứ không khoá `maximum-scale`, để người dùng vẫn pinch-zoom được.
+- Trạng thái khôi phục từ địa chỉ phải kéo theo cả giao diện phụ thuộc nó:
+  ô nhập được điền từ hash thì nút xoá của nó phải hiện, vì gán giá trị bằng
+  mã không bắn ra sự kiện nhập nào.
 - Bản dịch tiếng Việt của lore luôn hiển thị kèm nguyên văn tiếng Anh có
   nhãn, không bao giờ giấu nguyên văn; không có bản dịch nào là chuỗi rỗng
   hoặc y hệt nguyên văn tiếng Anh.
