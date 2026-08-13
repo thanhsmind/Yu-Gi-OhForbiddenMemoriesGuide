@@ -6,4 +6,6 @@ search — it answers "where does X live" without a grep.
 
 | Area | Spec | Code entry points |
 |---|---|---|
-| (none mapped yet — run a bee-capturing bootstrap pass) | | |
+| Trang hướng dẫn Forbidden Memories | `docs/specs/guide-site.md` | `index.html` (dữ liệu nhúng giữa `/* FM_DATA:BEGIN */` và `/* FM_DATA:END */`), `tools/extract_cards.py`, `tools/check.py` |
+| Nguồn dữ liệu bài | `docs/specs/guide-site.md` § Nguồn dữ liệu và ranh giới | `data/cards.json`, `scripts/fetch_yugipedia_cards.py`, `images/cards/` |
+| Nguồn nội dung hướng dẫn | `docs/specs/guide-site.md` § Hướng dẫn, § Fusion | `docs/guide/*.md` (3 file tiếng Việt, chỉ đọc) |

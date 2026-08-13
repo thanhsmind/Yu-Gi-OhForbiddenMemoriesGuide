@@ -8,6 +8,10 @@
     "session-close": true
   },
   "gate_bypass": false,
+  "worktree_first": "off",
+  "commands": {
+    "test": "python3 tools/check.py"
+  },
   "models": {
     "claude": {
       "extraction": "haiku",
