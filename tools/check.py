@@ -182,6 +182,24 @@ def main() -> int:
         not identical_lore_vi,
         f"{identical_lore_vi[:5]}",
     )
+    # D5: tên lá bài (nhiều từ) không được dịch — nếu tên đó xuất hiện trong
+    # lore tiếng Anh của một lá, nó phải xuất hiện y nguyên (tiếng Anh) trong
+    # loreVi của cùng lá đó. Chỉ xét tên nhiều từ để tránh báo giả với các từ
+    # thường (Dragon, Forest, Umi...) vốn cũng trùng tên một lá bài khác.
+    multiword_card_names = [c["name"] for c in cards if " " in c["name"]]
+    dissolved_card_names_in_lore_vi = [
+        (num, name)
+        for num, en_lore in en_lore_by_number.items()
+        for name in multiword_card_names
+        if name in en_lore
+        and lore_vi_raw.get(num)
+        and name not in lore_vi_raw[num]
+    ]
+    check(
+        "tên lá bài nhiều từ có mặt trong lore tiếng Anh thì cũng có mặt y nguyên (tiếng Anh) trong loreVi cùng lá (D5: không dịch tên bài)",
+        not dissolved_card_names_in_lore_vi,
+        f"{dissolved_card_names_in_lore_vi[:5]}",
+    )
     recounted_lore_vi = sum(1 for num in real_numbers if lore_vi_raw.get(num))
     check(
         "meta.cardsWithLoreVi khớp số đếm lại trực tiếp từ bốn file data/lore-vi/part-*.json",
@@ -468,6 +486,10 @@ def main() -> int:
     check(
         "index.html không chứa 'http://' hay 'https://' (D1: không phụ thuộc mạng)",
         "http://" not in html_text and "https://" not in html_text,
+    )
+    check(
+        "index.html không còn chứa 'quái thú' (thuật ngữ thống nhất là 'quái vật', cell fm-guide-site-15)",
+        "quái thú" not in html_text,
     )
     check(
         "chuỗi 'chưa có dữ liệu' có mặt trong index.html (D4)",
