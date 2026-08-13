@@ -1,0 +1,139 @@
+{
+  "id": "fm-guide-site-16",
+  "feature": "fm-guide-site",
+  "title": "Nút x xoá nhanh nội dung ô tìm kiếm",
+  "lane": "small",
+  "status": "capped",
+  "deps": [],
+  "decisions": [
+    "D1"
+  ],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Thêm nút x xoá nhanh cho cả ba ô nhập chữ: #search-name, #search-number (tab tra cứu bài) và #fusion-search (tab Fusion). Nút chỉ hiện khi ô có chữ, ẩn khi ô rỗng. Bấm vào thì xoá sạch ô, chạy lại bộ lọc ngay, và trả con trỏ về chính ô đó để gõ tiếp được luôn. Dùng nút tự vẽ chứ ĐỪNG dựa vào type=search: nút xoá mặc định của WebKit không hiện trên Firefox và không tạo kiểu nhất quán được. Về lịch sử duyệt: xoá bằng nút là một hành động dứt khoát, không phải đang gõ — nên nó đẩy một mục lịch sử thật (như khi đổi dropdown), để Back trả lại từ khoá vừa xoá. Về giao diện: nút nằm gọn bên trong mép phải ô nhập, không đè lên chữ đang gõ, vùng bấm đủ rộng cho ngón tay trên điện thoại (tối thiểu 28px mỗi chiều), và không làm ô nhập nhảy kích thước khi nút hiện hay ẩn. Về khả năng tiếp cận: nút là button thật có aria-label tiếng Việt, bấm được bằng bàn phím, và không lọt vào thứ tự tab khi đang ẩn. Giữ nguyên cỡ chữ 16px của ô nhập trên màn hình cảm ứng đã có. Thêm khẳng định vào tools/check.py: cả ba ô đều có nút xoá kèm aria-label, và nút được ẩn hiện theo trạng thái rỗng của ô.",
+  "must_haves": {
+    "truths": [
+      "Ô rỗng thì không thấy nút x; gõ một ký tự thì nút hiện",
+      "Bấm x xoá sạch ô, danh sách trở về đầy đủ, con trỏ vẫn ở trong ô",
+      "Back sau khi bấm x trả lại từ khoá vừa xoá",
+      "Nút không đè lên chữ và không làm ô nhảy kích thước",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "nút xoá cho ba ô nhập, kèm CSS và xử lý ẩn hiện"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định ba nút xoá và aria-label"
+      }
+    ],
+    "key_links": [
+      "Nút xoá dùng lại đường ghi hash sẵn có, không tạo đường thứ hai"
+    ],
+    "prohibitions": [
+      "Không dùng type=search thay cho nút tự vẽ",
+      "Không thêm URL http/https, script src, fetch",
+      "Không sửa tay bên trong khối FM_DATA",
+      "Không phá cỡ chữ 16px trên màn hình cảm ứng"
+    ]
+  },
+  "trace": {
+    "worker": "clearer",
+    "outcome": "Added a self-drawn clear (x) button to #search-name, #search-number, and #fusion-search that appears only when the field has text, clears+refilters+refocuses on click, and commits a real history entry via the existing scheduleHashWrite(true) path",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T16:40:57.999Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T16:32:04.269Z",
+    "report": {
+      "outcome": "Added a self-drawn clear (x) button to #search-name, #search-number, and #fusion-search that appears only when the field has text, clears+refilters+refocuses on click, and commits a real history entry via the existing scheduleHashWrite(true) path",
+      "commit": "8c2f834ba29e4036baec1e97708899dbe0cf96bd",
+      "files": [
+        "index.html",
+        "tools/check.py"
+      ],
+      "tests": "green",
+      "deviations": []
+    },
+    "warnings": [
+      "advisory: this cap's commit changes 176 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T16:40:57.172Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "visibility-tracks-empty",
+            "name": "Button hidden while the field is empty, shown once it has text",
+            "status": "PASS",
+            "evidence": "Own jsdom harness on the real page: empty cold load -> hidden true; one input event -> hidden false. Visibility is driven by value.length === 0 on the element itself, not a separate flag."
+          },
+          {
+            "id": "clear-behaviour",
+            "name": "Click empties, refilters, and returns focus",
+            "status": "PASS",
+            "evidence": "Harness: after click, value '', button hidden again, document.activeElement is the input, result count back to '722 / 722 lá' (typing had narrowed it to '28 / 722 lá' after the 120ms filter debounce)."
+          },
+          {
+            "id": "history-commit",
+            "name": "Clearing commits a real history entry so Back restores the query",
+            "status": "PASS",
+            "evidence": "Handlers cancel any pending debounce then call scheduleHashWrite(true) — the same commit path the dropdown change handlers use. Harness: history.back() after a clear restored value 'dark' AND the button visible."
+          },
+          {
+            "id": "restore-from-url",
+            "name": "State restored from the hash also shows the button",
+            "status": "PASS",
+            "evidence": "DEFECT FOUND AND FIXED during this judge pass: applyState assigns .value directly so no input event fires, leaving a filled field with a hidden button on cold load of #tra-cuu?q=dark and after Back. Added updateSearchClearButtons() to the cards branch (the fusion branch already got it free via onFusionSearchInput). Harness now green on both, and check.py pins it — mutation-tested by removing the call on an isolated copy, which turned the suite red on exactly that assertion."
+          },
+          {
+            "id": "layout",
+            "name": "Button does not overlap text or resize the field",
+            "evidence": "CSS reserves padding-right 1.9rem on .search-field input at all times, so appearing/disappearing changes nothing; button is absolutely positioned at the right edge, 28x28 touch target. The flex sizing moved onto the #search-name-field / #search-number-field wrappers, preserving the original 1 1 220px / 0 1 160px behaviour.",
+            "status": "PASS"
+          },
+          {
+            "id": "accessibility",
+            "name": "Real button, Vietnamese aria-label, out of tab order when hidden",
+            "status": "PASS",
+            "evidence": "All three are <button type=\"button\"> with aria-label ('Xoá ô tìm theo tên', 'Xoá ô tìm theo số thứ tự', 'Xoá ô tìm tên lá bài') and the hidden attribute, which removes them from the tab order. check.py asserts all of it, and that no input was switched to type=search."
+          },
+          {
+            "id": "suite-green",
+            "name": "python3 tools/check.py green, touch font-size rule intact",
+            "status": "PASS",
+            "evidence": "Exit 0 on the committed tree. The @media (pointer: coarse) 16px rule is untouched and still asserted."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T16:47:18.199Z"
+      }
+    ]
+  },
+  "tier": "generation"
+}
