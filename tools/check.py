@@ -459,6 +459,69 @@ def main() -> int:
         and "Lore</dt>" in html_text,
     )
 
+    # --- Bộ lọc Guardian Star + link lọc trong panel chi tiết (cell fm-guide-site-8) ---
+    check(
+        'index.html có dropdown "star-filter", populate từ danh sách guardianStars đọc lại từ dữ liệu '
+        "(không hardcode 10 tên sao trong markup)",
+        'id="star-filter"' in html_text
+        and "populateDropdown(elStarFilter, guardianStars," in html_text,
+    )
+    expected_stars = {
+        "Jupiter", "Mars", "Mercury", "Moon", "Neptune",
+        "Pluto", "Saturn", "Sun", "Uranus", "Venus",
+    }
+    actual_stars = {
+        s
+        for c in cards
+        for s in (c.get("guardianStars") or [])
+        if s
+    }
+    check(
+        "dữ liệu 722 lá phủ đủ 10 Guardian Star mà dropdown 'star-filter' liệt kê "
+        "(Jupiter, Mars, Mercury, Moon, Neptune, Pluto, Saturn, Sun, Uranus, Venus)",
+        actual_stars == expected_stars,
+        f"got {sorted(actual_stars)}",
+    )
+    check(
+        "không có bộ lọc theo 'Cách lấy' (obtainedBy) trong tab tra cứu — mọi lá chỉ có giá trị 'Drop' nên vô nghĩa",
+        "obtainedby-filter" not in html_text.lower(),
+    )
+    check(
+        "tham số hash 'sao' được ĐỌC (readStateFromHash/applyState) và GHI (currentHash) đúng như 'loai'/'type'/'he'",
+        '["sao", elStarFilter.value]' in html_text
+        and 'sao: params.sao || ""' in html_text
+        and 'elStarFilter.value = st.sao || "";' in html_text,
+    )
+    check(
+        "panel chi tiết sinh link lọc cho Loại lá, Type, mỗi hệ fusion và mỗi Guardian Star qua filterLinkHtml "
+        "(giá trị thiếu vẫn là chữ 'chưa có dữ liệu', không phải link)",
+        'filterLinkHtml("loai", card.cardType)' in html_text
+        and 'filterLinkHtml("type", card.type)' in html_text
+        and "function fmtFusionHtml(card)" in html_text
+        and 'filterLinkHtml("he", s)' in html_text
+        and "function fmtStarsHtml(card)" in html_text
+        and 'filterLinkHtml("sao", s)' in html_text
+        and 'if (!value) return "chưa có dữ liệu";' in html_text,
+    )
+    check(
+        "danh sách Equip trong panel chi tiết dùng lại cơ chế card-link/wireCardLinks sẵn có để mở lá "
+        "được equip (không tạo cơ chế nhảy thứ hai)",
+        '<li><span class="card-link" data-cardname="' in html_text
+        and html_text.count("function wireCardLinks(") == 1
+        and html_text.count("function goToCardFilter(") == 1
+        and html_text.count("function wireFilterLinks(") == 1,
+    )
+    check(
+        "mỗi link lọc trong panel chi tiết đi qua goToCardFilter -> scheduleHashWrite(true), "
+        "nên vào lịch sử duyệt như mọi thay đổi bộ lọc khác",
+        re.search(
+            r"function goToCardFilter\(filterKey, value\) \{.*?scheduleHashWrite\(true\);\s*\n\s*\}",
+            html_text,
+            re.S,
+        )
+        is not None,
+    )
+
     # --- Tab "Fusion" và tab "Độ phủ dữ liệu" (cell fm-guide-site-5) ---
     check(
         "hai placeholder 'coming-soon' cũ của tab Fusion / Độ phủ dữ liệu đã bị thay bằng nội dung thật",

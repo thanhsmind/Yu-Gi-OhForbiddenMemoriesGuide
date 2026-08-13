@@ -544,6 +544,7 @@
       <select id="cardtype-filter"></select>
       <select id="type-filter"></select>
       <select id="fusion-filter"></select>
+      <select id="star-filter"></select>
       <span id="result-count" class="result-count"></span>
     </div>
     <div class="table-wrap">
@@ -73765,14 +73766,17 @@ window.FM_DATA = {
   var fusionSystemsSeen = {};
   var cardTypesSeen = {};
   var typesSeen = {};
+  var guardianStarsSeen = {};
   CARDS.forEach(function (c) {
     (c.fusionSystems || []).forEach(function (tag) { fusionSystemsSeen[tag] = true; });
     if (c.cardType) cardTypesSeen[c.cardType] = true;
     if (c.type) typesSeen[c.type] = true;
+    (c.guardianStars || []).forEach(function (s) { if (s) guardianStarsSeen[s] = true; });
   });
   var fusionSystems = Object.keys(fusionSystemsSeen).sort();
   var cardTypes = Object.keys(cardTypesSeen).sort();
   var monsterTypes = Object.keys(typesSeen).sort();
+  var guardianStars = Object.keys(guardianStarsSeen).sort();
 
   var elSearchName = document.getElementById("search-name");
   var elSearchNumber = document.getElementById("search-number");
@@ -73780,6 +73784,7 @@ window.FM_DATA = {
   var elCardTypeFilter = document.getElementById("cardtype-filter");
   var elTypeFilter = document.getElementById("type-filter");
   var elFusionFilter = document.getElementById("fusion-filter");
+  var elStarFilter = document.getElementById("star-filter");
   var elTableBody = document.getElementById("card-table-body");
   var elResultCount = document.getElementById("result-count");
   var elPager = document.getElementById("pager");
@@ -74063,6 +74068,7 @@ window.FM_DATA = {
     var cardTypeQ = elCardTypeFilter.value;
     var typeQ = elTypeFilter.value;
     var fusionQ = elFusionFilter.value;
+    var starQ = elStarFilter.value;
 
     state.filtered = CARDS.filter(function (c) {
       if (nameQ && c.name.toLowerCase().indexOf(nameQ) === -1) return false;
@@ -74071,6 +74077,7 @@ window.FM_DATA = {
       if (cardTypeQ && c.cardType !== cardTypeQ) return false;
       if (typeQ && c.type !== typeQ) return false;
       if (fusionQ && (!c.fusionSystems || c.fusionSystems.indexOf(fusionQ) === -1)) return false;
+      if (starQ && (!c.guardianStars || c.guardianStars.indexOf(starQ) === -1)) return false;
       return true;
     });
     state.page = 1;
@@ -74269,6 +74276,33 @@ window.FM_DATA = {
       .join("");
   }
 
+  // Renders one detail-panel field as a link into the card-lookup tab's
+  // matching filter (cell fm-guide-site-8) -- reuses the .card-link visual
+  // style so it reads as clickable like the existing card-name links, but
+  // carries data-filter-key/value instead of data-cardname so wireCardLinks'
+  // selector (which requires data-cardname) never picks it up by accident.
+  // A missing value renders the honest "chưa có dữ liệu" text, never a link
+  // (D1/D2: a value that isn't real must never look real).
+  function filterLinkHtml(filterKey, value) {
+    if (!value) return "chưa có dữ liệu";
+    return (
+      '<span class="card-link filter-link" data-filter-key="' + filterKey + '" ' +
+      'data-filter-value="' + escapeHtml(value) + '">' + escapeHtml(value) + "</span>"
+    );
+  }
+
+  function fmtStarsHtml(card) {
+    if (!card.guardianStars) return "chưa có dữ liệu";
+    return card.guardianStars
+      .map(function (s) { return filterLinkHtml("sao", s); })
+      .join(" / ");
+  }
+
+  function fmtFusionHtml(card) {
+    if (!card.fusionSystems || !card.fusionSystems.length) return "chưa có dữ liệu";
+    return card.fusionSystems.map(function (s) { return filterLinkHtml("he", s); }).join(", ");
+  }
+
   function showDetail(card) {
     openCardNumber = card.number;
     var equipsHtml = "chưa có dữ liệu";
@@ -74277,7 +74311,10 @@ window.FM_DATA = {
         '<ul class="equip-list">' +
         card.equips
           .map(function (e) {
-            return "<li>#" + escapeHtml(e.number) + " " + escapeHtml(e.name) + "</li>";
+            return (
+              '<li><span class="card-link" data-cardname="' + escapeHtml(e.name) + '">#' +
+              escapeHtml(e.number) + " " + escapeHtml(e.name) + "</span></li>"
+            );
           })
           .join("") +
         "</ul>";
@@ -74291,12 +74328,12 @@ window.FM_DATA = {
           "<h3>" + escapeHtml(card.name) + "</h3>" +
           "<dl>" +
             "<dt>Số thứ tự</dt><dd>#" + escapeHtml(card.number) + "</dd>" +
-            "<dt>Loại lá</dt><dd>" + fmt(card.cardType) + "</dd>" +
-            "<dt>Type</dt><dd>" + fmt(card.type) + "</dd>" +
+            "<dt>Loại lá</dt><dd>" + filterLinkHtml("loai", card.cardType) + "</dd>" +
+            "<dt>Type</dt><dd>" + filterLinkHtml("type", card.type) + "</dd>" +
             "<dt>Level</dt><dd>" + fmt(card.level) + "</dd>" +
             "<dt>ATK / DEF</dt><dd>" + fmt(card.atk) + " / " + fmt(card.def) + "</dd>" +
-            "<dt>Guardian Star</dt><dd>" + escapeHtml(fmtStars(card)) + "</dd>" +
-            "<dt>Hệ fusion</dt><dd>" + escapeHtml(fmtFusion(card)) + "</dd>" +
+            "<dt>Guardian Star</dt><dd>" + fmtStarsHtml(card) + "</dd>" +
+            "<dt>Hệ fusion</dt><dd>" + fmtFusionHtml(card) + "</dd>" +
             "<dt>Password</dt><dd>" + escapeHtml(fmt(card.password)) + "</dd>" +
             "<dt>Star Chip Cost</dt><dd>" + fmtStarChipCost(card) + "</dd>" +
             "<dt>Cách lấy</dt><dd>" + escapeHtml(fmtList(card.obtainedBy)) + "</dd>" +
@@ -74315,6 +74352,7 @@ window.FM_DATA = {
       scheduleHashWrite(true);
     });
     wireCardLinks(elDetail);
+    wireFilterLinks(elDetail);
     elDetail.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
@@ -74338,10 +74376,55 @@ window.FM_DATA = {
     elCardTypeFilter.value = "";
     elTypeFilter.value = "";
     elFusionFilter.value = "";
+    elStarFilter.value = "";
     applyFilters();
     showDetail(card);
     elDetail.scrollIntoView({ behavior: "smooth", block: "start" });
     scheduleHashWrite(true);
+  }
+
+  // Detail-panel field link (cell fm-guide-site-8): opens the card-lookup
+  // tab with exactly ONE filter set (the clicked field), every other filter
+  // and the open detail cleared -- then commits a fresh history entry so
+  // Back returns to the card whose detail was just showing. filterKey is one
+  // of "loai" | "type" | "he" | "sao", matching the hash params already read
+  // by readStateFromHash/applyState below.
+  function goToCardFilter(filterKey, value) {
+    if (!value) return;
+    tabPanels.forEach(function (panel) { panel.hidden = panel.id !== "tab-cards"; });
+    tabButtons.forEach(function (b) { b.classList.toggle("active", b.dataset.tab === "tab-cards"); });
+    elSearchName.value = "";
+    elSearchNumber.value = "";
+    elOnlyAtkDef.checked = false;
+    elCardTypeFilter.value = filterKey === "loai" ? value : "";
+    elTypeFilter.value = filterKey === "type" ? value : "";
+    elFusionFilter.value = filterKey === "he" ? value : "";
+    elStarFilter.value = filterKey === "sao" ? value : "";
+    applyFilters();
+    elDetail.hidden = true;
+    openCardNumber = null;
+    scheduleHashWrite(true);
+  }
+
+  function wireFilterLinks(root) {
+    var scope = root || document;
+    var links = Array.prototype.slice.call(
+      scope.querySelectorAll(".filter-link[data-filter-key]:not([data-wired])")
+    );
+    links.forEach(function (el) {
+      el.setAttribute("data-wired", "1");
+      el.setAttribute("role", "button");
+      el.tabIndex = 0;
+      var key = el.dataset.filterKey;
+      var value = el.dataset.filterValue;
+      el.addEventListener("click", function () { goToCardFilter(key, value); });
+      el.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          goToCardFilter(key, value);
+        }
+      });
+    });
   }
 
   function wireCardLinks(root) {
@@ -74375,12 +74458,14 @@ window.FM_DATA = {
   elCardTypeFilter.addEventListener("change", applyFilters);
   elTypeFilter.addEventListener("change", applyFilters);
   elFusionFilter.addEventListener("change", applyFilters);
+  elStarFilter.addEventListener("change", applyFilters);
   elSearchName.addEventListener("input", function () { scheduleHashWrite(false); });
   elSearchNumber.addEventListener("input", function () { scheduleHashWrite(false); });
   elOnlyAtkDef.addEventListener("change", function () { scheduleHashWrite(true); });
   elCardTypeFilter.addEventListener("change", function () { scheduleHashWrite(true); });
   elTypeFilter.addEventListener("change", function () { scheduleHashWrite(true); });
   elFusionFilter.addEventListener("change", function () { scheduleHashWrite(true); });
+  elStarFilter.addEventListener("change", function () { scheduleHashWrite(true); });
 
   var tabButtons = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
   var tabPanels = Array.prototype.slice.call(document.querySelectorAll(".tab-panel"));
@@ -74404,6 +74489,7 @@ window.FM_DATA = {
   populateDropdown(elCardTypeFilter, cardTypes, "Tất cả loại lá");
   populateDropdown(elTypeFilter, monsterTypes, "Tất cả type");
   populateDropdown(elFusionFilter, fusionSystems, "Tất cả hệ fusion");
+  populateDropdown(elStarFilter, guardianStars, "Tất cả Guardian Star");
   applyFilters();
   initFusionTab();
   renderCoverage();
@@ -74465,7 +74551,7 @@ window.FM_DATA = {
   // page's hash-shape for it. Single source of truth is the DOM itself
   // (never a second copy of the same values) -- see also the shapes
   // documented on cell fm-guide-site-7:
-  //   #tra-cuu?q=..&so=..&loai=..&type=..&he=..&chiso=1&trang=..&la=..
+  //   #tra-cuu?q=..&so=..&loai=..&type=..&he=..&sao=..&chiso=1&trang=..&la=..
   //   #fusion?q=..&he=..
   //   #huong-dan  or  #sec-N (bare TOC anchors keep working, see D-note below)
   //   #do-phu
@@ -74491,6 +74577,7 @@ window.FM_DATA = {
       ["loai", elCardTypeFilter.value],
       ["type", elTypeFilter.value],
       ["he", elFusionFilter.value],
+      ["sao", elStarFilter.value],
       ["chiso", elOnlyAtkDef.checked ? "1" : ""],
       ["trang", state.page > 1 ? String(state.page) : ""],
       ["la", openCardNumber !== null && openCardNumber !== undefined ? String(openCardNumber) : ""],
@@ -74580,6 +74667,7 @@ window.FM_DATA = {
         loai: params.loai || "",
         type: params.type || "",
         he: params.he || "",
+        sao: params.sao || "",
         chiso: params.chiso === "1",
         trang: params.trang ? parseInt(params.trang, 10) || 1 : 1,
         la: params.la || null,
@@ -74599,6 +74687,7 @@ window.FM_DATA = {
       elCardTypeFilter.value = st.loai || "";
       elTypeFilter.value = st.type || "";
       elFusionFilter.value = st.he || "";
+      elStarFilter.value = st.sao || "";
       elOnlyAtkDef.checked = !!st.chiso;
       applyFilters();
       var pageCount = Math.max(1, Math.ceil(state.filtered.length / PAGE_SIZE));
