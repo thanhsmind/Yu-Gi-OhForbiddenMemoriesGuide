@@ -1,0 +1,116 @@
+{
+  "id": "fm-guide-site-3",
+  "feature": "fm-guide-site",
+  "title": "Chuyển spine bảng tra cứu sang 722 lá Yugipedia, ghép fusion + equip lên trên",
+  "lane": "standard",
+  "status": "capped",
+  "deps": [],
+  "decisions": [
+    "D1",
+    "D2",
+    "D3",
+    "D7"
+  ],
+  "files": [
+    "tools/extract_cards.py",
+    "tools/check.py",
+    "index.html"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "tools/extract_cards.py",
+    "data/cards.json"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Per D7 đổi nguồn của bảng tra cứu bài: spine là data/cards.json (722 lá Yugipedia, đã có sẵn trong repo, các trường number/name/slug/cardType/type/guardianStars/level/atk/def/password/starChipCost/lore/japaneseName/romajiName/obtainedBy). Sửa tools/extract_cards.py: đọc data/cards.json làm bảng bài chính THAY cho phần mine số+tên+ATK/DEF từ docs/guide, rồi ghép lên đó hai thứ vẫn mine từ docs/guide — danh sách equip theo lá (621 khối) và các tham chiếu công thức fusion. Giữ nguyên phần mine fusionBasic/fusionExact/fusionConflict/fusionGroups, không đụng vào logic tách cột. Ghép theo tên không phân biệt hoa thường; 14 tên trong docs/guide không khớp Yugipedia cần bảng alias (chạy thử để lấy danh sách chính xác, gồm 'black skull dragon', 'blue eyes silver zombie', 'blue eyes ultimate dragon', 'charubin the fire', 'kuwagata a', 'meteor black dragon', 'millenium golem', 'one who hunts soul', 'performance of swords', 'red eyes black dragon' và các tên còn lại) — map từng cái sang tên Yugipedia đúng; tên nào thật sự không có lá tương ứng thì giữ dạng chỉ-có-tên, không tạo dòng ma. Per D4 giữ nguyên nguyên tắc: trường thiếu là null, không bao giờ 0, không bao giờ đoán. Slug giữ nguyên slug của data/cards.json vì 722 ảnh trong images/cards/ đã đặt theo đúng slug đó. Cập nhật index.html: ảnh thật hiện lên (không còn placeholder khi file tồn tại), panel chi tiết hiện thêm type, level, lore, password, star chip cost, obtainedBy, tên Nhật; bộ lọc thêm lọc theo type và theo cardType. Chạy lại --inject. Cập nhật tools/check.py cho khớp nguồn mới: 722 lá, 621 lá có ATK/DEF, 621 lá có type và guardianStars, 722 lá có lore, 722/722 slug có file ảnh tương ứng trong images/cards/, 621 danh sách equip ghép được, không slug trùng, các khẳng định cấu trúc D1/D2 giữ nguyên. Bỏ các khẳng định cũ đã hết nghĩa (653 cặp, 98 join, 257 tên hệ fusion) chứ không để lại cho xanh giả.",
+  "must_haves": {
+    "truths": [
+      "Bảng tra cứu hiện đủ 722 lá; gõ 'Blue-eyes White Dragon' hiện 3000/2500, type Dragon, Sun/Mars, level 8, lore, password",
+      "Ảnh lá bài hiện thật từ images/cards/<slug>.png",
+      "Lá không có chỉ số (magic/trap) hiện 'chưa có dữ liệu', không hiện 0",
+      "python3 tools/check.py xanh trên bộ khẳng định đã cập nhật"
+    ],
+    "artifacts": [
+      {
+        "path": "tools/extract_cards.py",
+        "substantive": "spine từ data/cards.json, ghép equip + fusion từ docs/guide, bảng alias tên thật; không TODO"
+      },
+      {
+        "path": "index.html",
+        "substantive": "bảng tra cứu 722 lá với ảnh thật, panel chi tiết đủ trường, lọc theo type/cardType"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định theo nguồn mới, bỏ khẳng định đã chết"
+      }
+    ],
+    "key_links": [
+      "index.html đọc window.FM_DATA nhúng inline; ảnh trỏ images/cards/<slug>.png"
+    ],
+    "prohibitions": [
+      "Không sửa file trong docs/guide/ hay data/cards.json",
+      "Không thêm URL http/https, script src, fetch vào index.html",
+      "Không render null thành 0",
+      "Không giữ lại khẳng định cũ chỉ để test xanh"
+    ]
+  },
+  "trace": {
+    "worker": "swapper",
+    "outcome": "Card lookup table spine switched to data/cards.json (722 Yugipedia cards); equip lists + fusion joined onto it by name via a 15-entry alias table; index.html shows real images, type/cardType filters, and a full detail panel; tools/check.py rewritten for the new source",
+    "files_changed": [
+      "tools/extract_cards.py",
+      "tools/check.py",
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T11:59:03.967Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T11:48:57.221Z",
+    "report": {
+      "outcome": "Card lookup table spine switched to data/cards.json (722 Yugipedia cards); equip lists + fusion joined onto it by name via a 15-entry alias table; index.html shows real images, type/cardType filters, and a full detail panel; tools/check.py rewritten for the new source",
+      "commit": "caa38c5",
+      "files": [
+        "tools/extract_cards.py",
+        "tools/check.py",
+        "index.html"
+      ],
+      "tests": "green",
+      "deviations": [
+        "Fixed a pre-existing parsing bug: the #668 Bright Castle equip item line has fusion.mds closing separator glued onto it with no whitespace, so the greedy-to-EOL item regex captured Bright Castle===...=== as the name; stripped the trailing run of = characters in touched code (parse_equip_file)."
+      ]
+    },
+    "warnings": [
+      "advisory: this cap's commit changes 18523 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T11:59:03.339Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "slice-judge",
+            "name": "Per-slice checklist judge over must_haves, artifacts, key_links, prohibitions",
+            "status": "PASS",
+            "evidence": "Independent read-only judge dispatch verified cell fm-guide-site-3 against its own must_haves by re-parsing the embedded FM_DATA block, executing index.html's script under a DOM shim, recomputing every count, and cross-reading docs/guide sources; all checks PASS. python3 tools/check.py green, exit 0."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T12:39:39.706Z"
+      }
+    ]
+  },
+  "tier": "generation"
+}

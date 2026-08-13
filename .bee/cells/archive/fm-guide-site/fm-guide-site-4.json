@@ -1,0 +1,100 @@
+{
+  "id": "fm-guide-site-4",
+  "feature": "fm-guide-site",
+  "title": "Viết toàn bộ nội dung hướng dẫn chơi vào tab Hướng dẫn",
+  "lane": "standard",
+  "status": "capped",
+  "deps": [
+    "fm-guide-site-3"
+  ],
+  "decisions": [
+    "D1",
+    "D5"
+  ],
+  "files": [
+    "index.html"
+  ],
+  "read_first": [
+    "docs/guide/Game Yu-Gi-Oh Hướng dẫn cơ bản.md",
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Điền tab 'Hướng dẫn' trong index.html bằng nội dung biên tập lại từ 'docs/guide/Game Yu-Gi-Oh Hướng dẫn cơ bản.md'. Cấu trúc thành các mục có mục lục nhảy được: (1) Luật cơ bản và cách một ván diễn ra; (2) Các Type quái vật — danh sách đầy đủ, và nêu rõ Type nào ghép với Type nào là chuyện của tab Fusion; (3) Guardian Star — 10 sao, vẽ vòng tương khắc bằng HTML/CSS hoặc SVG inline (KHÔNG ảnh ngoài, không URL), nêu luật cộng 500 ATK khi sao khắc; (4) Môi trường / field magic và ảnh hưởng lên từng Type; (5) Ritual — giải thích cơ chế triệu hồi hiến tế, và nói thẳng rằng repo chưa có bảng công thức Ritual nên mục đó còn trống, không bịa công thức; (6) Bộ bài khởi đầu và mẹo đầu game; (7) Farm bài — nguyên tắc chọn lá đáng farm; (8) Bài nên mua bằng StarChip — bảng password lấy đúng ~13 dòng có trong nguồn, ghi rõ đây là danh sách một phần; (9) Xếp hạng Pow/Tec và cách đánh để ra drop mong muốn. Viết tiếng Việt tự nhiên, gọn, đúng D5 — tên bài và thuật ngữ game giữ tiếng Anh. Nội dung phải trung thành với nguồn: không thêm luật không có trong file, không sửa số. Chỗ nào nguồn nói mơ hồ thì ghi nguyên trạng thái mơ hồ đó. Style bám theo CSS đã có sẵn trong trang, không thêm thư viện. Cột password nếu lá đó có trong bảng tra cứu thì link nhảy sang chi tiết lá đó.",
+  "must_haves": {
+    "truths": [
+      "Tab Hướng dẫn có đủ 9 mục với mục lục nhảy được, không còn chỗ nào ghi 'sắp có'",
+      "Vòng Guardian Star vẽ bằng HTML/CSS/SVG inline, không tải ảnh ngoài",
+      "Mục Ritual nói rõ chưa có bảng công thức thay vì bịa công thức",
+      "python3 tools/check.py vẫn xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "tab Hướng dẫn đầy đủ 9 mục nội dung thật, biên tập từ nguồn"
+      }
+    ],
+    "key_links": [
+      "Bảng password link sang chi tiết lá trong tab tra cứu khi lá đó tồn tại"
+    ],
+    "prohibitions": [
+      "Không thêm URL http/https, script src, fetch, font hay ảnh ngoài",
+      "Không thêm luật hay số liệu không có trong docs/guide",
+      "Không bịa công thức Ritual",
+      "Không sửa file trong docs/guide/"
+    ]
+  },
+  "trace": {
+    "worker": "scribe",
+    "outcome": "Filled the Hướng dẫn tab with all 9 sections edited from docs/guide/Game Yu-Gi-Oh Hướng dẫn cơ bản.md, including an inline-SVG Guardian Star wheel and a StarChip password table linked to card detail",
+    "files_changed": [
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T12:14:27.188Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T12:04:35.820Z",
+    "report": {
+      "outcome": "Filled the Hướng dẫn tab with all 9 sections edited from docs/guide/Game Yu-Gi-Oh Hướng dẫn cơ bản.md, including an inline-SVG Guardian Star wheel and a StarChip password table linked to card detail",
+      "commit": "340d0e5",
+      "files": [
+        "index.html"
+      ],
+      "tests": "green",
+      "deviations": []
+    },
+    "warnings": [
+      "advisory: this cap's commit changes 644 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T12:14:26.505Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "slice-judge",
+            "name": "Per-slice checklist judge over must_haves, artifacts, key_links, prohibitions",
+            "status": "PASS",
+            "evidence": "Independent read-only judge dispatch verified cell fm-guide-site-4 against its own must_haves by re-parsing the embedded FM_DATA block, executing index.html's script under a DOM shim, recomputing every count, and cross-reading docs/guide sources; all checks PASS. python3 tools/check.py green, exit 0."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T12:39:39.711Z"
+      }
+    ]
+  },
+  "tier": "generation"
+}

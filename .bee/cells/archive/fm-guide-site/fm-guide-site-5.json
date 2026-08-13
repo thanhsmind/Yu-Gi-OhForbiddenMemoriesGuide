@@ -1,0 +1,204 @@
+{
+  "id": "fm-guide-site-5",
+  "feature": "fm-guide-site",
+  "title": "Tab Fusion tra cứu hai chiều và mục độ phủ dữ liệu",
+  "lane": "standard",
+  "status": "capped",
+  "deps": [
+    "fm-guide-site-4"
+  ],
+  "decisions": [
+    "D1",
+    "D4",
+    "D5",
+    "D7"
+  ],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "index.html",
+    "tools/extract_cards.py"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Điền tab 'Fusion' và tab 'Độ phủ dữ liệu' trong index.html, dùng dữ liệu đã có trong window.FM_DATA (fusionBasic, fusionExact, fusionConflict, fusionGroups, equipLists). Tab Fusion gồm: (a) ô tìm kiếm một lá bài rồi hiện hai danh sách — 'ghép ra lá này bằng gì' và 'lá này ghép với gì ra gì'; (b) bảng công thức cơ bản theo hệ, lọc được theo hệ; (c) bảng công thức chính xác tên+tên; (d) bảng xung đột hệ, trình bày đúng ý nghĩa cột trái/cột phải như nguồn giải thích. Mỗi tên lá trong công thức, nếu khớp một lá trong bảng tra cứu, là link nhảy sang chi tiết lá đó; tên không khớp hiển thị dạng chữ thường, không link, không tạo dòng ma. Trong panel chi tiết một lá ở tab tra cứu, thêm mục equip của lá đó (từ equipLists) và mục fusion liên quan. Tab 'Độ phủ dữ liệu' liệt kê trung thực các con số thật do extractor đếm ra tại thời điểm sinh dữ liệu — số lá, số lá có chỉ số, số lá có type, số công thức mỗi loại, số lá có danh sách equip, và ghi rõ những gì repo KHÔNG có (bảng công thức Ritual, bảng drop theo đối thủ, password đầy đủ). Các con số này phải đọc từ FM_DATA.meta do extractor sinh, không được gõ cứng vào HTML. Mở rộng tools/check.py: khẳng định FM_DATA.meta tồn tại và mọi con số hiện trên tab độ phủ đều khớp số đếm thật từ dữ liệu.",
+  "must_haves": {
+    "truths": [
+      "Tra một lá trong tab Fusion hiện đúng công thức ghép ra nó và công thức nó tham gia",
+      "Panel chi tiết lá hiện danh sách equip và fusion liên quan",
+      "Tab Độ phủ dữ liệu hiện số đếm thật lấy từ FM_DATA.meta, không gõ cứng",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "tab Fusion tra cứu hai chiều đầy đủ 4 phần, tab Độ phủ dữ liệu đọc từ meta"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định meta tồn tại và khớp số đếm thật"
+      }
+    ],
+    "key_links": [
+      "Tên lá trong công thức link sang chi tiết lá trong tab tra cứu"
+    ],
+    "prohibitions": [
+      "Không gõ cứng số thống kê vào HTML",
+      "Không thêm URL http/https, script src, fetch",
+      "Không tạo dòng cho tên lá không tồn tại",
+      "Không sửa file trong docs/guide/ hay data/cards.json"
+    ]
+  },
+  "trace": {
+    "worker": "fixer",
+    "outcome": "Tab Fusion tra cuu hai chieu, tab do phu doc tu meta, alias giai duoc ten cong thuc, sentinel starChipCost hien khong mua duoc",
+    "files_changed": [
+      "index.html",
+      "tools/check.py",
+      "tools/extract_cards.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T12:54:23.556Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T12:41:02.690Z",
+    "report": {
+      "outcome": "Fusion tab now has two-way name lookup + basic/exact/conflict tables with card-links, card detail panel gained a Fusion liên quan section, and the coverage tab reads real counts from new FM_DATA.meta fields instead of hardcoding",
+      "commit": "3e9a944",
+      "files": [
+        "index.html",
+        "tools/check.py",
+        "tools/extract_cards.py"
+      ],
+      "tests": "green",
+      "deviations": [
+        "Extended tools/extract_cards.py (outside cells declared files) to emit cardsWithType/fusionBasicCount/fusionExactCount/fusionConflictCount into FM_DATA.meta, per orchestrator note; reserved the path first, no conflict"
+      ]
+    },
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T12:54:22.865Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "NEEDS_REVISION",
+        "checks": [
+          {
+            "id": "two-way-lookup",
+            "name": "Fusion tab shows produced-by and participates-in for a searched card",
+            "status": "PASS",
+            "evidence": "Judge drove onFusionSearchInput('Dark Witch') under a DOM shim: 13543 chars, both lists populated; findProducedBy/findParticipatesIn cover fusionBasic, fusionExact and fusionConflict on both sides."
+          },
+          {
+            "id": "coverage-from-meta",
+            "name": "No hardcoded statistics; all 11 coverage numbers read from FM_DATA.meta and match a recount",
+            "status": "PASS",
+            "evidence": "coverage-body ships empty; renderCoverage reads 11 values from DATA.meta. Independent recount matched 11 for 11 (722, 621, 621, 621, 255, 621, 141, 150, 202, 25, 257)."
+          },
+          {
+            "id": "no-ghost-rows",
+            "name": "An unmatched operand name never becomes a row or a dead link",
+            "status": "PASS",
+            "evidence": "nameLinkHtml emits a .card-link span only on a byNameLower hit; rendered tables contain 3378 card-link spans and 0 unresolvable."
+          },
+          {
+            "id": "formula-name-links",
+            "name": "A formula name that IS a real card links to its detail",
+            "status": "FAIL",
+            "evidence": "nameLinkHtml matches on exact lowercased name only and never consults the alias map. 'Kuwagata a' does not link although #480 'Kuwagata α' exists; 'Twin Long Rods #2' does not link although #606 'Twin Long Rods 2' exists. Both keys are already present in EQUIP_NAME_ALIASES at tools/extract_cards.py:71-72. 2 of 337 distinct formula names affected.",
+            "failure_signature": "Real spine cards #480 Kuwagata α and #606 Twin Long Rods 2 render unlinked in the Fusion tables because the docs/guide spelling is never alias-resolved on the fusion-name path."
+          },
+          {
+            "id": "check-asserts-meta",
+            "name": "check.py asserts every coverage-tab number against a real recount",
+            "status": "FAIL",
+            "evidence": "tools/check.py:149-159 asserts only key presence for cardsWithFusionSystems (255, shown on the tab); it is never compared against a recount. Separately, tools/check.py:122-123 labels an assertion '257 la co he fusion' while asserting the 257 distinct member names, contradicting the tab's 255.",
+            "failure_signature": "meta.cardsWithFusionSystems has no recount assertion, and check.py:122's label misstates what the assertion checks."
+          }
+        ],
+        "failure_signature": "Hai lá bài có thật (#480 Kuwagata α, #606 Twin Long Rods 2) hiện không link trong bảng Fusion vì đường dẫn tên công thức không tra bảng alias; và meta.cardsWithFusionSystems hiển thị trên tab độ phủ không có khẳng định đếm lại trong check.py.",
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T12:40:03.287Z"
+      },
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "alias-links-fixed",
+            "name": "Kuwagata a -> #480 and Twin Long Rods #2 -> #606 now render as working links; unknown names still plain text",
+            "status": "PASS",
+            "evidence": "Node harness running the real resolveCardByName/nameLinkHtml/render functions against the embedded FM_DATA: both resolve and appear as links; nameLinkHtml('Totally Not A Card 12345') returns plain escaped text with no card-link span."
+          },
+          {
+            "id": "alias-source-of-truth",
+            "name": "nameAliases emitted from the extractor dict, not duplicated as HTML literals",
+            "status": "PASS",
+            "evidence": "tools/extract_cards.py:531 emits dict(EQUIP_NAME_ALIASES); index.html reads DATA.nameAliases. A fresh extractor run is byte-identical to the embedded block (1512738 bytes both)."
+          },
+          {
+            "id": "no-link-regression",
+            "name": "No previously working link broke",
+            "status": "PASS",
+            "evidence": "Multiset diff of card-link spans across the fusion tables, prior commit vs HEAD: lost = [], gained = [Kuwagata a, Twin Long Rods #2]. 3380 spans, 0 unresolvable."
+          },
+          {
+            "id": "meta-recount-and-label",
+            "name": "cardsWithFusionSystems asserted against a recount; the mislabeled 257 assertion relabeled with its condition unchanged",
+            "status": "PASS",
+            "evidence": "tools/check.py:165-170 asserts meta.cardsWithFusionSystems == recount == 255. Diff at check.py:119 changes only the label string; the condition len(fusion_conflict_members) == 257 is untouched."
+          },
+          {
+            "id": "assertions-load-bearing",
+            "name": "The new assertions genuinely fail when their invariants break",
+            "status": "PASS",
+            "evidence": "Mutation test on an isolated scratch copy (repo tree never written): breaking the alias target, hardcoding meta.cardsWithFusionSystems, and reverting the sentinel render each produced a named [FAIL] and exit 1; baseline copy exit 0."
+          },
+          {
+            "id": "sentinel-rendered-honestly",
+            "name": "starChipCost 999999 renders as 'khong mua duoc'; real costs still print as numbers; no other sentinel field left reading as real",
+            "status": "PASS",
+            "evidence": "index.html fmtStarChipCost is the single render site for the field. Independent scan of all 722 raw cards across every key: values >=9999 occur only in starChipCost (999999 x98 plus plausible real 20000/35000/50000); no placeholder strings anywhere; missing data is null everywhere per D4."
+          },
+          {
+            "id": "offline-and-scope",
+            "name": "index.html still fully offline; commit scope clean",
+            "status": "PASS",
+            "evidence": "Full-file counts: '://' 0, '<script src=' 0, 'fetch(' 0, XMLHttpRequest/WebSocket/EventSource/@import/@font-face/<link> all 0; only system font stacks and the local images/cards/<slug>.png path. git show a9de32d --name-only lists only index.html, tools/check.py, tools/extract_cards.py."
+          },
+          {
+            "id": "suite-green",
+            "name": "python3 tools/check.py green on the committed tree",
+            "status": "PASS",
+            "evidence": "Exit 0, 'All data-layer invariants hold.' Summary: 722 cards / 621 ATK-DEF / 621 equips / 255 fusion systems / 257 distinct conflict member names / 141-150-202 formula counts."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T12:54:17.483Z"
+      }
+    ],
+    "reopened_for_rework": {
+      "at": "2026-08-13T12:40:03.287Z",
+      "reason": "NEEDS_REVISION semantic-judge verdict recorded after cap"
+    },
+    "verify_command": null,
+    "verified_at": null
+  },
+  "tier": "generation"
+}

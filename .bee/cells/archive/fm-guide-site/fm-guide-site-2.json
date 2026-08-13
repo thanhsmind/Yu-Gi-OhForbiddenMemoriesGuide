@@ -1,0 +1,103 @@
+{
+  "id": "fm-guide-site-2",
+  "feature": "fm-guide-site",
+  "title": "Dựng index.html với bảng tra cứu bài và nhúng dữ liệu vào giữa hai marker",
+  "lane": "standard",
+  "status": "capped",
+  "deps": [
+    "fm-guide-site-1"
+  ],
+  "decisions": [
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5"
+  ],
+  "files": [
+    "index.html",
+    "tools/extract_cards.py",
+    "tools/check.py",
+    ".gitignore"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "docs/history/fm-guide-site/plan.md",
+    "tools/extract_cards.py"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Tạo index.html: một file HTML/CSS/JS thuần per D1, không framework, không CDN, không tải gì từ mạng, mở bằng double-click trên file:// là chạy. Trong file đặt một khối script chứa dữ liệu nằm giữa hai marker chính xác '/* FM_DATA:BEGIN */' và '/* FM_DATA:END */' per D2. Thêm cờ --inject vào tools/extract_cards.py để ghi đè đúng vùng giữa hai marker đó, giữ nguyên phần còn lại của file; chạy nó để nạp dữ liệu thật vào index.html. Giao diện chặng này chỉ cần phần tra cứu bài: ô tìm kiếm lọc theo tên và theo số thứ tự, bảng kết quả hiển thị số thứ tự, tên, ATK, DEF, cặp Guardian Star, hệ fusion, và ô ảnh trỏ images/cards/<slug>.png per D3 với placeholder khi thiếu ảnh — placeholder phải in ra đúng tên file cần đổ vào để người dùng copy được. Per D4 mọi ô null render thành 'chưa có dữ liệu', tuyệt đối không render 0. Nội dung và nhãn giao diện viết tiếng Việt, tên bài và thuật ngữ game giữ tiếng Anh per D5. Mở rộng tools/check.py thêm các khẳng định: index.html không chứa '<script src=', không chứa 'fetch(', không chứa 'http://' hay 'https://'; khối giữa hai marker tồn tại và parse được; chạy --inject hai lần liên tiếp cho ra byte y hệt; chuỗi 'chưa có dữ liệu' có mặt trong index.html.",
+  "must_haves": {
+    "truths": [
+      "Mở index.html bằng file:// rồi gõ 'Dark Witch' hiện số thứ tự, 1800/1700, Sun/Npt và hệ fusion của lá đó",
+      "Lá thiếu ATK/DEF hiện 'chưa có dữ liệu', không hiện 0",
+      "Ô ảnh thiếu hiện placeholder ghi rõ tên file png cần đổ vào",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "trang hoàn chỉnh có khung điều hướng, phần tra cứu bài chạy được trên dữ liệu thật, khối FM_DATA nhúng inline"
+      },
+      {
+        "path": "tools/extract_cards.py",
+        "substantive": "thêm --inject ghi đè vùng giữa hai marker, idempotent"
+      }
+    ],
+    "key_links": [
+      "index.html đọc window.FM_DATA do extractor nhúng, không fetch, không script src ngoài"
+    ],
+    "prohibitions": [
+      "Không thêm framework, CDN, font ngoài, hay bất kỳ URL http/https nào vào index.html",
+      "Không dùng fetch hay XMLHttpRequest",
+      "Không render null thành 0",
+      "Không sửa file trong docs/guide/"
+    ]
+  },
+  "trace": {
+    "worker": "pager",
+    "outcome": "index.html card lookup page built with embedded FM_DATA (653 cards) via new --inject flag; check.py green with new D1/D2/D4 structural assertions",
+    "files_changed": [
+      "index.html",
+      "tools/extract_cards.py",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T11:40:10.892Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T11:32:05.313Z",
+    "warnings": [
+      "advisory: this cap's commit changes 61826 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T11:40:10.338Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "slice-judge",
+            "name": "Per-slice checklist judge over must_haves, artifacts, key_links, prohibitions",
+            "status": "PASS",
+            "evidence": "Independent read-only judge dispatch verified cell fm-guide-site-2 against its own must_haves by re-parsing the embedded FM_DATA block, executing index.html's script under a DOM shim, recomputing every count, and cross-reading docs/guide sources; all checks PASS. python3 tools/check.py green, exit 0."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T12:39:39.701Z"
+      }
+    ]
+  },
+  "tier": "generation"
+}
