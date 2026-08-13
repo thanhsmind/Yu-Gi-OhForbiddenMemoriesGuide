@@ -311,6 +311,147 @@
 
   .equip-list li { margin-bottom: 0.2rem; }
 
+  .guide-toc {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0;
+    margin: 0 0 1.4rem;
+  }
+
+  .guide-toc a {
+    display: inline-block;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+  }
+
+  .guide-toc a:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+  .guide-section {
+    margin: 0 0 2.2rem;
+    scroll-margin-top: 0.75rem;
+  }
+
+  .guide-section h2 {
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+    margin: 0 0 0.9rem;
+    font-size: 1.1rem;
+  }
+
+  .guide-section h3 {
+    color: var(--text);
+    margin: 1.1rem 0 0.5rem;
+    font-size: 0.98rem;
+  }
+
+  .guide-section p { margin: 0 0 0.75rem; }
+  .guide-section ul, .guide-section ol { margin: 0 0 0.9rem; padding-left: 1.2rem; }
+  .guide-section li { margin-bottom: 0.3rem; }
+
+  .guide-note {
+    background: var(--panel);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    color: var(--text-dim);
+    font-size: 0.87rem;
+    margin: 0.85rem 0;
+  }
+
+  .guide-note.warn { border-color: var(--danger); color: var(--text); border-style: solid; }
+
+  .type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.5rem;
+    margin: 0.75rem 0 1rem;
+  }
+
+  .type-chip {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  .star-wheel-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+    margin: 0.75rem 0 1rem;
+  }
+
+  .star-wheel svg { max-width: 320px; height: auto; }
+  .star-wheel .star-node circle { fill: var(--panel); stroke: var(--accent-dim); stroke-width: 1.5; }
+  .star-wheel .star-node text { fill: var(--text); font-size: 10.5px; font-family: inherit; text-anchor: middle; }
+  .star-wheel .hub circle { fill: var(--panel-alt); stroke: var(--accent); stroke-width: 1.5; }
+  .star-wheel .hub text { fill: var(--accent); font-size: 10px; font-family: inherit; text-anchor: middle; }
+  .star-wheel .wheel-ring { fill: none; stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 4; }
+  .star-wheel .highlight-pair line { stroke: var(--accent); stroke-width: 1.5; }
+
+  .star-example { flex: 1 1 220px; min-width: 220px; }
+
+  .guide-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 0.75rem 0 1rem;
+  }
+
+  .guide-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+    min-width: 480px;
+  }
+
+  .guide-table th {
+    text-align: left;
+    background: var(--panel-alt);
+    color: var(--accent);
+    padding: 0.5rem 0.65rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .guide-table td {
+    padding: 0.45rem 0.65rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    vertical-align: top;
+  }
+
+  .guide-table td.num, .guide-table th.num { text-align: right; white-space: nowrap; }
+
+  .card-link {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline dotted;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+  }
+
+  .card-link:hover { color: var(--text); }
+
+  .card-link.no-match {
+    color: var(--text-dim);
+    cursor: default;
+    text-decoration: none;
+  }
+
   footer {
     padding: 1rem 1.5rem;
     color: var(--text-dim);
@@ -374,10 +515,465 @@
   </section>
 
   <section id="tab-guide" class="tab-panel" hidden>
-    <p class="coming-soon">
-      Mục "Hướng dẫn" (luật cơ bản, danh sách Type, bánh xe Guardian Star, luật +500 ATK,
-      môi trường/field, cơ chế Ritual, bộ bài khởi đầu, mẹo fusion, farm bài, password mua bài,
-      xếp hạng Pow/Tec) sẽ có ở chặng tiếp theo.
+    <ul class="guide-toc">
+      <li><a href="#sec-1">1. Luật cơ bản</a></li>
+      <li><a href="#sec-2">2. Các Type quái vật</a></li>
+      <li><a href="#sec-3">3. Guardian Star</a></li>
+      <li><a href="#sec-4">4. Môi trường (Field)</a></li>
+      <li><a href="#sec-5">5. Ritual</a></li>
+      <li><a href="#sec-6">6. Bộ bài khởi đầu</a></li>
+      <li><a href="#sec-7">7. Farm bài</a></li>
+      <li><a href="#sec-8">8. Bài nên mua bằng StarChip</a></li>
+      <li><a href="#sec-9">9. Xếp hạng Pow/Tec</a></li>
+    </ul>
+
+    <section id="sec-1" class="guide-section">
+      <h2>1. Luật cơ bản và cách một ván diễn ra</h2>
+      <p>
+        Forbidden Memories xoay quanh việc xây <strong>Bộ bài (Deck)</strong> rồi đấu tay đôi.
+        Quái vật được chia theo nhiều <strong>Type</strong> khác nhau (mục 2); dựa vào Type và
+        hình dạng, quái vật có thể <strong>Kết hợp (Fusion)</strong> với nhau để ra quái vật mới
+        mạnh hơn — đây là điểm cốt lõi của lối chơi (xem thêm ở mục 6 và tab "Fusion").
+      </p>
+      <p>
+        Sau khi thắng một trận, bạn được nhận một lá bài mới. Vào màn hình
+        <strong>Build Deck</strong>, bấm <strong>Select</strong> một lần để xem lá vừa nhận:
+      </p>
+      <ul>
+        <li>Nếu vừa ý, nhấn mũi tên sang phải rồi bấm <strong>X</strong> để bỏ ra một lá không
+          thích trong deck.</li>
+        <li>Sau đó nhấn mũi tên sang trái để trở lại lá bài mới vừa nhận, bấm <strong>X</strong>
+          để đưa lá đó vào bộ bài.</li>
+      </ul>
+      <div class="guide-note">
+        Luật cộng ATK theo Guardian Star và theo môi trường (Field) — hai cơ chế ảnh hưởng
+        trực tiếp tới một lượt đánh — nằm ở mục 3 và mục 4 bên dưới.
+      </div>
+    </section>
+
+    <section id="sec-2" class="guide-section">
+      <h2>2. Các Type quái vật</h2>
+      <p>
+        Game chia quái vật ra nhiều Loại (Type) khác nhau và nhiều cách kết hợp khác nhau; dựa
+        vào hình dạng và Type sẽ tạo ra những quái vật mới mạnh hơn. Nguồn liệt kê đủ các Type
+        sau (nguồn không kèm mô tả biểu tượng bằng chữ — bản gốc dẫn người đọc "Xem Hình"):
+      </p>
+      <div class="type-grid">
+        <span class="type-chip">Aqua</span>
+        <span class="type-chip">Beast</span>
+        <span class="type-chip">Beast-Warrior</span>
+        <span class="type-chip">Dinosaur</span>
+        <span class="type-chip">Dragon</span>
+        <span class="type-chip">Fairy</span>
+        <span class="type-chip">Fiend</span>
+        <span class="type-chip">Fish</span>
+        <span class="type-chip">Insect</span>
+        <span class="type-chip">Machine</span>
+        <span class="type-chip">Plant</span>
+        <span class="type-chip">Pyro</span>
+        <span class="type-chip">Reptile</span>
+        <span class="type-chip">Rock</span>
+        <span class="type-chip">Sea Serpent (Sea Dragon)</span>
+        <span class="type-chip">Spellcaster</span>
+        <span class="type-chip">Thunder</span>
+        <span class="type-chip">Warrior</span>
+        <span class="type-chip">Winged Beast</span>
+        <span class="type-chip">Zombie</span>
+      </div>
+      <p>
+        Tra Type của từng lá cụ thể ở tab "Tra cứu bài" (cột "Loại"), hoặc lọc theo Type bằng
+        bộ lọc trên bảng đó.
+      </p>
+    </section>
+
+    <section id="sec-3" class="guide-section">
+      <h2>3. Guardian Star — vòng khắc hệ</h2>
+      <p>
+        Game có hệ thống khắc hệ lẫn nhau gọi là <strong>Guardian Star</strong>, đại diện cho
+        các ngôi sao trên bầu trời. Thuộc lòng hệ này sẽ rất có lợi thế trong trận đấu. Nguồn
+        liệt kê đủ 10 Guardian Star, theo đúng thứ tự sau:
+      </p>
+      <div class="star-wheel-wrap">
+        <div class="star-wheel">
+          <svg viewBox="0 0 260 260" role="img" aria-label="Vòng 10 Guardian Star, ví dụ Sun đối Moon cộng 500 ATK">
+            <circle class="wheel-ring" cx="130" cy="130" r="105"></circle>
+            <g class="highlight-pair">
+              <line x1="130" y1="25" x2="229.9" y2="162.4"></line>
+            </g>
+            <g class="hub">
+              <circle cx="130" cy="130" r="34"></circle>
+              <text x="130" y="126">Khắc hệ</text>
+              <text x="130" y="140">+500 ATK</text>
+            </g>
+            <g class="star-node"><circle cx="130" cy="25" r="24"></circle><text x="130" y="29">Sun</text></g>
+            <g class="star-node"><circle cx="191.7" cy="45.1" r="24"></circle><text x="191.7" y="49.1">Mercury</text></g>
+            <g class="star-node"><circle cx="229.9" cy="97.6" r="24"></circle><text x="229.9" y="101.6">Venus</text></g>
+            <g class="star-node"><circle cx="229.9" cy="162.4" r="24"></circle><text x="229.9" y="166.4">Moon</text></g>
+            <g class="star-node"><circle cx="191.7" cy="214.9" r="24"></circle><text x="191.7" y="218.9">Mars</text></g>
+            <g class="star-node"><circle cx="130" cy="235" r="24"></circle><text x="130" y="239">Jupiter</text></g>
+            <g class="star-node"><circle cx="68.3" cy="214.9" r="24"></circle><text x="68.3" y="218.9">Saturn</text></g>
+            <g class="star-node"><circle cx="30.1" cy="162.4" r="24"></circle><text x="30.1" y="166.4">Uranus</text></g>
+            <g class="star-node"><circle cx="30.1" cy="97.6" r="24"></circle><text x="30.1" y="101.6">Neptune</text></g>
+            <g class="star-node"><circle cx="68.3" cy="45.1" r="24"></circle><text x="68.3" y="49.1">Pluto</text></g>
+          </svg>
+        </div>
+        <div class="star-example">
+          <p>
+            <strong>Luật:</strong> khi bạn chọn đúng hệ khắc hệ của đối phương, bài của bạn
+            được <strong>+500 ATK</strong> trong lượt đó.
+          </p>
+          <p>
+            Ví dụ nguồn đưa ra: nếu bạn chọn <strong>Sun</strong> còn đối phương chọn
+            <strong>Moon</strong> thì bạn được +500 ATK — và ngược lại (đối phương chọn Sun,
+            bạn chọn Moon thì đối phương được +500 ATK).
+          </p>
+          <div class="guide-note">
+            Nguồn chỉ đưa đúng một cặp khắc hệ cụ thể (Sun/Moon) làm ví dụ, và ghi nguyên văn
+            "Cụ thể về khắc chế khắc hệ AE xem Hình sẽ trực quan hơn" — nghĩa là bảng đầy đủ các
+            cặp khắc hệ còn lại chỉ nằm trong một hình ảnh không có trong tài liệu nguồn. Vòng
+            bên cạnh vẽ lại đúng 10 Guardian Star theo thứ tự nguồn liệt kê và làm nổi bật ví dụ
+            Sun/Moon; nó <strong>không</strong> khẳng định quy luật khắc hệ cho các cặp sao còn
+            lại vì nguồn không cung cấp.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-4" class="guide-section">
+      <h2>4. Môi trường (Field Magic)</h2>
+      <p>
+        Môi trường là một loại bài Magic làm thay đổi môi trường của sân chơi. Quái vật có Type
+        tương thích với môi trường đang có hiệu lực sẽ được <strong>+500 ATK</strong>.
+      </p>
+      <div class="guide-note">
+        Nguồn không liệt kê môi trường (Field) nào tương thích với Type nào cụ thể — chỉ nêu
+        đúng nguyên tắc trên. Mục này giữ nguyên mức độ chi tiết của nguồn, không suy đoán thêm
+        bảng ánh xạ Field ↔ Type.
+      </div>
+    </section>
+
+    <section id="sec-5" class="guide-section">
+      <h2>5. Ritual</h2>
+      <p>
+        Ritual là nghi thức triệu hồi hiến tế: được xem là cách triệu hồi ra một quái vật mới,
+        đòi hỏi những lá bài tế phải đúng yêu cầu thì mới thực hiện được.
+      </p>
+      <p>
+        Ví dụ nguồn nêu: để Ritual ra
+        <span class="card-link" data-cardname="Blue-Eyes Ultimate Dragon">Blue-Eyes Ultimate Dragon</span>
+        thì cần 3 lá
+        <span class="card-link" data-cardname="Blue-Eyes White Dragon">Blue-Eyes White Dragon</span>
+        trên sân, sau đó dùng lá Ritual "Ultimate Dragon" để thực hiện hiến tế. Lá bài được hiến
+        tế khi đó chỉ dùng được trong trận đấu đó, không sở hữu vĩnh viễn.
+      </p>
+      <p>
+        Theo kinh nghiệm của nguồn: phần Ritual không được chú ý nhiều vì không áp dụng thường
+        xuyên. Chỉ đáng làm khi bạn đã farm được thẳng một lá mạnh để dùng luôn (ví dụ farm được
+        hẳn một lá Blue-Eyes Ultimate Dragon) — còn không thì đừng phí thời gian Ritual, vì
+        "chỉ để làm đẹp thôi chứ không có gì hơn".
+      </p>
+      <div class="guide-note warn">
+        <strong>Bảng công thức Ritual:</strong> repo hiện chưa có bảng công thức Ritual đầy đủ
+        (nguyên liệu hiến tế + lá Ritual cho từng quái vật). <code>docs/guide/</code> chỉ có
+        đúng một ví dụ bằng lời như trên. Mục này để trống bảng công thức cho tới khi có nguồn —
+        không bịa công thức.
+      </div>
+    </section>
+
+    <section id="sec-6" class="guide-section">
+      <h2>6. Bộ bài khởi đầu và mẹo đầu game</h2>
+      <h3>Chọn Deck khởi đầu</h3>
+      <p>
+        Việc chọn Bộ bài (Deck) khởi đầu cũng có chút quan trọng vì sẽ giúp dễ thở hơn trong
+        những trận đầu. Nếu Deck không vừa ý thì cứ thoát ra New Game vào lại cho đến khi có một
+        Deck vừa ý; ai thích chơi kiểu định mệnh thì cứ ra Deck nào đánh Deck đó.
+      </p>
+      <ul>
+        <li>
+          Deck khởi đầu nên luôn có một lá
+          <span class="card-link" data-cardname="Raigeki">Raigeki</span>
+          (bài Ma thuật tiêu diệt toàn bộ quái vật trên sân đối phương) — giúp ích khá nhiều lúc
+          đánh Campaign.
+        </li>
+        <li>
+          Nếu chịu khó kiếm được ít nhất 1 Rồng và 1 Sét trong Deck khởi đầu, sẽ dễ Dung hợp ra
+          <span class="card-link" data-cardname="Twin-headed Thunder Dragon">Twin-headed Thunder Dragon</span>
+          (2800/2100) — quái vật có sức tấn công mạnh nhất và cũng là quái vật Kết hợp dùng
+          thường xuyên nhất trong thời kỳ đầu game.
+        </li>
+      </ul>
+
+      <h3>Mẹo kết hợp đầu game</h3>
+      <p>
+        Đây là điểm rất thú vị của game và đòi hỏi ghi nhớ những công thức cơ bản để tạo ra
+        quái vật mạnh. Danh sách dưới đây chỉ gồm những kết hợp cơ bản, đủ mạnh để thắng lúc
+        đầu game — nguồn không liệt kê toàn bộ, còn nhiều hệ khác chưa cần chú ý.
+      </p>
+
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead><tr><th>Rồng dung hợp với</th><th>Kết quả</th></tr></thead>
+          <tbody>
+            <tr><td>Cây</td><td>B. Dragon Jungle King (ATK 2100)</td></tr>
+            <tr><td>Nước</td><td>Spike Seadra (ATK 1600) + Quái vật dạng Rùa = 2000 ATK</td></tr>
+            <tr><td>Đất</td><td>Stone D. (ATK 2000)</td></tr>
+            <tr><td>Máy</td><td>Metal Dragon (ATK 1850)</td></tr>
+            <tr><td>Sét</td><td>Thunder Dragon (ATK 1600)</td></tr>
+            <tr><td>Sọ (Zombie)</td><td>Dragon Zombie (ATK 1600)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Sau khi Dung hợp thành một trong những quái vật trên, chỉ cần Dung hợp thêm 1 Sét nữa
+        sẽ ra
+        <span class="card-link" data-cardname="Twin-headed Thunder Dragon">Twin-headed Thunder Dragon</span>
+        (2800/2100). Ví dụ: Rồng + Cây =
+        <span class="card-link" data-cardname="B. Dragon Jungle King">B. Dragon Jungle King</span>
+        + Sét = Twin-headed Thunder Dragon.
+      </p>
+
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead><tr><th>Kiếm (Chiến Binh) dung hợp với</th><th>Kết quả (ATK)</th></tr></thead>
+          <tbody>
+            <tr><td>Đất</td><td>1300</td></tr>
+            <tr><td>Sọ</td><td>1200 ATK, + Sọ nữa = 1500 ATK</td></tr>
+            <tr><td>Cây</td><td>1400</td></tr>
+            <tr><td>Thú</td><td>1300</td></tr>
+            <tr><td>Máy</td><td>1500</td></tr>
+            <tr><td>Lửa</td><td>1100 ATK, + Kiếm nữa = 1800 ATK, + Kiếm nữa = 1900 ATK</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead><tr><th>Thú dung hợp với</th><th>Kết quả (ATK)</th></tr></thead>
+          <tbody>
+            <tr><td>Kiếm</td><td>1300</td></tr>
+            <tr><td>Cây</td><td>1800</td></tr>
+            <tr><td>Bài có hình dạng nữ (Phù Thuỷ Nữ, Tiên Nữ, v.v.)</td><td>1900</td></tr>
+            <tr><td>Máy</td><td>1200</td></tr>
+            <tr><td>Lửa</td><td>2100</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead><tr><th>Bài có hình dạng nữ dung hợp với</th><th>Kết quả (ATK)</th></tr></thead>
+          <tbody>
+            <tr><td>Cây</td><td>1800</td></tr>
+            <tr><td>Đất</td><td>2100</td></tr>
+            <tr><td>Thú</td><td>1900</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead><tr><th>Khủng Long dung hợp với</th><th>Kết quả (ATK)</th></tr></thead>
+          <tbody>
+            <tr><td>Máy</td><td>1800</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Còn một số hệ khác không cần chú ý nhiều (theo nguyên văn nguồn).</p>
+
+      <div class="guide-note">
+        <strong>Lưu ý ràng buộc ATK khi kết hợp:</strong> quái vật dùng để Kết hợp không được có
+        ATK bằng hoặc lớn hơn quái vật được tạo ra. Ví dụ: Rồng + Cây = 2100 ATK thì cả Rồng lẫn
+        Cây đều phải có ATK nhỏ hơn 2100 mới Kết hợp được. Ngược lại, nếu quái vật có ATK vượt
+        mức bậc đang có thì Kết hợp sẽ nhảy thẳng lên bậc cao hơn — ví dụ nếu có sẵn một quái vật
+        hệ Kiếm ATK 1100 (từ 1100 đến 1700), chỉ cần Kết hợp với Lửa sẽ ra ngay 1800 ATK, bỏ qua
+        các nấc ở giữa.
+      </div>
+    </section>
+
+    <section id="sec-7" class="guide-section">
+      <h2>7. Farm bài</h2>
+      <p>Những lá bài nên farm, theo tổng hợp của nguồn:</p>
+      <ul>
+        <li>
+          <strong>Bài có hình dạng nữ</strong> (rất đa hệ, có khi là Phù Thuỷ, có khi là Cây, có
+          khi là Nước, v.v.) — nên farm vì Kết hợp ra bài toàn trên 1800 ATK, chủ yếu kết hợp với
+          Thú, Cây, Đất.
+        </li>
+        <li>
+          <strong>Thú</strong> cũng mạnh khi Kết hợp với bài có hình dạng nữ, Cây, Lửa.
+        </li>
+        <li>
+          <strong>Rồng</strong> luôn là mục tiêu đáng farm nhất vì kết hợp được nhiều và vô cùng
+          mạnh mẽ — kết hợp với Sọ, Đất, Cây, Nước, Máy, Sét, tạo ra quái vật khủng thời kỳ đầu
+          game với 2800 ATK.
+        </li>
+      </ul>
+
+      <h3>Fusion thường dùng</h3>
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead><tr><th>Kết hợp</th><th>Kết quả (ATK)</th></tr></thead>
+          <tbody>
+            <tr><td>Bài có hình dạng nữ (Phù Thuỷ Nữ, Tiên Nữ, v.v.) + Đất</td><td>2100</td></tr>
+            <tr><td>Quái vật có tên Elf + Quái vật có chòm sao Mercury</td><td>2000</td></tr>
+            <tr><td>Quái vật có Cánh + Thú</td><td>2000</td></tr>
+            <tr><td>Thú + Lửa</td><td>2100</td></tr>
+            <tr><td><span class="card-link" data-cardname="Mavelus">Mavelus</span> + Lửa</td><td>2300</td></tr>
+            <tr><td>Đất có dạng Hủ + Phù Thuỷ có chòm sao Mercury</td><td>2150</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Thời kỳ đầu, nguồn chủ yếu đánh Campaign win hết 3 Village rồi vào Free Duel farm
+        Village 2, vì Village 2 lúc đầu dễ cho Rồng và Sét — nên tập trung farm ở đó; hoặc có
+        thể farm Master K, cũng có Rồng và Sét, khi đã đủ mạnh thì đi tiếp.
+      </p>
+    </section>
+
+    <section id="sec-8" class="guide-section">
+      <h2>8. Bài nên mua bằng StarChip</h2>
+      <p>
+        Khi thắng một trận đấu, tùy thứ hạng đạt được (xem mục 9) mà bạn nhận một lượng
+        StarChip nhất định; vào mục Password nhập đúng Code sẽ mua được bài. Giới hạn mua mỗi lá
+        là 1, nên khá công bằng.
+      </p>
+      <p>
+        Do Deck tập trung chủ yếu Rồng và Sét, nguồn tổng hợp một số lá bài rẻ mà đáng mua —
+        <strong>đây chỉ là danh sách một phần</strong> (đúng những lá nguồn liệt kê, không phải
+        toàn bộ danh sách bài mua được bằng Password):
+      </p>
+
+      <h3>Rồng</h3>
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead><tr><th>Tên</th><th>ATK/DEF</th><th>Password</th><th class="num">Giá (Sao)</th></tr></thead>
+          <tbody>
+            <tr><td><span class="card-link" data-cardname="Yamatano Dragon Scroll">Yamatano Dragon Scroll</span></td><td>900/300</td><td>76704943</td><td class="num">25</td></tr>
+            <tr><td><span class="card-link" data-cardname="Petit Dragon">Petit Dragon</span></td><td>600/700</td><td>75356564</td><td class="num">30</td></tr>
+            <tr><td><span class="card-link" data-cardname="Wicked Dragon with the Ersatz Head">Wicked Dragon with the Ersatz Head</span></td><td>900/900</td><td>02957055</td><td class="num">45</td></tr>
+            <tr><td><span class="card-link" data-cardname="Dragon Statue">Dragon Statue</span></td><td>1100/900</td><td>09197735</td><td class="num">55</td></tr>
+            <tr><td><span class="card-link" data-cardname="One-eyed Shield Dragon">One-eyed Shield Dragon</span></td><td>700/1300</td><td>33064647</td><td class="num">55</td></tr>
+            <tr><td><span class="card-link" data-cardname="Lesser Dragon">Lesser Dragon</span></td><td>1200/1000</td><td>55444629</td><td class="num">70</td></tr>
+            <tr><td><span class="card-link" data-cardname="Blackland Fire Dragon">Blackland Fire Dragon</span></td><td>1500/800</td><td>87564352</td><td class="num">80</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Sét</h3>
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead><tr><th>Tên</th><th>ATK/DEF</th><th>Password</th><th class="num">Giá (Sao)</th></tr></thead>
+          <tbody>
+            <tr><td><span class="card-link" data-cardname="Lala Li-Oon">Lala Li-Oon</span></td><td>600/600</td><td>09430387</td><td class="num">25</td></tr>
+            <tr><td><span class="card-link" data-cardname="Oscillo Hero #2">Oscillo Hero #2</span></td><td>1000/500</td><td>27324313</td><td class="num">30</td></tr>
+            <tr><td><span class="card-link" data-cardname="Mega Thunderball">Mega Thunderball</span></td><td>750/600</td><td>21817254</td><td class="num">30</td></tr>
+            <tr><td><span class="card-link" data-cardname="Kaminarikozou">Kaminarikozou</span></td><td>700/600</td><td>15510988</td><td class="num">30</td></tr>
+            <tr><td><span class="card-link" data-cardname="Electric Snake">Electric Snake</span></td><td>800/900</td><td>11324436</td><td class="num">40</td></tr>
+            <tr><td><span class="card-link" data-cardname="Bolt Penguin">Bolt Penguin</span></td><td>1100/800</td><td>48531733</td><td class="num">50</td></tr>
+            <tr><td><span class="card-link" data-cardname="Tripwire Beast">Tripwire Beast</span></td><td>1200/1300</td><td>45042329</td><td class="num">100</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Nhiêu đó chắc cũng đủ để trận đánh nhẹ nhàng hơn. Về sau, cứ farm được Rồng có ATK 1600
+        trở lên thì chỉ cần Kết hợp với Sét là ra ngay Rồng 2800, không cần rườm rà nữa.
+      </p>
+    </section>
+
+    <section id="sec-9" class="guide-section">
+      <h2>9. Xếp hạng Pow/Tec và cách đánh để ra drop mong muốn</h2>
+      <p>
+        Khi kết thúc trận đấu, tùy vào cách đánh, hệ thống sẽ tính điểm và xếp hạng, từ đó có 2
+        kiểu Rớt (Drop) bài khác nhau: một loại cho chủ yếu bài Quái Vật mạnh, một loại chủ yếu
+        cho bài Trang Bị (Equip) và Ma Thuật (Magic).
+      </p>
+
+      <h3>Xếp hạng Pow</h3>
+      <p>
+        Chia thành 5 thứ hạng: SPow, APow, BPow, CPow, DPow. Về cơ bản SPow và APow đều cho bài
+        mạnh tỉ lệ như nhau, chỉ khác nhau ở chỗ SPow cho 5 StarChip còn APow cho 4 StarChip.
+        BCDPow ít được chú ý vì đa số rớt bài yếu — tùy bản Mod mà chọn đánh theo thứ hạng nào
+        cho phù hợp.
+      </p>
+      <p>
+        Cách đánh để đạt A hay SPow: kết thúc trận đấu thật nhanh, tốn thật ít Lượt (Turn), dùng
+        ít Equip/Magic/Trap/Kết hợp nhất, và cố giữ số bài còn lại từ 28 lá trở lên (theo dõi góc
+        trên bên phải: Điểm Gốc (LP) và số lá bài còn lại — nếu đang giữ ở mức 28 hoặc cao hơn
+        thì phải thắng ngay trong lượt đó). "Ít dùng Equip hay Magic" không có nghĩa là né tránh
+        — cứ dùng miễn kết thúc trận thật nhanh.
+      </p>
+
+      <h3>Xếp hạng Tec</h3>
+      <p>
+        Cũng chia S/A/B/C/D; STec và ATec rớt bài tốt hơn BCD, và cũng như Pow, hạng A hay S rớt
+        bài tỉ lệ ngang nhau, chỉ khác số lượng StarChip.
+      </p>
+      <p>
+        Nếu Pow là đánh nhanh thắng nhanh thì Tec ngược lại — đòi hỏi tính toán một chút, chia
+        theo 2 kiểu:
+      </p>
+      <ol>
+        <li>Đánh sao cho đối phương hết bài trước mình — chắc chắn được STec.</li>
+        <li>
+          Cách phổ biến hơn, nhanh hơn, đòi hỏi tính toán một chút: nhắm đúng các mốc dưới đây
+          trong một trận (13 cách đã được tổng hợp, tham khảo Admin Trần Duy An — Group Yugioh
+          Forbidden Memories - Nơi chia sẻ kinh nghiệm):
+        </li>
+      </ol>
+
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead>
+            <tr>
+              <th>Cách</th><th>Trap</th><th>Fusion</th><th>Equip</th><th>Magic</th>
+              <th>Úp bài</th><th>Card</th><th>Lp</th><th>Turn</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>1+</td><td>15+</td><td>1+</td><td>4+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>2</td><td>1+</td><td>15+</td><td>5+</td><td>1+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>3</td><td>1+</td><td>1+</td><td>15+</td><td>4+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>4</td><td>1+</td><td>10+</td><td>10+</td><td>1+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>5</td><td>1+</td><td>0</td><td>15+</td><td>7+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>6</td><td>1+</td><td>5+</td><td>5+</td><td>7+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>7</td><td>3+</td><td>5+</td><td>5+</td><td>1+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>8</td><td>3+</td><td>1+</td><td>10+</td><td>1+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>9</td><td>3+</td><td>10+</td><td>1+</td><td>1+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>10</td><td>3+</td><td>0</td><td>15+</td><td>1+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>11</td><td>7+</td><td>0</td><td>1+</td><td>1+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>12</td><td>7+</td><td>1+</td><td>0</td><td>1+</td><td>1+</td><td>37-40</td><td>&lt; 7000</td><td>9+</td></tr>
+            <tr><td>13</td><td>7+</td><td>0</td><td>0</td><td>7+</td><td>1+</td><td>13-32</td><td>8000+</td><td>9+</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Tuỳ Deck hiện tại mà áp dụng cách phù hợp. Trong các cách trên, Cách 2 là nhanh nhất,
+        Cách 1 dễ thực hiện lúc đầu nhất — khi đủ Equip thì chuyển qua Cách 2.
+      </p>
+
+      <div class="guide-note">
+        Về việc Kết hợp 15+: cứ dùng Deck có Rồng và Sọ, chọn những con có ATK càng thấp càng
+        tốt. Ví dụ nguồn cho:
+        <br>- Rồng + Sọ + Sọ + Sọ + Sét = Rồng 2800. Cụ thể: Rồng (bắt buộc ATK dưới 1600) + Sọ
+        = Rồng 1600 + Sọ = Rồng 1700 + Sọ = Rồng 2000 + Sét = Rồng 2800.
+        <br>- Rồng + Sét + Sọ + Sọ + Sét = Rồng 2800.
+      </div>
+
+      <p>
+        Kiếm đủ để đánh Tec sẽ có Equip mạnh, từ đó tiến tới những lá bài có sức mạnh khủng
+        khiếp như
+        <span class="card-link" data-cardname="Gate Guardian">Gate Guardian</span>
+        hay
+        <span class="card-link" data-cardname="Blue-Eyes Ultimate Dragon">Blue-Eyes Ultimate Dragon</span>.
+      </p>
+    </section>
+
+    <p class="guide-note">
+      Nội dung mục "Hướng dẫn" biên tập lại từ bài viết cộng đồng, thực hiện bởi Thế Giới Game
+      Retro — Admin Page Yugioh Forbidden Memories - Nơi Chia Sẻ Kinh Nghiệm. Mỗi người một cách
+      chơi một cách nghĩ, hướng dẫn này chỉ mang tính tham khảo cho người mới.
     </p>
   </section>
 
@@ -71536,6 +72132,9 @@ window.FM_DATA = {
   var elPager = document.getElementById("pager");
   var elDetail = document.getElementById("card-detail");
 
+  var byNameLower = {};
+  CARDS.forEach(function (c) { byNameLower[c.name.toLowerCase()] = c; });
+
   var state = { page: 1, filtered: CARDS };
 
   function escapeHtml(s) {
@@ -71725,6 +72324,42 @@ window.FM_DATA = {
     if (card) showDetail(card);
   });
 
+  function jumpToCard(card) {
+    if (!card) return;
+    tabPanels.forEach(function (panel) { panel.hidden = panel.id !== "tab-cards"; });
+    tabButtons.forEach(function (b) { b.classList.toggle("active", b.dataset.tab === "tab-cards"); });
+    elSearchName.value = card.name;
+    elSearchNumber.value = "";
+    elOnlyAtkDef.checked = false;
+    elCardTypeFilter.value = "";
+    elTypeFilter.value = "";
+    elFusionFilter.value = "";
+    applyFilters();
+    showDetail(card);
+    elDetail.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function wireCardLinks() {
+    var links = Array.prototype.slice.call(document.querySelectorAll(".card-link[data-cardname]"));
+    links.forEach(function (el) {
+      var card = byNameLower[el.dataset.cardname.toLowerCase()];
+      if (!card) {
+        el.classList.add("no-match");
+        el.title = "Không có trong bảng tra cứu bài";
+        return;
+      }
+      el.setAttribute("role", "button");
+      el.tabIndex = 0;
+      el.addEventListener("click", function () { jumpToCard(card); });
+      el.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          jumpToCard(card);
+        }
+      });
+    });
+  }
+
   elSearchName.addEventListener("input", onFilterInput);
   elSearchNumber.addEventListener("input", onFilterInput);
   elOnlyAtkDef.addEventListener("change", applyFilters);
@@ -71750,6 +72385,7 @@ window.FM_DATA = {
   populateDropdown(elTypeFilter, monsterTypes, "Tất cả type");
   populateDropdown(elFusionFilter, fusionSystems, "Tất cả hệ fusion");
   applyFilters();
+  wireCardLinks();
 })();
 </script>
 </body>
