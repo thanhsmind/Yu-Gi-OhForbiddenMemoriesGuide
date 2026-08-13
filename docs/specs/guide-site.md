@@ -93,6 +93,31 @@ danh sách password đầy đủ.
 Các con số này phải đọc từ dữ liệu tại lúc hiển thị. Gõ cứng con số vào nội
 dung là vi phạm: khi dữ liệu đổi mà con số không đổi thì trang nói dối.
 
+## Địa chỉ và lịch sử duyệt
+
+Mọi trạng thái xem được đều có địa chỉ riêng nằm trong phần hash của URL: tab
+đang mở, và ở tab tra cứu bài là từ khóa, bộ lọc loại lá, bộ lọc Type, tùy chọn
+chỉ hiện lá có chỉ số, số trang, lá đang mở chi tiết; ở tab Fusion là từ khóa
+tra cứu và bộ lọc hệ.
+
+Hệ quả bắt buộc:
+
+- Nút Back của trình duyệt đưa người dùng về đúng trạng thái trước đó, kể cả
+  trạng thái bộ lọc trung gian — không phải nhảy thẳng về trạng thái rỗng.
+  Forward đi tới lại.
+- Dán một địa chỉ vào tab mới dựng lại đúng trạng thái đó, kể cả lá đang mở.
+- Gõ một chuỗi ký tự vào ô tìm kiếm chỉ tạo **một** mục lịch sử, và Back từ đó
+  quay về trạng thái trước khi bắt đầu gõ — kể cả khi chuỗi gõ bắt đầu hoặc kết
+  thúc bằng khoảng trắng.
+- Địa chỉ hỏng hoặc không hiểu được (mục lục không tồn tại, số trang vượt giới
+  hạn, lá không có thật, ký tự thoát sai) không được ném lỗi và không được làm
+  trắng trang; nó rơi về một trạng thái hợp lệ và địa chỉ tự chuẩn hóa lại.
+- Các liên kết mục lục sẵn có trong mục Hướng dẫn tiếp tục chạy như liên kết
+  neo bình thường, không bị định tuyến chiếm.
+
+Chỉ phần hash được đổi, không bao giờ đổi đường dẫn — vì đổi đường dẫn sẽ làm
+trang vỡ khi mở bằng cách nhấp đúp vào file.
+
 ## Nguồn dữ liệu và ranh giới
 
 Hai nguồn, chia việc rõ ràng:
