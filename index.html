@@ -311,6 +311,46 @@
 
   .equip-list li { margin-bottom: 0.2rem; }
 
+  .fusion-related-label {
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    margin: 0.5rem 0 0.25rem;
+  }
+
+  .fusion-related-list {
+    margin: 0 0 0.3rem;
+    padding-left: 1.1rem;
+    font-size: 0.85rem;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .fusion-related-list li { margin-bottom: 0.25rem; }
+
+  .fusion-lookup-card {
+    margin-top: 0.9rem;
+    background: var(--panel);
+    border: 1px solid var(--accent-dim);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+  }
+
+  .fusion-lookup-card h3 { margin: 0 0 0.5rem; color: var(--accent); }
+
+  .fusion-lookup-card h4 {
+    margin: 0.9rem 0 0.4rem;
+    font-size: 0.92rem;
+    color: var(--text-dim);
+  }
+
+  .fusion-lookup-card ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    font-size: 0.85rem;
+  }
+
+  .fusion-lookup-card li { margin-bottom: 0.3rem; }
+
   .guide-toc {
     list-style: none;
     display: flex;
@@ -978,17 +1018,91 @@
   </section>
 
   <section id="tab-fusion" class="tab-panel" hidden>
-    <p class="coming-soon">
-      Mục "Fusion" (dung hợp cơ bản, dung hợp chính xác, dung hợp xung đột, tra cứu hai chiều
-      theo lá bài, danh sách equip theo từng lá) sẽ có ở chặng tiếp theo.
+    <h2>Tra cứu Fusion hai chiều</h2>
+    <p class="guide-note">
+      Gõ tên một lá bài (tiếng Anh) để xem hai danh sách: công thức ghép RA lá đó, và công thức
+      lá đó THAM GIA làm nguyên liệu. Danh sách "tham gia" tính cả các công thức ghép theo hệ
+      ([Type] + [Type]) mà lá bài thuộc hệ đó, không chỉ công thức nêu đích danh tên lá.
     </p>
+    <div class="controls">
+      <input id="fusion-search" type="text" list="fusion-card-names"
+        placeholder="Gõ tên một lá bài (vd: Dark Witch)" autocomplete="off">
+      <datalist id="fusion-card-names"></datalist>
+    </div>
+    <div id="fusion-lookup-result"></div>
+
+    <h3>Dung hợp cơ bản (theo hệ)</h3>
+    <p class="guide-note">
+      [Hệ trái] + [Hệ phải] = kết quả trực tiếp; cột "Có thể ra thêm" là các lá cũng có thể ra từ
+      cặp hệ này khi áp dụng thêm quy tắc riêng của từng lá.
+    </p>
+    <div class="controls">
+      <select id="fusion-basic-filter"></select>
+      <span id="fusion-basic-count" class="result-count"></span>
+    </div>
+    <div class="table-wrap">
+      <table class="guide-table">
+        <thead>
+          <tr><th>Hệ trái</th><th>Hệ phải</th><th>Kết quả (=)</th><th>Có thể ra thêm (&lt;)</th></tr>
+        </thead>
+        <tbody id="fusion-basic-body"></tbody>
+      </table>
+    </div>
+
+    <h3>Dung hợp chính xác (tên + tên)</h3>
+    <p class="guide-note">Không kèm ATK/DEF — nguồn chỉ ghi tên lá bài cho mục này.</p>
+    <div class="table-wrap">
+      <table class="guide-table">
+        <thead><tr><th>Lá 1</th><th>Lá 2</th><th>Ra lá</th></tr></thead>
+        <tbody id="fusion-exact-body"></tbody>
+      </table>
+    </div>
+
+    <h3>Dung hợp xung đột</h3>
+    <p class="guide-note">
+      Một số lá thuộc cùng lúc hai hệ, gây xung đột khi ghép. Mỗi dòng dưới đây gồm: công thức
+      chung (mặc định), công thức ưu tiên khi xảy ra xung đột, và hai cột thành viên — theo đúng
+      giải thích của nguồn: bất cứ lá nào ở <strong>cột trái</strong> kết hợp với bất cứ lá nào ở
+      <strong>cột phải</strong> sẽ ra kết quả ưu tiên, thay vì kết quả của công thức chung.
+    </p>
+    <div class="table-wrap">
+      <table class="guide-table">
+        <thead>
+          <tr><th>Công thức chung</th><th>Công thức ưu tiên</th><th>Cột trái</th><th>Cột phải</th></tr>
+        </thead>
+        <tbody id="fusion-conflict-body"></tbody>
+      </table>
+    </div>
   </section>
 
   <section id="tab-coverage" class="tab-panel" hidden>
-    <p class="coming-soon">
-      Mục "Độ phủ dữ liệu" (báo cáo trung thực những phần nào của dữ liệu còn thiếu nguồn,
-      để không ai lầm tưởng trang đã đủ 100%) sẽ có ở chặng tiếp theo.
+    <h2>Độ phủ dữ liệu</h2>
+    <p class="guide-note">
+      Số liệu dưới đây đọc trực tiếp từ <code>FM_DATA.meta</code>, do
+      <code>tools/extract_cards.py</code> đếm ra tại thời điểm sinh dữ liệu — không gõ tay vào
+      trang. Chạy lại extractor sẽ tự cập nhật các số này.
     </p>
+    <div class="guide-table-wrap">
+      <table class="guide-table">
+        <thead><tr><th>Chỉ số</th><th class="num">Số đếm thật</th></tr></thead>
+        <tbody id="coverage-body"></tbody>
+      </table>
+    </div>
+
+    <h3>Những gì repo KHÔNG có</h3>
+    <ul>
+      <li>
+        Bảng công thức Ritual (tribute summon thật, ví dụ 3× Blue-Eyes White Dragon) — chỉ có
+        nguồn ngoài (<code>gamen.pro/50935</code>), không có trong repo nên không thể tra cứu ở
+        đây.
+      </li>
+      <li>Bảng drop bài theo từng đối thủ — nguồn <code>docs/guide/</code> không có.</li>
+      <li>
+        Password đầy đủ cho toàn bộ lá bài — chỉ có cho các lá đã join được với dữ liệu Yugipedia
+        (xem số "lá có ATK/DEF" và các số khác ở bảng trên; lá thiếu Password hiện "chưa có dữ
+        liệu" trong panel chi tiết, không phải số hay chuỗi rỗng bịa ra).
+      </li>
+    </ul>
   </section>
 </main>
 
@@ -71803,10 +71917,14 @@ window.FM_DATA = {
   "meta": {
     "totalCards": 722,
     "cardsWithAtkDef": 621,
+    "cardsWithType": 621,
     "cardsWithEquips": 621,
     "cardsWithFusionSystems": 255,
     "equipListsCount": 621,
     "equipNameMisses": [],
+    "fusionBasicCount": 141,
+    "fusionExactCount": 150,
+    "fusionConflictCount": 202,
     "fusionConflictMemberNames": [
       "30,000-Year White Turtle",
       "Abyss Flower",
@@ -72132,6 +72250,16 @@ window.FM_DATA = {
   var elPager = document.getElementById("pager");
   var elDetail = document.getElementById("card-detail");
 
+  var elFusionSearch = document.getElementById("fusion-search");
+  var elFusionCardNames = document.getElementById("fusion-card-names");
+  var elFusionLookupResult = document.getElementById("fusion-lookup-result");
+  var elFusionBasicFilter = document.getElementById("fusion-basic-filter");
+  var elFusionBasicCount = document.getElementById("fusion-basic-count");
+  var elFusionBasicBody = document.getElementById("fusion-basic-body");
+  var elFusionExactBody = document.getElementById("fusion-exact-body");
+  var elFusionConflictBody = document.getElementById("fusion-conflict-body");
+  var elCoverageBody = document.getElementById("coverage-body");
+
   var byNameLower = {};
   CARDS.forEach(function (c) { byNameLower[c.name.toLowerCase()] = c; });
 
@@ -72162,6 +72290,169 @@ window.FM_DATA = {
   function fmtFusion(card) {
     if (!card.fusionSystems || !card.fusionSystems.length) return "chưa có dữ liệu";
     return card.fusionSystems.join(", ");
+  }
+
+  // --- Fusion two-way lookup helpers (tab "Fusion", cell fm-guide-site-5) ---
+  // A card name is a link only when it matches a real card in the lookup
+  // table; an unmatched name renders as plain lowercase text — never a link,
+  // never a fabricated row.
+  function nameLinkHtml(name) {
+    if (!name) return "chưa có dữ liệu";
+    var match = byNameLower[String(name).toLowerCase()];
+    if (match) {
+      return '<span class="card-link" data-cardname="' + escapeHtml(name) + '">' + escapeHtml(name) + "</span>";
+    }
+    return escapeHtml(String(name).toLowerCase());
+  }
+
+  function describeSide(side) {
+    if (!side) return "";
+    if (side.kind === "type") return "[" + escapeHtml(side.value) + "]";
+    if (side.kind === "name") return nameLinkHtml(side.value);
+    if (side.kind === "names") return "{" + side.value.map(nameLinkHtml).join(", ") + "}";
+    return "";
+  }
+
+  function statHtml(stat) {
+    return (
+      nameLinkHtml(stat.name) +
+      " (" + stat.atk + "/" + stat.def + " " + escapeHtml(stat.star1) + "/" + escapeHtml(stat.star2) + ")"
+    );
+  }
+
+  function statListHtml(stats) {
+    if (!stats || !stats.length) return "—";
+    return stats.map(statHtml).join(", ");
+  }
+
+  function dedupPreserveOrder(arr) {
+    var seen = {};
+    var out = [];
+    arr.forEach(function (x) {
+      if (x && !seen[x]) {
+        seen[x] = true;
+        out.push(x);
+      }
+    });
+    return out;
+  }
+
+  // A side (fusionBasic left/right, fusionConflict overrideLeft/overrideRight)
+  // matches `card` when: the side pins that exact name (kind "name"/"names"),
+  // or the side is a fusion-system type ([Type]) and `card` is tagged with
+  // that system (card.fusionSystems, mined from "Dung hợp xung đột").
+  function sideMatchesCard(side, card) {
+    if (!side) return false;
+    var nameLower = card.name.toLowerCase();
+    if (side.kind === "name") return side.value.toLowerCase() === nameLower;
+    if (side.kind === "names") {
+      return side.value.some(function (n) { return n.toLowerCase() === nameLower; });
+    }
+    if (side.kind === "type") {
+      return !!(card.fusionSystems && card.fusionSystems.indexOf(side.value) !== -1);
+    }
+    return false;
+  }
+
+  function nameMatchesCard(name, card) {
+    return !!name && name.toLowerCase() === card.name.toLowerCase();
+  }
+
+  // "Ghép ra lá này bằng gì" — every recipe whose OUTPUT is `card`.
+  function findProducedBy(card) {
+    var out = [];
+    (DATA.fusionBasic || []).forEach(function (entry) {
+      (entry.results || []).forEach(function (stat) {
+        if (nameMatchesCard(stat.name, card)) out.push({ kind: "basic-result", entry: entry, stat: stat });
+      });
+      (entry.possible || []).forEach(function (stat) {
+        if (nameMatchesCard(stat.name, card)) out.push({ kind: "basic-possible", entry: entry, stat: stat });
+      });
+    });
+    (DATA.fusionExact || []).forEach(function (entry) {
+      if (nameMatchesCard(entry.result, card)) out.push({ kind: "exact", entry: entry });
+    });
+    (DATA.fusionConflict || []).forEach(function (entry) {
+      if (nameMatchesCard(entry.overrideResult, card)) out.push({ kind: "conflict", entry: entry });
+    });
+    return out;
+  }
+
+  // "Lá này ghép với gì ra gì" — every recipe where `card` is an INGREDIENT.
+  function findParticipatesIn(card) {
+    var out = [];
+    (DATA.fusionBasic || []).forEach(function (entry) {
+      if (sideMatchesCard(entry.left, card) || sideMatchesCard(entry.right, card)) {
+        out.push({ kind: "basic", entry: entry });
+      }
+    });
+    (DATA.fusionExact || []).forEach(function (entry) {
+      if (nameMatchesCard(entry.a, card) || nameMatchesCard(entry.b, card)) {
+        out.push({ kind: "exact", entry: entry });
+      }
+    });
+    (DATA.fusionConflict || []).forEach(function (entry) {
+      if (sideMatchesCard(entry.overrideLeft, card) || sideMatchesCard(entry.overrideRight, card)) {
+        out.push({ kind: "conflict", entry: entry });
+      }
+    });
+    return out;
+  }
+
+  function renderProducedByItem(item) {
+    if (item.kind === "basic-result" || item.kind === "basic-possible") {
+      var note = item.kind === "basic-possible" ? " (có thể ra thêm, cần thêm điều kiện riêng)" : "";
+      return "<li>" + describeSide(item.entry.left) + " + " + describeSide(item.entry.right) + " = " + statHtml(item.stat) + note + "</li>";
+    }
+    if (item.kind === "exact") {
+      return "<li>" + nameLinkHtml(item.entry.a) + " + " + nameLinkHtml(item.entry.b) + " = " + nameLinkHtml(item.entry.result) + " (dung hợp chính xác)</li>";
+    }
+    if (item.kind === "conflict") {
+      return (
+        "<li>" + describeSide(item.entry.overrideLeft) + " + " + describeSide(item.entry.overrideRight) +
+        " &lt; " + nameLinkHtml(item.entry.overrideResult) +
+        " (công thức xung đột, ghi đè công thức chung [" + escapeHtml(item.entry.generalLeft) + "] + [" +
+        escapeHtml(item.entry.generalRight) + "] = " + nameLinkHtml(item.entry.generalResult) + ")</li>"
+      );
+    }
+    return "";
+  }
+
+  function renderParticipatesInItem(item) {
+    if (item.kind === "basic") {
+      var extra = item.entry.possible && item.entry.possible.length
+        ? ", có thể ra thêm: " + statListHtml(item.entry.possible)
+        : "";
+      return "<li>" + describeSide(item.entry.left) + " + " + describeSide(item.entry.right) + " = " + statListHtml(item.entry.results) + extra + "</li>";
+    }
+    if (item.kind === "exact") {
+      return "<li>" + nameLinkHtml(item.entry.a) + " + " + nameLinkHtml(item.entry.b) + " = " + nameLinkHtml(item.entry.result) + " (dung hợp chính xác)</li>";
+    }
+    if (item.kind === "conflict") {
+      return (
+        "<li>" + describeSide(item.entry.overrideLeft) + " + " + describeSide(item.entry.overrideRight) +
+        " &lt; " + nameLinkHtml(item.entry.overrideResult) + " (công thức xung đột)</li>"
+      );
+    }
+    return "";
+  }
+
+  function fusionRelatedHtml(card) {
+    var producedBy = findProducedBy(card);
+    var participatesIn = findParticipatesIn(card);
+    if (!producedBy.length && !participatesIn.length) return "chưa có dữ liệu";
+    var html = "";
+    if (producedBy.length) {
+      html +=
+        '<p class="fusion-related-label">Ghép ra lá này:</p>' +
+        '<ul class="fusion-related-list">' + producedBy.map(renderProducedByItem).join("") + "</ul>";
+    }
+    if (participatesIn.length) {
+      html +=
+        '<p class="fusion-related-label">Lá này tham gia:</p>' +
+        '<ul class="fusion-related-list">' + participatesIn.map(renderParticipatesInItem).join("") + "</ul>";
+    }
+    return html;
   }
 
   function imgCellHtml(card, size) {
@@ -72274,6 +72565,137 @@ window.FM_DATA = {
     elPager.appendChild(mkBtn("Sau »", state.page + 1, state.page >= pageCount));
   }
 
+  // --- Tab "Fusion" ---
+
+  function onFusionSearchInput() {
+    var q = elFusionSearch.value.trim();
+    if (!q) {
+      elFusionLookupResult.innerHTML = "";
+      return;
+    }
+    var card = byNameLower[q.toLowerCase()];
+    if (!card) {
+      elFusionLookupResult.innerHTML =
+        '<p class="guide-note">Không khớp tên lá bài nào trong bảng tra cứu — gõ đúng tên tiếng Anh ' +
+        "(có gợi ý bên dưới ô nhập).</p>";
+      return;
+    }
+    var producedBy = findProducedBy(card);
+    var participatesIn = findParticipatesIn(card);
+    var producedHtml = producedBy.length
+      ? "<ul>" + producedBy.map(renderProducedByItem).join("") + "</ul>"
+      : '<p class="guide-note">Chưa có công thức nào ghép ra lá này trong dữ liệu.</p>';
+    var participatesHtml = participatesIn.length
+      ? "<ul>" + participatesIn.map(renderParticipatesInItem).join("") + "</ul>"
+      : '<p class="guide-note">Lá này chưa xuất hiện trong công thức nào (theo tên hoặc theo hệ) trong dữ liệu.</p>';
+    elFusionLookupResult.innerHTML =
+      '<div class="fusion-lookup-card">' +
+        "<h3>" + escapeHtml(card.name) + "</h3>" +
+        "<h4>Ghép ra lá này bằng gì</h4>" + producedHtml +
+        "<h4>Lá này ghép với gì ra gì</h4>" + participatesHtml +
+      "</div>";
+    wireCardLinks(elFusionLookupResult);
+  }
+
+  function fusionBasicTypesUsed() {
+    var seen = {};
+    (DATA.fusionBasic || []).forEach(function (entry) {
+      if (entry.left.kind === "type") seen[entry.left.value] = true;
+      if (entry.right.kind === "type") seen[entry.right.value] = true;
+    });
+    return Object.keys(seen).sort();
+  }
+
+  function renderFusionBasicTable() {
+    var filterTag = elFusionBasicFilter.value;
+    var all = DATA.fusionBasic || [];
+    var rows = !filterTag
+      ? all
+      : all.filter(function (e) {
+          return (
+            (e.left.kind === "type" && e.left.value === filterTag) ||
+            (e.right.kind === "type" && e.right.value === filterTag)
+          );
+        });
+    elFusionBasicCount.textContent = rows.length + " / " + all.length + " công thức";
+    elFusionBasicBody.innerHTML = rows
+      .map(function (e) {
+        return (
+          "<tr><td>" + describeSide(e.left) + "</td><td>" + describeSide(e.right) + "</td><td>" +
+          statListHtml(e.results) + "</td><td>" + statListHtml(e.possible) + "</td></tr>"
+        );
+      })
+      .join("");
+    wireCardLinks(elFusionBasicBody);
+  }
+
+  function renderFusionExactTable() {
+    elFusionExactBody.innerHTML = (DATA.fusionExact || [])
+      .map(function (e) {
+        return (
+          "<tr><td>" + nameLinkHtml(e.a) + "</td><td>" + nameLinkHtml(e.b) + "</td><td>" +
+          nameLinkHtml(e.result) + "</td></tr>"
+        );
+      })
+      .join("");
+    wireCardLinks(elFusionExactBody);
+  }
+
+  function renderFusionConflictTable() {
+    elFusionConflictBody.innerHTML = (DATA.fusionConflict || [])
+      .map(function (e) {
+        var general = describeSide({ kind: "type", value: e.generalLeft }) + " + " +
+          describeSide({ kind: "type", value: e.generalRight }) + " = " + nameLinkHtml(e.generalResult);
+        var override = describeSide(e.overrideLeft) + " + " + describeSide(e.overrideRight) +
+          " &lt; " + nameLinkHtml(e.overrideResult);
+        var leftMembers = dedupPreserveOrder((e.members || []).map(function (m) { return m.left; }));
+        var rightMembers = dedupPreserveOrder((e.members || []).map(function (m) { return m.right; }));
+        var leftHtml = leftMembers.length ? leftMembers.map(nameLinkHtml).join(", ") : "—";
+        var rightHtml = rightMembers.length ? rightMembers.map(nameLinkHtml).join(", ") : "—";
+        return "<tr><td>" + general + "</td><td>" + override + "</td><td>" + leftHtml + "</td><td>" + rightHtml + "</td></tr>";
+      })
+      .join("");
+    wireCardLinks(elFusionConflictBody);
+  }
+
+  function initFusionTab() {
+    CARDS.forEach(function (c) {
+      var opt = document.createElement("option");
+      opt.value = c.name;
+      elFusionCardNames.appendChild(opt);
+    });
+    populateDropdown(elFusionBasicFilter, fusionBasicTypesUsed(), "Tất cả hệ");
+    elFusionSearch.addEventListener("input", onFusionSearchInput);
+    elFusionBasicFilter.addEventListener("change", renderFusionBasicTable);
+    renderFusionBasicTable();
+    renderFusionExactTable();
+    renderFusionConflictTable();
+  }
+
+  // --- Tab "Độ phủ dữ liệu" ---
+
+  function renderCoverage() {
+    var meta = DATA.meta || {};
+    var rows = [
+      ["Tổng số lá bài (spine data/cards.json)", meta.totalCards],
+      ["Lá có ATK/DEF", meta.cardsWithAtkDef],
+      ["Lá có Type", meta.cardsWithType],
+      ["Lá có danh sách Equip", meta.cardsWithEquips],
+      ["Lá có hệ fusion (mục Dung hợp xung đột)", meta.cardsWithFusionSystems],
+      ["Khối equip mined từ docs/guide (equipLists)", meta.equipListsCount],
+      ["Công thức dung hợp cơ bản (fusionBasic)", meta.fusionBasicCount],
+      ["Công thức dung hợp chính xác (fusionExact)", meta.fusionExactCount],
+      ["Câu xung đột hệ (fusionConflict)", meta.fusionConflictCount],
+      ["Nhóm hệ fusion có danh sách thành viên (fusionGroups)", (meta.fusionGroupsWithMembers || []).length],
+      ["Tên riêng biệt xuất hiện trong mục xung đột hệ", (meta.fusionConflictMemberNames || []).length],
+    ];
+    elCoverageBody.innerHTML = rows
+      .map(function (r) {
+        return "<tr><td>" + escapeHtml(r[0]) + "</td><td class=\"num\">" + fmt(r[1]) + "</td></tr>";
+      })
+      .join("");
+  }
+
   function showDetail(card) {
     var equipsHtml = "chưa có dữ liệu";
     if (card.equips && card.equips.length) {
@@ -72309,11 +72731,14 @@ window.FM_DATA = {
           "</dl>" +
           "<h4>Equip</h4>" +
           equipsHtml +
+          "<h4>Fusion liên quan</h4>" +
+          fusionRelatedHtml(card) +
         "</div>" +
       "</div>";
     elDetail.querySelector(".detail-close").addEventListener("click", function () {
       elDetail.hidden = true;
     });
+    wireCardLinks(elDetail);
     elDetail.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
@@ -72339,9 +72764,13 @@ window.FM_DATA = {
     elDetail.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function wireCardLinks() {
-    var links = Array.prototype.slice.call(document.querySelectorAll(".card-link[data-cardname]"));
+  function wireCardLinks(root) {
+    var scope = root || document;
+    var links = Array.prototype.slice.call(
+      scope.querySelectorAll(".card-link[data-cardname]:not([data-wired])")
+    );
     links.forEach(function (el) {
+      el.setAttribute("data-wired", "1");
       var card = byNameLower[el.dataset.cardname.toLowerCase()];
       if (!card) {
         el.classList.add("no-match");
@@ -72385,6 +72814,8 @@ window.FM_DATA = {
   populateDropdown(elTypeFilter, monsterTypes, "Tất cả type");
   populateDropdown(elFusionFilter, fusionSystems, "Tất cả hệ fusion");
   applyFilters();
+  initFusionTab();
+  renderCoverage();
   wireCardLinks();
 })();
 </script>

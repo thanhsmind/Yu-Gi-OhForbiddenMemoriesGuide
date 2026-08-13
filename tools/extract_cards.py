@@ -501,10 +501,17 @@ def extract_all() -> dict:
     meta = {
         "totalCards": len(cards),
         "cardsWithAtkDef": sum(1 for c in cards if c["atk"] is not None),
+        "cardsWithType": sum(1 for c in cards if c["type"] is not None),
         "cardsWithEquips": sum(1 for c in cards if c["equips"]),
         "cardsWithFusionSystems": sum(1 for c in cards if c["fusionSystems"]),
         "equipListsCount": len(equip_lists),
         "equipNameMisses": equip_name_misses,
+        # Per-section recipe counts (tab "Độ phủ dữ liệu", cell fm-guide-site-5):
+        # the tab reads these directly from meta instead of hardcoding the
+        # numbers into index.html.
+        "fusionBasicCount": len(fusion_basic),
+        "fusionExactCount": len(fusion_exact),
+        "fusionConflictCount": len(fusion_conflict),
         "fusionConflictMemberNames": sorted(member_names),
         "fusionGroupsWithMembers": sorted(tag for tag, names in groups.items() if names),
     }

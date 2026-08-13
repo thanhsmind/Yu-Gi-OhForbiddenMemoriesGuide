@@ -141,6 +141,40 @@ def main() -> int:
     )
     check("có công thức từ cả ba mục fusion.md", bool(data["fusionBasic"]) and bool(data["fusionExact"]) and bool(data["fusionConflict"]))
 
+    # --- meta counts backing tab "Độ phủ dữ liệu" (cell fm-guide-site-5) ---
+    # The tab reads every number straight from FM_DATA.meta at runtime; here
+    # we assert meta actually carries every field it needs, and that each
+    # value is the real count from the same extraction run (never a number
+    # baked in by hand on either side).
+    required_meta_fields = (
+        "totalCards", "cardsWithAtkDef", "cardsWithType", "cardsWithEquips",
+        "cardsWithFusionSystems", "equipListsCount", "fusionBasicCount",
+        "fusionExactCount", "fusionConflictCount", "fusionConflictMemberNames",
+        "fusionGroupsWithMembers",
+    )
+    check(
+        "FM_DATA.meta có đủ các trường số đếm phục vụ tab Độ phủ dữ liệu",
+        all(k in data["meta"] for k in required_meta_fields),
+        f"meta keys: {sorted(data['meta'].keys())}",
+    )
+    check(
+        "meta.cardsWithType đúng bằng số lá có type != null trong spine",
+        data["meta"]["cardsWithType"] == sum(1 for c in cards if c["type"] is not None) == 621,
+        f"got {data['meta']['cardsWithType']}",
+    )
+    check(
+        "meta.fusionBasicCount/fusionExactCount/fusionConflictCount khớp đúng số phần tử thật của ba bảng công thức",
+        (data["meta"]["fusionBasicCount"], data["meta"]["fusionExactCount"], data["meta"]["fusionConflictCount"])
+        == (len(data["fusionBasic"]), len(data["fusionExact"]), len(data["fusionConflict"]))
+        == (141, 150, 202),
+        f"got {(data['meta']['fusionBasicCount'], data['meta']['fusionExactCount'], data['meta']['fusionConflictCount'])}",
+    )
+    check(
+        "meta.fusionGroupsWithMembers/fusionConflictMemberNames khớp đúng số nhóm hệ và số tên riêng biệt",
+        (len(data["meta"]["fusionGroupsWithMembers"]), len(data["meta"]["fusionConflictMemberNames"])) == (25, 257),
+        f"got {(len(data['meta']['fusionGroupsWithMembers']), len(data['meta']['fusionConflictMemberNames']))}",
+    )
+
     # The docs/guide equip roster spells 15 names differently than
     # Yugipedia (13 monster headers + 2 equip items) -- every alias must
     # resolve to a real spine card, and that card must carry equip data
@@ -286,6 +320,47 @@ def main() -> int:
         and "Cách lấy</dt>" in html_text
         and "Tên Nhật</dt>" in html_text
         and "Lore</dt>" in html_text,
+    )
+
+    # --- Tab "Fusion" và tab "Độ phủ dữ liệu" (cell fm-guide-site-5) ---
+    check(
+        "hai placeholder 'coming-soon' cũ của tab Fusion / Độ phủ dữ liệu đã bị thay bằng nội dung thật",
+        "sẽ có ở chặng tiếp theo" not in html_text,
+    )
+    check(
+        "tab Fusion có ô tìm kiếm hai chiều và ba bảng công thức (cơ bản/chính xác/xung đột)",
+        'id="fusion-search"' in html_text
+        and 'id="fusion-lookup-result"' in html_text
+        and 'id="fusion-basic-filter"' in html_text
+        and 'id="fusion-basic-body"' in html_text
+        and 'id="fusion-exact-body"' in html_text
+        and 'id="fusion-conflict-body"' in html_text,
+    )
+    check(
+        "tab Độ phủ dữ liệu có bảng số đếm và mục 'KHÔNG có'",
+        'id="coverage-body"' in html_text and "KHÔNG có" in html_text,
+    )
+    check(
+        "panel chi tiết một lá có mục 'Fusion liên quan'",
+        "Fusion liên quan" in html_text,
+    )
+    check(
+        "tab Độ phủ dữ liệu đọc số liệu qua DATA.meta.<field> (không gõ cứng số đếm vào HTML)",
+        all(
+            ("meta." + field) in html_text
+            for field in (
+                "totalCards", "cardsWithAtkDef", "cardsWithType", "cardsWithEquips",
+                "cardsWithFusionSystems", "equipListsCount", "fusionBasicCount",
+                "fusionExactCount", "fusionConflictCount", "fusionGroupsWithMembers",
+                "fusionConflictMemberNames",
+            )
+        ),
+    )
+    check(
+        "tên lá bài trong công thức chỉ link khi khớp bảng tra cứu (nameLinkHtml/wireCardLinks tái dùng, không cơ chế thứ hai)",
+        "function nameLinkHtml(" in html_text
+        and "function wireCardLinks(" in html_text
+        and html_text.count("function wireCardLinks(") == 1,
     )
 
     fm_begin = extract_cards.FM_DATA_BEGIN_MARKER
