@@ -518,6 +518,69 @@ def main() -> int:
         "chưa có dữ liệu" in html_text,
     )
 
+    # --- Nút x xoá nhanh ô tìm kiếm (cell fm-guide-site-16) ---
+    # Cả ba ô nhập chữ (#search-name, #search-number, #fusion-search) đều có
+    # một nút xoá riêng (button thật, không phải type=search), mặc định ẩn
+    # (hidden) và mang aria-label tiếng Việt.
+    clear_buttons = {
+        "search-name-clear": "search-name",
+        "search-number-clear": "search-number",
+        "fusion-search-clear": "fusion-search",
+    }
+    for btn_id, input_id in clear_buttons.items():
+        btn_match = re.search(
+            r'<button[^>]*id="' + re.escape(btn_id) + r'"[^>]*>', html_text
+        )
+        check(
+            f"index.html có nút xoá #{btn_id} là <button type=\"button\"> thật kèm aria-label",
+            btn_match is not None
+            and 'type="button"' in btn_match.group(0)
+            and 'aria-label="' in btn_match.group(0),
+            "không tìm thấy nút hoặc thiếu type/aria-label" if not btn_match else btn_match.group(0),
+        )
+        check(
+            f"nút xoá #{btn_id} ẩn mặc định bằng thuộc tính hidden (không lọt vào Tab khi ô rỗng)",
+            btn_match is not None and "hidden" in btn_match.group(0),
+        )
+    check(
+        "cả ba ô nhập không dùng type=\"search\" (nút xoá mặc định của trình duyệt không nhất quán "
+        "giữa Firefox/WebKit) -- vẫn giữ type=\"text\"",
+        'id="search-name" type="text"' in html_text
+        and 'id="search-number" type="text"' in html_text
+        and 'id="fusion-search" type="text"' in html_text,
+    )
+    check(
+        "nút xoá ẩn/hiện theo đúng trạng thái rỗng của ô (so sánh value.length === 0), "
+        "không phải một cờ trạng thái tách rời có thể lệch khỏi DOM",
+        html_text.count("Clear.hidden = el") >= 3
+        and "elSearchNameClear.hidden = elSearchName.value.length === 0;" in html_text
+        and "elSearchNumberClear.hidden = elSearchNumber.value.length === 0;" in html_text
+        and "elFusionSearchClear.hidden = elFusionSearch.value.length === 0;" in html_text,
+    )
+    check(
+        "bấm nút xoá dùng lại scheduleHashWrite(true) (đường ghi hash sẵn có, giống lúc đổi dropdown) "
+        "chứ không tự tạo đường ghi lịch sử thứ hai",
+        html_text.count("elSearchNameClear.addEventListener(\"click\"") == 1
+        and html_text.count("elSearchNumberClear.addEventListener(\"click\"") == 1
+        and html_text.count("elFusionSearchClear.addEventListener(\"click\"") == 1,
+    )
+    # Mỗi ô nhập được đặt trong một wrapper .search-field mang phần chia cỡ
+    # flex trước đây gắn thẳng vào #search-name/#search-number, để nút xoá
+    # định vị tuyệt đối bên trong mà không phá layout hàng .controls.
+    check(
+        "cỡ flex của #search-name/#search-number chuyển sang wrapper .search-field "
+        "(#search-name-field/#search-number-field), input không còn tự mang flex",
+        "#search-name-field { flex: 1 1 220px; min-width: 180px; }" in html_text
+        and "#search-number-field { flex: 0 1 160px; }" in html_text
+        and re.search(r"\n\s*#search-name\s*\{\s*flex:", html_text) is None
+        and re.search(r"\n\s*#search-number\s*\{\s*flex:", html_text) is None,
+    )
+    check(
+        "ô nhập trong .search-field chừa sẵn padding-right cho nút xoá (không nhảy kích thước khi nút ẩn/hiện)",
+        re.search(r'\.search-field input\[type="text"\]\s*\{[^}]*padding-right', html_text, re.S)
+        is not None,
+    )
+
     # --- Vietnamese lore in the detail panel + coverage tab (cell fm-guide-site-13) ---
     check(
         "bảng chi tiết trong index.html có nhãn 'Nguyên văn' cho lore gốc tiếng Anh",

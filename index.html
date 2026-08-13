@@ -127,8 +127,53 @@
     }
   }
 
-  #search-name { flex: 1 1 220px; min-width: 180px; }
-  #search-number { flex: 0 1 160px; }
+  /* Flex sizing lives on the wrapper (not the input) so the clear (x)
+     button can be absolutely positioned inside the same box without
+     disturbing #search-name/#search-number's row layout (cell
+     fm-guide-site-16). */
+  .search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  #search-name-field { flex: 1 1 220px; min-width: 180px; }
+  #search-number-field { flex: 0 1 160px; }
+
+  .search-field input[type="text"] {
+    width: 100%;
+    /* Reserve room for the clear button at all times so its appearing or
+       disappearing never resizes the field or overlaps typed text. */
+    padding-right: 1.9rem;
+  }
+
+  .search-field .clear-btn {
+    position: absolute;
+    right: 0.15rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    line-height: 1;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .search-field .clear-btn:hover,
+  .search-field .clear-btn:focus {
+    color: var(--text);
+    background: var(--panel-alt);
+    outline: 1px solid var(--accent);
+  }
+
+  .search-field .clear-btn[hidden] { display: none; }
 
   .controls label.checkbox {
     display: flex;
@@ -559,8 +604,14 @@
 <main>
   <section id="tab-cards" class="tab-panel">
     <div class="controls">
-      <input id="search-name" type="text" placeholder="Tìm theo tên (vd: Dark Witch)" autocomplete="off">
-      <input id="search-number" type="text" placeholder="Tìm theo số thứ tự (vd: 582)" autocomplete="off" inputmode="numeric">
+      <span class="search-field" id="search-name-field">
+        <input id="search-name" type="text" placeholder="Tìm theo tên (vd: Dark Witch)" autocomplete="off">
+        <button type="button" id="search-name-clear" class="clear-btn" aria-label="Xoá ô tìm theo tên" hidden>×</button>
+      </span>
+      <span class="search-field" id="search-number-field">
+        <input id="search-number" type="text" placeholder="Tìm theo số thứ tự (vd: 582)" autocomplete="off" inputmode="numeric">
+        <button type="button" id="search-number-clear" class="clear-btn" aria-label="Xoá ô tìm theo số thứ tự" hidden>×</button>
+      </span>
       <label class="checkbox"><input id="only-atkdef" type="checkbox"> Chỉ hiện lá có ATK/DEF</label>
       <select id="cardtype-filter"></select>
       <select id="type-filter"></select>
@@ -1060,8 +1111,11 @@
       ([Type] + [Type]) mà lá bài thuộc hệ đó, không chỉ công thức nêu đích danh tên lá.
     </p>
     <div class="controls">
-      <input id="fusion-search" type="text" list="fusion-card-names"
-        placeholder="Gõ tên một lá bài (vd: Dark Witch)" autocomplete="off">
+      <span class="search-field" id="fusion-search-field">
+        <input id="fusion-search" type="text" list="fusion-card-names"
+          placeholder="Gõ tên một lá bài (vd: Dark Witch)" autocomplete="off">
+        <button type="button" id="fusion-search-clear" class="clear-btn" aria-label="Xoá ô tìm tên lá bài" hidden>×</button>
+      </span>
       <datalist id="fusion-card-names"></datalist>
     </div>
     <div id="fusion-lookup-result"></div>
@@ -74524,6 +74578,8 @@ window.FM_DATA = {
 
   var elSearchName = document.getElementById("search-name");
   var elSearchNumber = document.getElementById("search-number");
+  var elSearchNameClear = document.getElementById("search-name-clear");
+  var elSearchNumberClear = document.getElementById("search-number-clear");
   var elOnlyAtkDef = document.getElementById("only-atkdef");
   var elCardTypeFilter = document.getElementById("cardtype-filter");
   var elTypeFilter = document.getElementById("type-filter");
@@ -74535,6 +74591,7 @@ window.FM_DATA = {
   var elDetail = document.getElementById("card-detail");
 
   var elFusionSearch = document.getElementById("fusion-search");
+  var elFusionSearchClear = document.getElementById("fusion-search-clear");
   var elFusionCardNames = document.getElementById("fusion-card-names");
   var elFusionLookupResult = document.getElementById("fusion-lookup-result");
   var elFusionBasicFilter = document.getElementById("fusion-basic-filter");
@@ -74805,7 +74862,19 @@ window.FM_DATA = {
     el.appendChild(frag);
   }
 
+  // Clear (x) button visibility tracks whether its field has text -- called
+  // from applyFilters()/onFusionSearchInput() (covers every programmatic
+  // `.value =` assignment: jumpToCard, goToCardFilter, applyState, the
+  // clear button itself) and also wired straight to "input" below for
+  // instant per-keystroke feedback ahead of the filter debounce
+  // (cell fm-guide-site-16).
+  function updateSearchClearButtons() {
+    elSearchNameClear.hidden = elSearchName.value.length === 0;
+    elSearchNumberClear.hidden = elSearchNumber.value.length === 0;
+  }
+
   function applyFilters() {
+    updateSearchClearButtons();
     var nameQ = elSearchName.value.trim().toLowerCase();
     var numQ = elSearchNumber.value.trim();
     var onlyAtkDef = elOnlyAtkDef.checked;
@@ -74890,6 +74959,7 @@ window.FM_DATA = {
   // --- Tab "Fusion" ---
 
   function onFusionSearchInput() {
+    elFusionSearchClear.hidden = elFusionSearch.value.length === 0;
     var q = elFusionSearch.value.trim();
     if (!q) {
       elFusionLookupResult.innerHTML = "";
@@ -74989,6 +75059,15 @@ window.FM_DATA = {
     populateDropdown(elFusionBasicFilter, fusionBasicTypesUsed(), "Tất cả hệ");
     elFusionSearch.addEventListener("input", onFusionSearchInput);
     elFusionSearch.addEventListener("input", function () { scheduleHashWrite(false); });
+    // Clear (x): a discrete action like a dropdown change, not typing -- it
+    // routes through the same scheduleHashWrite(true) commit path so Back
+    // restores the query that was just cleared (cell fm-guide-site-16).
+    elFusionSearchClear.addEventListener("click", function () {
+      elFusionSearch.value = "";
+      elFusionSearch.focus();
+      onFusionSearchInput();
+      scheduleHashWrite(true);
+    });
     elFusionBasicFilter.addEventListener("change", renderFusionBasicTable);
     elFusionBasicFilter.addEventListener("change", function () { scheduleHashWrite(true); });
     renderFusionBasicTable();
@@ -75218,6 +75297,10 @@ window.FM_DATA = {
 
   elSearchName.addEventListener("input", onFilterInput);
   elSearchNumber.addEventListener("input", onFilterInput);
+  // Instant show/hide per keystroke, ahead of the 120ms filter debounce
+  // above (cell fm-guide-site-16).
+  elSearchName.addEventListener("input", updateSearchClearButtons);
+  elSearchNumber.addEventListener("input", updateSearchClearButtons);
   elOnlyAtkDef.addEventListener("change", applyFilters);
   elCardTypeFilter.addEventListener("change", applyFilters);
   elTypeFilter.addEventListener("change", applyFilters);
@@ -75230,6 +75313,24 @@ window.FM_DATA = {
   elTypeFilter.addEventListener("change", function () { scheduleHashWrite(true); });
   elFusionFilter.addEventListener("change", function () { scheduleHashWrite(true); });
   elStarFilter.addEventListener("change", function () { scheduleHashWrite(true); });
+
+  // Clear (x): a discrete action like a dropdown change, not typing -- it
+  // routes through the same scheduleHashWrite(true) commit path so Back
+  // restores the query that was just cleared (cell fm-guide-site-16).
+  elSearchNameClear.addEventListener("click", function () {
+    if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+    elSearchName.value = "";
+    elSearchName.focus();
+    applyFilters();
+    scheduleHashWrite(true);
+  });
+  elSearchNumberClear.addEventListener("click", function () {
+    if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+    elSearchNumber.value = "";
+    elSearchNumber.focus();
+    applyFilters();
+    scheduleHashWrite(true);
+  });
 
   var tabButtons = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
   var tabPanels = Array.prototype.slice.call(document.querySelectorAll(".tab-panel"));
