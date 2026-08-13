@@ -142,6 +142,63 @@ def main() -> int:
     )
     check("có công thức từ cả ba mục fusion.md", bool(data["fusionBasic"]) and bool(data["fusionExact"]) and bool(data["fusionConflict"]))
 
+    # --- Vietnamese lore translation (cell fm-guide-site-13) ---
+    # data/lore-vi/part-1.json .. part-4.json, read directly here (never
+    # through the extractor's merged view) so this guards the raw input
+    # files, not just whatever extract_cards.load_lore_vi() already trusts.
+    LORE_VI_DIR = REPO_ROOT / "data" / "lore-vi"
+    lore_vi_raw: dict[str, str] = {}
+    duplicate_lore_vi_keys: list[str] = []
+    for i in range(1, 5):
+        part = json.loads((LORE_VI_DIR / f"part-{i}.json").read_text(encoding="utf-8"))
+        for k in part:
+            if k in lore_vi_raw:
+                duplicate_lore_vi_keys.append(k)
+        lore_vi_raw.update(part)
+    check(
+        "bốn file data/lore-vi/part-*.json không có khóa trùng lẫn nhau",
+        not duplicate_lore_vi_keys,
+        f"{duplicate_lore_vi_keys[:5]}",
+    )
+    real_numbers = {str(c["number"]) for c in cards}
+    fake_lore_vi_keys = [k for k in lore_vi_raw if k not in real_numbers]
+    check(
+        "mọi khóa trong bốn file data/lore-vi/part-*.json là số thứ tự của một lá có thật",
+        not fake_lore_vi_keys,
+        f"{fake_lore_vi_keys[:5]}",
+    )
+    empty_lore_vi = [k for k, v in lore_vi_raw.items() if not v]
+    check(
+        "không bản dịch tiếng Việt nào là chuỗi rỗng",
+        not empty_lore_vi,
+        f"{empty_lore_vi[:5]}",
+    )
+    en_lore_by_number = {str(c["number"]): c["lore"] for c in cards}
+    identical_lore_vi = [
+        k for k, v in lore_vi_raw.items() if v == en_lore_by_number.get(k)
+    ]
+    check(
+        "không bản dịch tiếng Việt nào y hệt nguyên văn tiếng Anh",
+        not identical_lore_vi,
+        f"{identical_lore_vi[:5]}",
+    )
+    recounted_lore_vi = sum(1 for num in real_numbers if lore_vi_raw.get(num))
+    check(
+        "meta.cardsWithLoreVi khớp số đếm lại trực tiếp từ bốn file data/lore-vi/part-*.json",
+        data["meta"]["cardsWithLoreVi"] == recounted_lore_vi == sum(1 for c in cards if c["loreVi"]),
+        f"meta={data['meta']['cardsWithLoreVi']}, recounted={recounted_lore_vi}, "
+        f"spine={sum(1 for c in cards if c['loreVi'])}",
+    )
+    loreVi_null_mismatch = [
+        c["number"] for c in cards
+        if bool(c["loreVi"]) != bool(lore_vi_raw.get(str(c["number"])))
+    ]
+    check(
+        "lá thiếu bản dịch có loreVi là null (không phải chuỗi rỗng); lá có bản dịch giữ đúng giá trị đó",
+        not loreVi_null_mismatch,
+        f"{loreVi_null_mismatch[:5]}",
+    )
+
     # --- meta counts backing tab "Độ phủ dữ liệu" (cell fm-guide-site-5) ---
     # The tab reads every number straight from FM_DATA.meta at runtime; here
     # we assert meta actually carries every field it needs, and that each
@@ -151,7 +208,7 @@ def main() -> int:
         "totalCards", "cardsWithAtkDef", "cardsWithType", "cardsWithEquips",
         "cardsWithFusionSystems", "equipListsCount", "fusionBasicCount",
         "fusionExactCount", "fusionConflictCount", "fusionConflictMemberNames",
-        "fusionGroupsWithMembers",
+        "fusionGroupsWithMembers", "cardsWithLoreVi",
     )
     check(
         "FM_DATA.meta có đủ các trường số đếm phục vụ tab Độ phủ dữ liệu",
@@ -415,6 +472,24 @@ def main() -> int:
     check(
         "chuỗi 'chưa có dữ liệu' có mặt trong index.html (D4)",
         "chưa có dữ liệu" in html_text,
+    )
+
+    # --- Vietnamese lore in the detail panel + coverage tab (cell fm-guide-site-13) ---
+    check(
+        "bảng chi tiết trong index.html có nhãn 'Nguyên văn' cho lore gốc tiếng Anh",
+        "Nguyên văn" in html_text,
+    )
+    check(
+        "tab Độ phủ dữ liệu đọc số lá có lore tiếng Việt từ meta.cardsWithLoreVi (không gõ cứng)",
+        "meta.cardsWithLoreVi" in html_text,
+    )
+    check(
+        "tab Độ phủ dữ liệu nói rõ bản dịch lore là dịch máy",
+        "bản dịch máy" in html_text,
+    )
+    check(
+        "panel chi tiết dùng fmtLoreHtml(card) cho dòng Lore, không dùng fmt(card.lore) trần",
+        '"<dt>Lore</dt><dd>" + fmtLoreHtml(card)' in html_text,
     )
 
     # starChipCost's 999999 sentinel (D4: a value must never read as real

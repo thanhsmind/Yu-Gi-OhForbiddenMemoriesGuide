@@ -28,6 +28,11 @@ Sources (read-only, never edited by this script):
       through unchanged; only the fusion-system tags are joined onto the
       spine (by name, matches Yugipedia's spelling directly, no alias
       needed -- audited: 0 mismatches).
+  - "data/lore-vi/part-1.json" .. "part-4.json" -- machine-translated
+      Vietnamese lore keyed by card number (string), joined onto the spine
+      as `loreVi` alongside the untouched English `lore`. A card with no
+      translation gets `loreVi: null`, never an empty string. This text is
+      a machine translation, not sourced from any Vietnamese original.
 
 D4 (docs/history/fm-guide-site/CONTEXT.md): a field with no source is
 `None` (-> JSON null). Never 0, never guessed. D7 keeps this rule, only
@@ -49,9 +54,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GUIDE_DIR = REPO_ROOT / "docs" / "guide"
 CARDS_JSON = REPO_ROOT / "data" / "cards.json"
+LORE_VI_DIR = REPO_ROOT / "data" / "lore-vi"
 
 EQUIP_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories Quân Bài Phụ trợ.md"
 FUSION_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories fusion.md"
+LORE_VI_FILES = [LORE_VI_DIR / f"part-{i}.json" for i in range(1, 5)]
 
 # docs/guide's equip roster spells 15 names (13 monster headers, 2 equip
 # items) differently than Yugipedia (data/cards.json). Fixed table, never
@@ -471,6 +478,22 @@ def load_spine_cards() -> list[dict]:
     return [{field: c[field] for field in SPINE_FIELDS} for c in raw["cards"]]
 
 
+def load_lore_vi() -> dict[str, str]:
+    """Merge data/lore-vi/part-1.json .. part-4.json into one {card number
+    (str) -> Vietnamese lore} map. The four files together cover every card
+    number exactly once (audited when the translation cells fm-guide-site-9
+    .. -12 landed: no missing number, no key that isn't a real card, no
+    empty value, no value identical to its English source) -- tools/check.py
+    re-asserts that here rather than trusting the audit forever. This
+    translation is machine-generated, never taken from any Vietnamese
+    source text, and is always joined onto the spine alongside the original
+    English `lore` field -- never replacing it."""
+    merged: dict[str, str] = {}
+    for path in LORE_VI_FILES:
+        merged.update(json.loads(path.read_text(encoding="utf-8")))
+    return merged
+
+
 def extract_all() -> dict:
     numbered_names, equip_lists = parse_equip_file(read_lines(EQUIP_FILE))
 
@@ -515,12 +538,22 @@ def extract_all() -> dict:
         tags = name_to_tags.get(card["name"].lower())
         card["fusionSystems"] = sorted(tags) if tags else None
 
+    # Vietnamese lore (machine-translated, keyed by card number) joins onto
+    # the spine as `loreVi`, alongside the untouched English `lore` field --
+    # never replacing it. A card whose number has no translation gets
+    # `None`, never an empty string (same D4 "missing is null" rule as
+    # every other field here).
+    lore_vi = load_lore_vi()
+    for card in cards:
+        card["loreVi"] = lore_vi.get(str(card["number"])) or None
+
     meta = {
         "totalCards": len(cards),
         "cardsWithAtkDef": sum(1 for c in cards if c["atk"] is not None),
         "cardsWithType": sum(1 for c in cards if c["type"] is not None),
         "cardsWithEquips": sum(1 for c in cards if c["equips"]),
         "cardsWithFusionSystems": sum(1 for c in cards if c["fusionSystems"]),
+        "cardsWithLoreVi": sum(1 for c in cards if c["loreVi"]),
         "equipListsCount": len(equip_lists),
         "equipNameMisses": equip_name_misses,
         # Per-section recipe counts (tab "Độ phủ dữ liệu", cell fm-guide-site-5):

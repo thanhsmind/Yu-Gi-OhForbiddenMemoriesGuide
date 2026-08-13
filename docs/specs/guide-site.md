@@ -36,6 +36,12 @@ ATK, DEF, cặp Guardian Star, mã password, giá StarChip, cách lấy được
 tên tiếng Nhật, lore, danh sách trang bị dùng được cho lá đó, và các công thức
 fusion liên quan.
 
+Lore có hai bản: bản dịch tiếng Việt (nếu có) hiện làm nội dung chính, và
+ngay dưới nó luôn hiện nguyên văn tiếng Anh kèm nhãn "Nguyên văn" ở cỡ chữ
+nhỏ hơn, màu nhạt hơn — bản dịch là sản phẩm phái sinh, không bao giờ thay
+thế hay che nguyên văn. Lá chưa có bản dịch chỉ hiện nguyên văn tiếng Anh,
+không có ô trống.
+
 **Quy tắc trung thực khi hiển thị** (ràng buộc trung tâm của cả khu vực):
 
 - Trường không có dữ liệu hiện chữ "chưa có dữ liệu". Không bao giờ hiện `0`,
@@ -86,9 +92,12 @@ một số lá.
 ## Độ phủ dữ liệu
 
 Liệt kê số đếm thật của dữ liệu đang nhúng trong trang — tổng số lá, số lá có
-chỉ số, số lá có Type, số lá có danh sách trang bị, số công thức mỗi loại — và
-nói rõ những thứ dự án KHÔNG có: bảng công thức Ritual, bảng drop theo đối thủ,
-danh sách password đầy đủ.
+chỉ số, số lá có Type, số lá có danh sách trang bị, số công thức mỗi loại, số
+lá đã có lore tiếng Việt trên tổng số — và nói rõ những thứ dự án KHÔNG có:
+bảng công thức Ritual, bảng drop theo đối thủ, danh sách password đầy đủ.
+
+Dòng số lá đã có lore tiếng Việt ghi rõ đây là **bản dịch máy**, không phải
+trích từ nguồn tiếng Việt nào.
 
 Các con số này phải đọc từ dữ liệu tại lúc hiển thị. Gõ cứng con số vào nội
 dung là vi phạm: khi dữ liệu đổi mà con số không đổi thì trang nói dối.
@@ -120,12 +129,13 @@ trang vỡ khi mở bằng cách nhấp đúp vào file.
 
 ## Nguồn dữ liệu và ranh giới
 
-Hai nguồn, chia việc rõ ràng:
+Ba nguồn, chia việc rõ ràng:
 
 | Nguồn | Cung cấp |
 |---|---|
-| Bộ dữ liệu bài (722 lá, lấy từ bách khoa Yu-Gi-Oh) | Xương sống bảng tra cứu: số thứ tự, tên, loại lá, Type, cấp độ, ATK, DEF, Guardian Star, password, giá StarChip, lore, tên tiếng Nhật, cách lấy, và ảnh mặt bài |
+| Bộ dữ liệu bài (722 lá, lấy từ bách khoa Yu-Gi-Oh) | Xương sống bảng tra cứu: số thứ tự, tên, loại lá, Type, cấp độ, ATK, DEF, Guardian Star, password, giá StarChip, lore (nguyên văn tiếng Anh), tên tiếng Nhật, cách lấy, và ảnh mặt bài |
 | Ba tài liệu hướng dẫn tiếng Việt | Công thức fusion, danh sách trang bị theo từng lá, và toàn bộ nội dung mục Hướng dẫn |
+| Bốn file lore dịch máy (`data/lore-vi/`, khóa theo số thứ tự lá) | Bản dịch tiếng Việt của trường lore, ghép thêm bên cạnh nguyên văn — lá nào chưa có bản dịch giữ `null`, không phải chuỗi rỗng |
 
 Dữ liệu từ tài liệu hướng dẫn được ghép LÊN xương sống theo tên lá, không tạo
 dòng mới. Một tên trong tài liệu không khớp lá nào thì giữ nguyên dạng tên, không
@@ -162,6 +172,9 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
   một công thức lặp lại nhiều lần trong nguồn phải xuất hiện đúng số lần đó.
 - Mọi tên trong bảng tên đồng nghĩa trỏ tới đúng một lá có thật.
 - Chạy lại công cụ sinh dữ liệu cho kết quả không đổi.
+- Bản dịch tiếng Việt của lore luôn hiển thị kèm nguyên văn tiếng Anh có
+  nhãn, không bao giờ giấu nguyên văn; không có bản dịch nào là chuỗi rỗng
+  hoặc y hệt nguyên văn tiếng Anh.
 
 ## Open Gaps
 
