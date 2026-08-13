@@ -1,0 +1,217 @@
+{
+  "id": "fm-guide-site-7",
+  "feature": "fm-guide-site",
+  "title": "Deep-link: mỗi tab và mỗi bộ lọc có URL riêng, nút Back hoạt động",
+  "lane": "small",
+  "status": "capped",
+  "deps": [],
+  "decisions": [
+    "D1",
+    "D2"
+  ],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html",
+    "docs/specs/guide-site.md"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Thêm định tuyến bằng hash cho index.html để mọi trạng thái xem được đều có URL riêng và nút Back/Forward của trình duyệt đi qua đúng các trạng thái đó. Trạng thái cần vào URL: tab đang mở; ở tab tra cứu bài — từ khóa tìm, bộ lọc loại lá, bộ lọc Type, tùy chọn chỉ hiện lá có chỉ số, số trang, và lá đang mở chi tiết; ở tab Fusion — từ khóa tra cứu và bộ lọc hệ của bảng công thức cơ bản; ở tab Hướng dẫn — mục đang xem. Yêu cầu: (1) đổi tab hoặc đổi bất kỳ bộ lọc nào thì URL đổi theo và vào lịch sử duyệt, nhưng gõ từng ký tự vào ô tìm kiếm KHÔNG được đẩy một mục lịch sử cho mỗi ký tự — gộp lại (debounce hoặc replaceState khi đang gõ, pushState khi dừng); (2) Back đưa về đúng trạng thái trước đó, Forward đi tới lại; (3) tải lại trang hoặc dán URL vào tab mới dựng lại đúng trạng thái đó; (4) URL đọc được bằng mắt, dùng tên tab tiếng Việt không dấu; (5) các liên kết mục lục #sec-1..#sec-9 sẵn có trong tab Hướng dẫn và cơ chế nhảy tới chi tiết một lá từ liên kết tên bài phải tiếp tục chạy đúng, không được vỡ. Phải chạy được trên file:// (hash hoạt động bình thường ở đó) — per D1 không thêm URL http/https, không script ngoài, không fetch, và tuyệt đối không dùng History API dạng pushState đổi đường dẫn (đường dẫn không đổi được trên file://), chỉ đổi phần hash. Thêm khẳng định vào tools/check.py: index.html có xử lý sự kiện hashchange, có hàm đọc trạng thái từ hash và hàm ghi trạng thái vào hash, và không xuất hiện pushState với tham số đường dẫn khác rỗng.",
+  "must_haves": {
+    "truths": [
+      "Đổi tab đổi URL; Back quay lại tab trước",
+      "Đặt bộ lọc rồi bấm Back thì bộ lọc trở về giá trị trước, không phải về trạng thái rỗng",
+      "Dán URL vào tab mới dựng lại đúng tab, bộ lọc, trang và lá đang mở",
+      "Gõ 10 ký tự vào ô tìm kiếm không tạo 10 mục lịch sử",
+      "Mục lục #sec-1..#sec-9 và liên kết tên lá vẫn nhảy đúng",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "định tuyến hash hai chiều cho tab, bộ lọc, phân trang và lá đang chọn"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định có định tuyến hash và không dùng pushState đổi đường dẫn"
+      }
+    ],
+    "key_links": [
+      "hashchange dựng lại trạng thái; mọi thay đổi bộ lọc ghi vào hash"
+    ],
+    "prohibitions": [
+      "Không thêm URL http/https, script src, fetch",
+      "Không dùng pushState/replaceState với đường dẫn (chỉ hash)",
+      "Không phá mục lục #sec-N hay liên kết tên lá",
+      "Không sửa file trong docs/guide/ hay data/"
+    ]
+  },
+  "trace": {
+    "worker": "patcher",
+    "outcome": "Deep-link hash router cho tab, bo loc, phan trang va la dang mo; Back/Forward dung; sua mat checkpoint burst go phim va URIError hash hong",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T14:34:49.589Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T14:26:03.143Z",
+    "report": {
+      "outcome": "Added hash-only deep-link router: every tab/filter/page/open-card state gets its own URL, Back/Forward round-trip correctly, typing debounces to one history entry, file:// safe (hash-only pushState/replaceState), #sec-N TOC anchors and card-name jumps preserved",
+      "commit": "a4b04d8",
+      "files": [
+        "index.html",
+        "tools/check.py"
+      ],
+      "tests": "green",
+      "deviations": [
+        "Typing debounce pushes its single checkpoint entry at the FIRST keystroke of a burst (then replaceState for the rest), not at settle-time as the cell text literally suggests (\"pushState khi dừng\") -- pushing only at settle-time turned out to be a no-op because the in-place replaceState calls during typing had already overwritten the pre-typing entry to the same text, so Back could not return to the pre-typing state. Verified the bug and the fix with a Node vm harness driving the real script text against a location/history/DOM shim (in scratchpad, deleted after use)."
+      ]
+    },
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T14:34:48.837Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "NEEDS_REVISION",
+        "checks": [
+          {
+            "id": "tab-hash",
+            "name": "Bon tab deu ghi hash doc duoc",
+            "status": "PASS",
+            "evidence": "jsdom harness tren file:// URL: #tra-cuu, #huong-dan, #fusion, #do-phu; panel hien khop nut active moi lan, 0 loi."
+          },
+          {
+            "id": "back-filters",
+            "name": "Back tra ve dung trang thai loc trung gian roi ban dau",
+            "status": "PASS",
+            "evidence": "S0 722/722 -> Type=Dragon 32/722 -> cardType=Equip 0/722; back x2 khoi phuc chinh xac S1 roi S0 (hash, gia tri select, so dong, 3 so dong dau). Phan trang cung dung."
+          },
+          {
+            "id": "forward",
+            "name": "Forward hoat dong sau Back",
+            "status": "PASS",
+            "evidence": "fwd1==S1, fwd2==S2 giong het ve hash, controls va tap dong."
+          },
+          {
+            "id": "typing-debounce",
+            "name": "10 ky tu chi ton mot entry va Back ve trang thai truoc khi go",
+            "status": "FAIL",
+            "evidence": "Cac ca chinh dat: go 'blue eyes ' delta 1, Back khoi phuc dung. Nhung burst bat dau bang dau cach (' eyes') cho delta 0 va Back nhay ve #tra-cuu?type=Dragon thay vi #tra-cuu?q=blue&type=Dragon. Nguyen nhan: currentHash() trim nen hash khong doi, writeHash early-return khong push, nhung scheduleHashWrite van dat typingBurstOpen=true.",
+            "failure_signature": "scheduleHashWrite danh dau burst mo ngay ca khi writeHash da early-return va bo qua pushState checkpoint"
+          },
+          {
+            "id": "paste-url",
+            "name": "Dan URL day du dung lai dung tab, loc, trang, la dang mo",
+            "evidence": "Cold load #tra-cuu?q=dra&so=1&loai=Monster&type=Dragon&he=Dragon&chiso=1&la=13: hash giu nguyen, moi control dung, 5/722, tap dong khop voi bo loc tinh doc lap, panel chi tiet mo dung la. Cac bien the phan trang va tab fusion cung dung.",
+            "status": "PASS"
+          },
+          {
+            "id": "file-safety",
+            "name": "Khong loi goi pushState/replaceState nao nhan duong dan",
+            "status": "PASS",
+            "evidence": "Dung 3 loi goi, ca ba nhan currentHash() luon bat dau bang '#' va encodeURIComponent moi gia tri dong; go 'a/b' ra '#tra-cuu?q=a%2Fb'. Chua kiem tren trinh duyet that."
+          },
+          {
+            "id": "anchors-regression",
+            "name": "#sec-N va nhay theo ten la van dung, va nhay do Back duoc",
+            "status": "PASS",
+            "evidence": "9 lien ket #sec-N deu co dich, khong bi router chiem; tu #sec-9 bam tab Fusion roi Back tra ve #sec-9. Lien ket ten la 'Garvas' mo dung chi tiet, Back/Forward dung."
+          },
+          {
+            "id": "edge-cases",
+            "name": "Hash hong, la khong ton tai, hash rong, chuyen tab lien tuc",
+            "status": "FAIL",
+            "evidence": "Hau het an toan: #nonsense, ?trang=999 (clamp), ?la=zzz, ?trang=abc, #sec-999, hash rong, 12 lan chuyen tab lien tuc deu 0 loi. Nhung #tra-cuu?q=%zz nem URIError khong bat tu decodeURIComponent trong fromQueryValue, lam readStateFromHash dut va lan dieu huong bi nuot im lang.",
+            "failure_signature": "URIError: URI malformed khong bat khi hash chua percent-escape hong"
+          },
+          {
+            "id": "project-checks",
+            "name": "tools/check.py xanh, khong tham chieu ngoai",
+            "status": "PASS",
+            "evidence": "exit 0 gom ca 5 khang dinh router moi. 0 '<script src=', 0 'fetch('. Ba chuoi '://' moi deu nam trong comment JS noi ve file://, khang dinh da ghi la khong co http:// hay https:// nen van dung."
+          }
+        ],
+        "failure_signature": "Hai loi: (1) checkpoint cua mot burst go phim bi mat khi ky tu dau tien khong lam doi hash sau khi trim (vi du go them dau cach) — writeHash early-return nhung typingBurstOpen van bat, nen cac ky tu sau replaceState de len entry truoc; Back nhay qua mat mot trang thai. (2) hash chua percent-escape hong (#tra-cuu?q=%zz) nem URIError khong bat, nuot luon lan dieu huong.",
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T14:22:45.408Z"
+      },
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "burst-checkpoint",
+            "name": "Typing burst opens only when a checkpoint was really pushed",
+            "status": "PASS",
+            "evidence": "index.html:74542-74543 reads `var pushed = writeHash(!typingBurstOpen); if (pushed) typingBurstOpen = true;` and writeHash (index.html:74494-74503) returns false on the trimmed-hash-unchanged early return, true after a real push/replace. A whitespace-only keystroke therefore cannot flag the burst open while skipping the checkpoint. Orchestrator read both function bodies directly."
+          },
+          {
+            "id": "burst-harness",
+            "name": "The two judge reproductions plus six burst variants exercised",
+            "status": "PASS",
+            "evidence": "Worker's own Node vm + location/history shim driving the real extracted script: 33/33 green on the patched code, and the SAME harness reproduces all 9 original failures against pre-fix commit a4b04d8 — so the harness is proven to detect these defects rather than trivially pass. Cases covered: burst starting with whitespace, burst ending with whitespace, type-then-clear, two consecutive bursts."
+          },
+          {
+            "id": "malformed-hash",
+            "name": "A malformed percent-escape no longer throws",
+            "status": "PASS",
+            "evidence": "safeDecodeURIComponent (index.html:74425-74431) wraps decodeURIComponent in try/catch returning the raw value on URIError; fromQueryValue and qsParse's key decode both route through it. Exercised for #tra-cuu?q=%zz on cold load and mid-session navigation, and for the bare-percent #tra-cuu?q=%."
+          },
+          {
+            "id": "guards-added",
+            "name": "check.py pins both invariants so they cannot silently regress",
+            "status": "PASS",
+            "evidence": "Structural assertions pin writeHash's false/true returns, that scheduleHashWrite gates typingBurstOpen=true behind `if (pushed)`, that exactly one `typingBurstOpen = true` assignment exists in the file, that safeDecodeURIComponent exists with a try/catch, and that no bare decodeURIComponent call site remains outside that wrapper."
+          },
+          {
+            "id": "no-regression",
+            "name": "Everything the prior judge pass already confirmed still holds",
+            "status": "PASS",
+            "evidence": "The prior pass confirmed tab hashes, Back/Forward through filter and pagination states, pasted-URL reconstruction, hash-only history calls, #sec-N anchor coexistence and card-name jumps. This revision touched only writeHash's return, scheduleHashWrite's flag gating, and the decode wrapper."
+          },
+          {
+            "id": "suite-green",
+            "name": "python3 tools/check.py green on the committed tree",
+            "status": "PASS",
+            "evidence": "Exit 0, re-run independently by the orchestrator, including the new router and decode guards."
+          },
+          {
+            "id": "tree-clean",
+            "name": "No scratch files left in the repo",
+            "status": "PASS",
+            "evidence": "render_check.js, verify_router.js and patcher_verify.js are all absent from the repo root; git status shows no stray untracked JS."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T14:34:48.815Z"
+      }
+    ],
+    "reopened_for_rework": {
+      "at": "2026-08-13T14:22:45.408Z",
+      "reason": "NEEDS_REVISION semantic-judge verdict recorded after cap"
+    },
+    "verify_command": null,
+    "verified_at": null
+  },
+  "tier": "generation"
+}
