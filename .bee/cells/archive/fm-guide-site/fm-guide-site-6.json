@@ -1,0 +1,124 @@
+{
+  "id": "fm-guide-site-6",
+  "feature": "fm-guide-site",
+  "title": "Sửa parser bỏ sót 10 công thức trong mục Dung hợp xung đột",
+  "lane": "small",
+  "status": "capped",
+  "deps": [],
+  "decisions": [
+    "D4"
+  ],
+  "files": [
+    "tools/extract_cards.py",
+    "tools/check.py",
+    "index.html"
+  ],
+  "read_first": [
+    "tools/extract_cards.py",
+    "docs/specs/guide-site.md"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Mục 'Dung hợp xung đột' trong docs/guide/Game Yu-Gi-Oh! Forbidden Memories fusion.md có 212 dòng công thức (dòng chứa dấu '<') nhưng extractor chỉ lấy được 202 — bỏ sót 10, trong đó có một công thức mất hẳn: 'Fungi of the Musk + [Fiend] < Darkworld Thorns' ở dòng 1581. Nguyên nhân đã khoanh vùng: dòng tổng quát đứng ngay trước dòng '<' đôi khi có TÊN LÁ ở một vế thay vì [Hệ] — ví dụ dòng 1580 '[Fiend] + Job-change Mirror = Summoned Skull' và dòng 1575 '[Fiend] + Arlownay = Rose Spectre of Dunn' — và parser hiện tại bỏ qua những stanza đó. Sửa parser để nhận cả dạng tên lá lẫn dạng {tập hợp tên} ở cả hai vế của DÒNG TỔNG QUÁT, giống như nó đã làm với dòng override. Sau khi sửa: tổng số stanza trích được phải bằng đúng 212, và bộ ba (overrideLeft, overrideRight, overrideResult) đếm theo bội số phải khớp 1-1 với nguồn — hiện 9 bộ ba đang bị thiếu bản sao (Pyro+Warrior<Flame Swordsman nguồn 13 trang 11; Elf+MercuryMagicUser<Dark Elf nguồn 8 trang 7; Female+Plant<Queen of Autumn Leaves nguồn 8 trang 7; Dragon+Warrior<Sword Arm of Dragon nguồn 3 trang 2; và 5 bộ ba nguồn 2 trang 1). Chạy lại --inject. Thêm khẳng định vào tools/check.py: số stanza xung đột trích được bằng đúng số dòng chứa '<' trong mục đó của file nguồn, đếm lại từ nguồn chứ không gõ cứng 212. Đồng thời khẳng định hai mục còn lại vẫn phủ đủ: tổng số mục có chỉ số trong 'Dung hợp cơ bản' bằng tổng results + possible (hiện 385), và số công thức 'Dung hợp chính xác' bằng số dòng '=' trong mục đó (hiện 150). Không sửa file trong docs/guide/.",
+  "must_haves": {
+    "truths": [
+      "Trích đủ 212 stanza xung đột, khớp bội số với nguồn, không thiếu bộ ba nào",
+      "'Fungi of the Musk + [Fiend] < Darkworld Thorns' hiện trong bảng xung đột trên trang",
+      "Hai mục fusion còn lại vẫn phủ đủ, không hồi quy",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "tools/extract_cards.py",
+        "substantive": "parser nhận tên lá và tập hợp tên ở dòng tổng quát"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định độ phủ cả ba mục fusion, đếm lại từ nguồn"
+      }
+    ],
+    "key_links": [
+      "index.html nhúng lại dữ liệu sau --inject"
+    ],
+    "prohibitions": [
+      "Không sửa file trong docs/guide/",
+      "Không gõ cứng 212/385/150 mà không đếm lại từ nguồn",
+      "Không thêm URL http/https, script src, fetch vào index.html"
+    ]
+  },
+  "trace": {
+    "worker": "mender",
+    "outcome": "Broadened the conflict-fusion top-header parser to accept a plain name (not just [Type]) on the general line, recovering all 10 dropped stanzas (212/212, triples match source 1-for-1); re-injected index.html and added source-recounted assertions for all three fusion sections to tools/check.py",
+    "files_changed": [
+      "tools/extract_cards.py",
+      "tools/check.py",
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T13:37:35.095Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T13:28:54.503Z",
+    "warnings": [
+      "advisory: this cap's commit changes 2465 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T13:37:34.264Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "conflict-full-coverage",
+            "name": "All 212 conflict stanzas extracted, triple multiset matches source 1-for-1",
+            "status": "PASS",
+            "evidence": "Orchestrator re-ran an independent diff against the source: source stanzas 212, page stanzas 212, under-represented [], in-page-not-in-source []. Before the fix it was 202 with 9 under-represented triples."
+          },
+          {
+            "id": "missing-recipe-recovered",
+            "name": "The one fully missing recipe now appears",
+            "status": "PASS",
+            "evidence": "'Fungi of the Musk + [Fiend] < Darkworld Thorns' (source line 1581) is present: any(overrideResult=='Darkworld Thorns') is True."
+          },
+          {
+            "id": "no-regression-other-sections",
+            "name": "The two already-complete fusion sections did not regress",
+            "status": "PASS",
+            "evidence": "Basic section: source stat-bearing entries 385 == page results+possible 385. Exact section: source 150 == page 150."
+          },
+          {
+            "id": "render-shape-fixed",
+            "name": "Recovered name-form general lines render without fake type brackets",
+            "status": "PASS",
+            "evidence": "Worker switched generalLeft/generalRight to the same {kind,value} shape as the override sides and fixed the two index.html render sites that hardcoded kind=type; verified under Node against the embedded data with zero bracket-wrapped plain names."
+          },
+          {
+            "id": "assertions-recount",
+            "name": "New check.py assertions recount from the source rather than hardcoding",
+            "status": "PASS",
+            "evidence": "Four added assertions derive their expected values by parsing the source section (conflict '<'-line count, override-triple multiset, basic stat-occurrence count, exact '='-line count). Three pre-existing counts shifted as a real consequence of the fix (member names 257->261, groups 25->26, cardsWithFusionSystems 255->258) and were updated against the recount."
+          },
+          {
+            "id": "suite-green",
+            "name": "python3 tools/check.py green",
+            "status": "PASS",
+            "evidence": "Exit 0 on the committed tree, re-run independently by the orchestrator."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T13:38:57.832Z"
+      }
+    ]
+  },
+  "tier": "generation"
+}
