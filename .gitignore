@@ -1,0 +1,34 @@
+# BEE:START
+.bee/state.json
+.bee/reservations.json
+.bee/workers/
+.bee/logs/
+.bee/capture-queue.jsonl
+.bee/feedback-digest.json
+.bee/.inject-cache.json
+.bee/HANDOFF.json
+.bee/spikes/
+.bee/manifest-hash.json
+.bee/sessions/
+.bee/claims/
+.bee/runtime/
+.bee/cache/
+.bee/intent/
+.bee/locks/
+.bee/doctor-attest.json
+.bee/native-transport-probe.json
+.bee/config.local.json
+.bee/tmp/
+.bee/backups/
+*.[0-9]*-*-*.tmp
+.claude-plugin/skills.tmp-*/
+.claude-plugin/skills.old-*/
+.codex-plugin/skills.tmp-*/
+.codex-plugin/skills.old-*/
+.bee/tmp_*
+.bee/patch-*.json
+.bee/bin/bee
+.bee/bin/bee.exe
+.claude/settings.json.bak
+.codex/hooks.json.bak
+# BEE:END
