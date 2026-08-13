@@ -549,6 +549,21 @@ def main() -> int:
         and 'id="search-number" type="text"' in html_text
         and 'id="fusion-search" type="text"' in html_text,
     )
+    # applyState gán thẳng .value nên không có sự kiện "input" nào bắn ra; thiếu
+    # lời gọi này thì mở #tra-cuu?q=... (hoặc bấm Back) ra ô có chữ mà nút xoá
+    # vẫn ẩn. Nhánh tab Fusion được lo sẵn nhờ onFusionSearchInput().
+    apply_state = re.search(r"function applyState\(st\) \{.*?\n  \}\n", html_text, re.S)
+    check(
+        "applyState gọi updateSearchClearButtons() sau khi gán value từ hash "
+        "(khôi phục từ URL/Back phải hiện lại nút xoá)",
+        apply_state is not None
+        and "updateSearchClearButtons();" in apply_state.group(0),
+    )
+    check(
+        "nhánh tab Fusion trong applyState chạy onFusionSearchInput() "
+        "(hàm này tự cập nhật nút xoá của ô Fusion)",
+        apply_state is not None and "onFusionSearchInput();" in apply_state.group(0),
+    )
     check(
         "nút xoá ẩn/hiện theo đúng trạng thái rỗng của ô (so sánh value.length === 0), "
         "không phải một cờ trạng thái tách rời có thể lệch khỏi DOM",

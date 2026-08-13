@@ -75574,6 +75574,11 @@ window.FM_DATA = {
       elFusionFilter.value = st.he || "";
       elStarFilter.value = st.sao || "";
       elOnlyAtkDef.checked = !!st.chiso;
+      // The two values above were set programmatically, so no "input" event
+      // fired -- refresh the clear buttons by hand or a state restored from
+      // the hash (cold load, Back, Forward) shows a filled field with no x.
+      // The fusion branch below gets this free via onFusionSearchInput().
+      updateSearchClearButtons();
       applyFilters();
       var pageCount = Math.max(1, Math.ceil(state.filtered.length / PAGE_SIZE));
       state.page = Math.min(Math.max(1, st.trang || 1), pageCount);
