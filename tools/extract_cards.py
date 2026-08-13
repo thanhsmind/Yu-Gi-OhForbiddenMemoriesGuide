@@ -79,7 +79,18 @@ EQUIP_NAME_ALIASES = {
 EQUIP_HEADER_RE = re.compile(r'^#(\d+)\s+(.*?)\s*\(\s*(\d+)\s*Equips?\s*\)')
 EQUIP_ITEM_RE = re.compile(r'^#(\d+)\s+(.+?)\s*$')
 STAT_RE = re.compile(r'^([^()]+?)\s*\((\d+)/(\d+)\s+(\w+)/(\w+)\)\s*$')
-CONFLICT_TOP_HEADER_RE = re.compile(r'^\s*\[[^\]]+\]\s*\+\s*\[[^\]]+\]\s*=\s*.+$')
+
+# A stanza's general (top) line is almost always [Type] + [Type] = Result,
+# but a handful pin a specific card on one side instead of a type (e.g.
+# fusion.md:1580 "[Fiend] + Job-change Mirror = Summoned Skull") -- the
+# same three side-forms parse_side() already accepts on the override line
+# ([Type], a bare name, or a {set, of, names}). Audited against every '+'
+# line in the "Dung hợp xung đột" section: exactly the lines containing
+# both '+' and '=' are general lines (212/212, 0 ambiguous), so the sides
+# are matched permissively (anything but '+'/'='/'<') rather than requiring
+# brackets -- a stricter side-grammar would silently re-introduce the drop
+# this regex exists to fix.
+CONFLICT_TOP_HEADER_RE = re.compile(r'^\s*[^+=<]+\+[^+=<]+=.+$')
 
 
 def read_lines(path: Path) -> list[str]:
@@ -343,13 +354,19 @@ def parse_fusion_conflict(lines: list[str]):
 
     Each stanza is two header lines followed by a two-column member table
     (until a blank line):
-        [GeneralLeft] + [GeneralRight] = GeneralResult
-        [OverrideLeft|Name] + [OverrideRight|Name] < OverrideResult
+        GeneralLeft + GeneralRight = GeneralResult
+        OverrideLeft + OverrideRight < OverrideResult
         LeftMember                       RightMember
         ...
-    Columns are split on runs of 2+ spaces (never a fixed character
-    width — long names such as "Wicked Dragon with the Ersatz Head" push
-    the right column further out, see fusion.md:1072 and :3326).
+    Each side of BOTH header lines is one of the same three forms:
+    a `[Type]`, a bare card name, or a `{Name, Name}` set (e.g.
+    fusion.md:1580 "[Fiend] + Job-change Mirror = Summoned Skull" has a
+    name on the general line's right side, not a type) -- parsed by
+    parse_side() and stored as {kind, value} on generalLeft/generalRight,
+    same shape as overrideLeft/overrideRight. Columns are split on runs
+    of 2+ spaces (never a fixed character width — long names such as
+    "Wicked Dragon with the Ersatz Head" push the right column further
+    out, see fusion.md:1072 and :3326).
 
     groups: {bracket-type-tag -> set(member names)}, built from whichever
       side(s) of each stanza's override header are a `[Type]` (not every
@@ -414,8 +431,8 @@ def parse_fusion_conflict(lines: list[str]):
 
         stanzas.append(
             {
-                "generalLeft": top_left.strip("[] "),
-                "generalRight": top_right.strip("[] "),
+                "generalLeft": parse_side(top_left),
+                "generalRight": parse_side(top_right),
                 "generalResult": top_result,
                 "overrideLeft": left,
                 "overrideRight": right,

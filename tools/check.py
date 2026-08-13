@@ -20,6 +20,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from collections import Counter
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -119,8 +120,8 @@ def main() -> int:
     # parsing (column-splitting logic) is untouched.
     fusion_conflict_members = data["meta"]["fusionConflictMemberNames"]
     check(
-        "257 tên riêng biệt xuất hiện trong mục 'Dung hợp xung đột' (fusionConflictMemberNames — khác với 255 lá có fusionSystems, xem check bên dưới)",
-        len(fusion_conflict_members) == 257,
+        "261 tên riêng biệt xuất hiện trong mục 'Dung hợp xung đột' (fusionConflictMemberNames — khác với 258 lá có fusionSystems, xem check bên dưới)",
+        len(fusion_conflict_members) == 261,
         f"got {len(fusion_conflict_members)}",
     )
 
@@ -163,22 +164,100 @@ def main() -> int:
         f"got {data['meta']['cardsWithType']}",
     )
     check(
-        "meta.cardsWithFusionSystems (255, hiện trên tab Độ phủ dữ liệu) đúng bằng số lá "
-        "có fusionSystems != null trong spine đếm lại (khác 257 — số tên riêng biệt, không phải số lá)",
-        data["meta"]["cardsWithFusionSystems"] == sum(1 for c in cards if c["fusionSystems"]) == 255,
+        "meta.cardsWithFusionSystems (258, hiện trên tab Độ phủ dữ liệu) đúng bằng số lá "
+        "có fusionSystems != null trong spine đếm lại (khác 261 — số tên riêng biệt, không phải số lá)",
+        data["meta"]["cardsWithFusionSystems"] == sum(1 for c in cards if c["fusionSystems"]) == 258,
         f"got {data['meta']['cardsWithFusionSystems']}",
     )
     check(
-        "meta.fusionBasicCount/fusionExactCount/fusionConflictCount khớp đúng số phần tử thật của ba bảng công thức",
-        (data["meta"]["fusionBasicCount"], data["meta"]["fusionExactCount"], data["meta"]["fusionConflictCount"])
-        == (len(data["fusionBasic"]), len(data["fusionExact"]), len(data["fusionConflict"]))
-        == (141, 150, 202),
-        f"got {(data['meta']['fusionBasicCount'], data['meta']['fusionExactCount'], data['meta']['fusionConflictCount'])}",
+        "meta.fusionBasicCount/fusionExactCount khớp đúng số phần tử thật của hai bảng công thức (fusionConflictCount đếm lại từ nguồn ở dưới, không gõ cứng số ở đây)",
+        (data["meta"]["fusionBasicCount"], data["meta"]["fusionExactCount"])
+        == (len(data["fusionBasic"]), len(data["fusionExact"]))
+        == (141, 150),
+        f"got {(data['meta']['fusionBasicCount'], data['meta']['fusionExactCount'])}",
     )
     check(
         "meta.fusionGroupsWithMembers/fusionConflictMemberNames khớp đúng số nhóm hệ và số tên riêng biệt",
-        (len(data["meta"]["fusionGroupsWithMembers"]), len(data["meta"]["fusionConflictMemberNames"])) == (25, 257),
+        (len(data["meta"]["fusionGroupsWithMembers"]), len(data["meta"]["fusionConflictMemberNames"])) == (26, 261),
         f"got {(len(data['meta']['fusionGroupsWithMembers']), len(data['meta']['fusionConflictMemberNames']))}",
+    )
+
+    # --- Recount every fusion.md section straight from the source text
+    # (never a hardcoded literal) -- guards the fm-guide-site-6 fix for the
+    # parser that used to drop a "Dung hợp xung đột" stanza whenever its
+    # general line pinned a card name instead of a [Type] on one side. ---
+    fusion_lines = extract_cards.read_lines(extract_cards.FUSION_FILE)
+
+    def side_key(side: dict):
+        value = side["value"]
+        if isinstance(value, list):
+            value = tuple(value)
+        return (side["kind"], value)
+
+    # (1) conflict stanza count == number of '<' lines in the section.
+    conflict_section = extract_cards.extract_fenced_after(fusion_lines, "Dung hợp xung đột")
+    source_conflict_lt_lines = [l for l in conflict_section if "<" in l]
+    check(
+        "số stanza 'Dung hợp xung đột' trích được == số dòng chứa '<' trong nguồn (đếm lại từ nguồn, không gõ cứng)",
+        len(data["fusionConflict"]) == data["meta"]["fusionConflictCount"] == len(source_conflict_lt_lines),
+        f"extractor {len(data['fusionConflict'])} (meta {data['meta']['fusionConflictCount']}) vs "
+        f"{len(source_conflict_lt_lines)} '<' line(s) in source",
+    )
+
+    # (2) the (overrideLeft, overrideRight, overrideResult) multiset from
+    # the extractor equals the same multiset parsed independently straight
+    # off the source's '<' lines (bypassing the stanza-grouping loop
+    # entirely, so this can't share the bug it is guarding against).
+    source_triples: Counter = Counter()
+    for line in source_conflict_lt_lines:
+        left_raw, right_raw, result = extract_cards.split_on_plus_and_delim(line, "<")
+        left = extract_cards.parse_side(left_raw)
+        right = extract_cards.parse_side(right_raw)
+        source_triples[(side_key(left), side_key(right), result)] += 1
+    extractor_triples: Counter = Counter(
+        (side_key(e["overrideLeft"]), side_key(e["overrideRight"]), e["overrideResult"])
+        for e in data["fusionConflict"]
+    )
+    triples_diff = {
+        k: (source_triples.get(k, 0), extractor_triples.get(k, 0))
+        for k in set(source_triples) | set(extractor_triples)
+        if source_triples.get(k, 0) != extractor_triples.get(k, 0)
+    }
+    check(
+        "bội số (overrideLeft, overrideRight, overrideResult) khớp 1-1 với nguồn (đếm lại từ nguồn, không gõ cứng)",
+        not triples_diff,
+        f"{len(triples_diff)} triple(s) lệch bội số, vd: {list(triples_diff.items())[:5]}",
+    )
+    check(
+        "công thức 'Fungi of the Musk + [Fiend] < Darkworld Thorns' có mặt trong dữ liệu trích được (trước đây mất hẳn)",
+        (("name", "Fungi of the Musk"), ("type", "Fiend"), "Darkworld Thorns") in extractor_triples,
+    )
+
+    # (3) "Dung hợp cơ bản" results+possible count == number of
+    # "(ATK/DEF Sao/Sao)" stat occurrences in that section of the source.
+    basic_section = extract_cards.extract_fenced_after(
+        fusion_lines, "Dung hợp cơ bản", until="Dung hợp chính xác"
+    )
+    source_stat_occurrences = sum(
+        len(re.findall(r"\(\d+/\d+\s+\w+/\w+\)", l)) for l in basic_section
+    )
+    extractor_basic_total = sum(len(b["results"]) + len(b["possible"]) for b in data["fusionBasic"])
+    check(
+        "'Dung hợp cơ bản': results+possible == số cụm (ATK/DEF Sao/Sao) trong nguồn (đếm lại từ nguồn, không gõ cứng)",
+        extractor_basic_total == source_stat_occurrences,
+        f"extractor results+possible={extractor_basic_total} vs source stat occurrences={source_stat_occurrences}",
+    )
+
+    # (4) "Dung hợp chính xác" recipe count == number of '=' lines in the
+    # section of the source.
+    exact_section = extract_cards.extract_fenced_after(
+        fusion_lines, "Dung hợp chính xác", until="Dung hợp xung đột"
+    )
+    source_exact_eq_lines = [l for l in exact_section if "=" in l]
+    check(
+        "'Dung hợp chính xác': số công thức == số dòng chứa '=' trong nguồn (đếm lại từ nguồn, không gõ cứng)",
+        len(data["fusionExact"]) == len(source_exact_eq_lines),
+        f"extractor {len(data['fusionExact'])} vs {len(source_exact_eq_lines)} '=' line(s) in source",
     )
 
     # The docs/guide equip roster spells 15 names differently than
