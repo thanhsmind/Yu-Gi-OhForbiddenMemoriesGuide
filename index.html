@@ -74421,8 +74421,21 @@ window.FM_DATA = {
   function toQueryValue(v) {
     return encodeURIComponent(v).replace(/%20/g, "+");
   }
+  // decodeURIComponent throws on a malformed percent-escape (e.g. "%zz" or
+  // a bare "%") -- a hand-edited or corrupted hash must degrade to the raw
+  // text instead of aborting the whole read (cold load, ~line 74614) or
+  // getting silently swallowed by the hashchange handler (mid-session,
+  // ~line 74606). Every decode in the router goes through this one wrapper
+  // so the try/catch guard can't be missed at a call site.
+  function safeDecodeURIComponent(v) {
+    try {
+      return decodeURIComponent(v);
+    } catch (e) {
+      return v;
+    }
+  }
   function fromQueryValue(v) {
-    return decodeURIComponent(v.replace(/\+/g, "%20"));
+    return safeDecodeURIComponent(v.replace(/\+/g, "%20"));
   }
 
   function qsStringify(pairs) {
@@ -74443,7 +74456,7 @@ window.FM_DATA = {
       var idx = pair.indexOf("=");
       var k = idx === -1 ? pair : pair.slice(0, idx);
       var v = idx === -1 ? "" : pair.slice(idx + 1);
-      out[decodeURIComponent(k)] = fromQueryValue(v);
+      out[safeDecodeURIComponent(k)] = fromQueryValue(v);
     });
     return out;
   }
@@ -74488,15 +74501,20 @@ window.FM_DATA = {
   // `commit` true  -> pushState (a real Back/Forward stop). Both pass only
   // a hash-prefixed string as the URL argument -- file:// refuses a path
   // argument, but a hash-only argument always resolves against the current
-  // path, so this works identically on file:// and http(s).
+  // path, so this works identically on file:// and http(s). Returns whether
+  // a write actually happened (false on the early-return no-op) so callers
+  // can tell a real checkpoint from a same-hash keystroke -- currentHash()
+  // trims search fields, so a keystroke that only adds/removes surrounding
+  // whitespace can leave the hash unchanged even though the DOM changed.
   function writeHash(commit) {
     var newHash = currentHash();
-    if (location.hash === newHash) return;
+    if (location.hash === newHash) return false;
     if (commit) {
       history.pushState(null, "", newHash);
     } else {
       history.replaceState(null, "", newHash);
     }
+    return true;
   }
 
   function scheduleHashWrite(commit) {
@@ -74509,15 +74527,20 @@ window.FM_DATA = {
       writeHash(true);
       return;
     }
-    // Typing: the FIRST keystroke of a burst opens its own checkpoint entry
-    // (pushState) so whatever hash was current before typing started is
-    // never overwritten -- Back must land there, not mid-typing text. Every
-    // further keystroke in the same burst replaces that same checkpoint in
-    // place (replaceState), so N keystrokes always cost exactly one history
-    // entry, never N. The debounce timer only marks the burst as settled;
-    // the checkpoint entry it already pushed already holds the final text.
-    writeHash(!typingBurstOpen);
-    typingBurstOpen = true;
+    // Typing: the FIRST keystroke that actually changes the hash opens the
+    // burst's own checkpoint entry (pushState) so whatever hash was current
+    // before typing started is never overwritten -- Back must land there,
+    // not mid-typing text. A keystroke that only adds/removes surrounding
+    // whitespace leaves the trimmed hash unchanged (writeHash no-ops), so it
+    // must NOT flip the burst open -- otherwise the next real change would
+    // replaceState over the wrong (pre-burst) entry and destroy it. Every
+    // further keystroke while the burst is open replaces that same
+    // checkpoint in place (replaceState), so N keystrokes always cost at
+    // most one history entry, never N. The debounce timer only marks the
+    // burst as settled; the checkpoint entry it already pushed already
+    // holds the final text.
+    var pushed = writeHash(!typingBurstOpen);
+    if (pushed) typingBurstOpen = true;
     if (hashDebounceTimer) clearTimeout(hashDebounceTimer);
     hashDebounceTimer = setTimeout(function () {
       hashDebounceTimer = null;

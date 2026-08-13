@@ -528,6 +528,69 @@ def main() -> int:
         not bad_history_calls,
         f"{bad_history_calls}",
     )
+    # Judge fix fm-guide-site-7 FAIL 1: a typing-burst checkpoint was lost
+    # when the burst's first keystroke didn't change the trimmed hash --
+    # writeHash() early-returned (no push) but scheduleHashWrite() still
+    # flagged the burst open, so the next keystroke replaceState'd the
+    # PREVIOUS (pre-burst) history entry. Pin: writeHash must report
+    # whether it actually wrote (return false on the no-op early return,
+    # true after a real push/replace), and typingBurstOpen must only ever
+    # be set true from that reported result -- never unconditionally. This
+    # is structural (source-shape), not behavioral, because check.py has no
+    # DOM/history harness; the invariant it pins is "the burst flag and the
+    # checkpoint push cannot diverge".
+    writehash_fn_match = re.search(
+        r"function writeHash\(commit\) \{.*?\breturn false;.*?\breturn true;\s*\}",
+        html_text,
+        re.S,
+    )
+    check(
+        "writeHash(commit) trả về false khi early-return (hash không đổi) và true sau khi thực sự push/replace",
+        writehash_fn_match is not None,
+    )
+    schedule_gate_match = re.search(
+        r"var pushed = writeHash\(!typingBurstOpen\);\s*\n\s*if \(pushed\) typingBurstOpen = true;",
+        html_text,
+    )
+    check(
+        "scheduleHashWrite chỉ bật typingBurstOpen từ giá trị writeHash trả về (if (pushed) typingBurstOpen = true), không bật vô điều kiện",
+        schedule_gate_match is not None,
+    )
+    typing_burst_true_sites = re.findall(r"typingBurstOpen\s*=\s*true", html_text)
+    check(
+        "toàn bộ index.html chỉ có đúng một chỗ gán typingBurstOpen = true, và đó là chỗ được gate bởi if (pushed) ở trên (cờ burst và việc push checkpoint không thể phân kỳ)",
+        len(typing_burst_true_sites) == 1,
+        f"tìm thấy {len(typing_burst_true_sites)} chỗ gán typingBurstOpen = true",
+    )
+
+    # Judge fix fm-guide-site-7 FAIL 2: a malformed percent-escape in the
+    # hash (e.g. "#tra-cuu?q=%zz") threw an uncaught URIError from
+    # decodeURIComponent inside fromQueryValue/qsParse, aborting cold load
+    # (init never reaches the normalizing replaceState) or escaping
+    # onHashChange mid-session (navigation silently swallowed). Pin: every
+    # decodeURIComponent call site in the routing code sits inside a
+    # try/catch, or goes through the one safe wrapper that does.
+    safe_decode_match = re.search(
+        r"function safeDecodeURIComponent\(v\) \{\s*try \{\s*return decodeURIComponent\(v\);\s*\}\s*catch \(e\) \{\s*return v;\s*\}\s*\}",
+        html_text,
+    )
+    check(
+        "index.html có safeDecodeURIComponent(v) bọc decodeURIComponent trong try/catch, trả về giá trị thô khi gặp URIError",
+        safe_decode_match is not None,
+    )
+    all_decode_calls = re.findall(r"decodeURIComponent\(", html_text)
+    unwrapped_decode_calls = re.findall(
+        r"(?<!return )decodeURIComponent\(", html_text
+    )
+    check(
+        f"đủ {len(all_decode_calls)} lệnh gọi decodeURIComponent trong index.html (guard không chạy trên tập rỗng)",
+        len(all_decode_calls) > 0,
+    )
+    check(
+        "mọi lệnh gọi decodeURIComponent trong index.html đều nằm trong safeDecodeURIComponent (chỉ 'return decodeURIComponent(' xuất hiện, tức luôn có try/catch bao ngoài) -- không lệnh gọi trần nào có thể ném URIError chưa bắt",
+        len(unwrapped_decode_calls) == 0,
+        f"{len(unwrapped_decode_calls)} lệnh gọi decodeURIComponent không đứng ngay sau 'return ' (khả năng nằm ngoài try/catch)",
+    )
 
     fm_begin = extract_cards.FM_DATA_BEGIN_MARKER
     fm_end = extract_cards.FM_DATA_END_MARKER
