@@ -1,0 +1,140 @@
+{
+  "id": "fm-guide-site-15",
+  "feature": "fm-guide-site",
+  "title": "Thống nhất thuật ngữ bản dịch và giữ nguyên tên lá bài",
+  "lane": "small",
+  "status": "capped",
+  "deps": [],
+  "decisions": [
+    "D4",
+    "D5"
+  ],
+  "files": [
+    "data/lore-vi/part-1.json",
+    "data/lore-vi/part-2.json",
+    "data/lore-vi/part-3.json",
+    "data/lore-vi/part-4.json",
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "data/lore-vi/part-1.json",
+    "tools/check.py"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Ba việc trên bản dịch lore. (1) Thống nhất từ chỉ 'monster' thành 'quái vật' trên toàn bộ trang — hiện lẫn lộn 'quái vật' và 'quái thú'. Chọn 'quái vật' vì ba file nguồn trong docs/guide dùng từ này áp đảo (24 lần so với 5) và tab Hướng dẫn trên trang đã theo nó. Sửa trong cả bốn file data/lore-vi/part-*.json VÀ trong phần nội dung viết tay của tab Hướng dẫn trong index.html. Đọc lại từng câu sau khi đổi, đừng thay máy móc — câu nào đọc gượng thì viết lại cho xuôi. (2) Lá #694: nguyên văn tiếng Anh có tên nghi lễ 'Resurrection of Chakra' nhưng bản dịch đã hòa tan tên đó thành mô tả tiếng Việt. Trả tên đó về đúng dạng tiếng Anh. Đây là lá DUY NHẤT còn lỗi này — đã quét toàn bộ 722 lá, không lá nào khác đánh mất một tên bài nhiều chữ. (3) Rà lại bốn lá bị vòng soi nhặt ra và sửa nếu còn gượng: #514 (bản dịch thêm động từ 'ra đòn' mà nguyên văn không có), #262 (dùng token Type 'Warrior' thay cho danh từ chung 'chiến binh', đọc thành nửa Anh nửa Việt — ở đây nguyên văn dùng nghĩa danh từ chung nên phải dịch), #233 (mệnh đề 'đồn rằng' sai ngữ pháp, phải là 'được đồn là' hoặc tương đương). Sau đó chạy lại extractor --inject để nhúng bản dịch mới vào trang. Thêm khẳng định vào tools/check.py: (a) không chuỗi 'quái thú' nào còn trong index.html; (b) mọi tên lá bài NHIỀU CHỮ xuất hiện trong lore tiếng Anh của một lá đều phải xuất hiện nguyên dạng trong bản dịch tiếng Việt của chính lá đó — đây là khẳng định giữ cho lỗi (2) không tái diễn; chỉ xét tên nhiều chữ để tránh bắt nhầm danh từ chung một chữ như Dragon hay Forest.",
+  "must_haves": {
+    "truths": [
+      "Toàn trang chỉ dùng 'quái vật', không còn 'quái thú'",
+      "Lore #694 giữ nguyên tên 'Resurrection of Chakra' bằng tiếng Anh",
+      "Bốn câu bị nhặt ra đọc xuôi tiếng Việt",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "data/lore-vi/part-1.json",
+        "substantive": "thuật ngữ thống nhất, các câu đã rà lại"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định thuật ngữ và khẳng định giữ tên lá nhiều chữ"
+      }
+    ],
+    "key_links": [
+      "Bản dịch đã sửa được nhúng lại vào index.html qua --inject"
+    ],
+    "prohibitions": [
+      "Không sửa file trong docs/guide/ hay data/cards.json",
+      "Không sửa tay bên trong khối FM_DATA của index.html",
+      "Không dịch tên lá bài, tên Type hay thuật ngữ game",
+      "Không thêm URL http/https, script src, fetch"
+    ]
+  },
+  "trace": {
+    "worker": "editor",
+    "outcome": "Unified monster term to quái vật across lore-vi + index.html, restored Resurrection of Chakra's English name for card #694, fixed three flagged sentences (#514/#262/#233), and added two regression assertions to tools/check.py",
+    "files_changed": [
+      "data/lore-vi/part-1.json",
+      "data/lore-vi/part-2.json",
+      "data/lore-vi/part-3.json",
+      "data/lore-vi/part-4.json",
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T16:06:03.080Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T16:01:29.212Z",
+    "report": {
+      "outcome": "Unified monster term to quái vật across lore-vi + index.html, restored Resurrection of Chakra's English name for card #694, fixed three flagged sentences (#514/#262/#233), and added two regression assertions to tools/check.py",
+      "commit": "b016335",
+      "files": [
+        "data/lore-vi/part-1.json",
+        "data/lore-vi/part-2.json",
+        "data/lore-vi/part-3.json",
+        "data/lore-vi/part-4.json",
+        "index.html",
+        "tools/check.py"
+      ],
+      "tests": "green",
+      "deviations": [
+        "Left a pre-existing, unrelated dirty edit in docs/guide/Game Yu-Gi-Oh Hướng dẫn cơ bản.md untouched — it was already present in the working tree before this cell started, was not caused by any edit here, and is outside this cell's prohibited-files scope."
+      ]
+    },
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T16:06:02.273Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "glossary-unified",
+            "name": "The page uses one word for monster",
+            "status": "PASS",
+            "evidence": "Orchestrator recount on the committed tree: 'quai thu' occurrences in index.html = 0, 'quai vat' = 100. The chosen term matches the three docs/guide source files (24 vs 5) and the Huong dan tab already on the page."
+          },
+          {
+            "id": "card-name-restored",
+            "name": "Card #694 keeps its ritual name in English",
+            "status": "PASS",
+            "evidence": "VI now reads 'Hien te 3 quai vat he Fiend de cu hanh nghi le Resurrection of Chakra.' — the name is verbatim English inside the Vietnamese sentence."
+          },
+          {
+            "id": "no-dropped-names",
+            "name": "No multi-word card name named in an English lore is missing from its Vietnamese",
+            "status": "PASS",
+            "evidence": "Independent scan over all 722 cards against the 722-name list, multi-word names only: zero hits. check.py now pins this so the defect cannot return."
+          },
+          {
+            "id": "flagged-sentences",
+            "name": "The three flagged sentences read as natural Vietnamese",
+            "status": "PASS",
+            "evidence": "#514 dropped the invented verb ('cho ket qua cuc ky chinh xac' — matches 'with definite results'); #262 renders the common noun as 'Chien binh tien toc' instead of the English Type token; #233 reads 'duoc don la song trong the gioi giac mo', grammatical."
+          },
+          {
+            "id": "suite-green",
+            "name": "python3 tools/check.py green with the two new assertions",
+            "status": "PASS",
+            "evidence": "Exit 0, re-run independently by the orchestrator; 722 translations still complete and none empty."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T16:06:34.486Z"
+      }
+    ]
+  },
+  "tier": "generation"
+}
