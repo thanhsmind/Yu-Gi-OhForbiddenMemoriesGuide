@@ -1,23 +1,37 @@
 #!/usr/bin/env python3
-"""Mine docs/guide/*.md into a single window.FM_DATA JS block.
+"""Build a single window.FM_DATA JS block: the card spine from
+data/cards.json (D7), with equip lists and fusion recipes mined from
+docs/guide/*.md joined on top by card name.
 
 This is a developer-only tool (decision D6 in
 docs/history/fm-guide-site/CONTEXT.md): the shipped index.html never runs
 Python, it only embeds the JS this script prints. Re-run this script and
 splice its output between the `/* FM_DATA:BEGIN */` / `/* FM_DATA:END */`
-markers in index.html whenever docs/guide/ changes.
+markers in index.html whenever data/cards.json or docs/guide/ changes.
 
 Sources (read-only, never edited by this script):
+  - "data/cards.json" (D7) -- 722 Yugipedia cards, the spine of the card
+      table: number/name/slug/cardType/type/guardianStars/level/atk/def/
+      password/starChipCost/lore/japaneseName/romajiName/obtainedBy.
+      Supersedes the old docs/guide-mined number+name+ATK/DEF roster
+      (D4's original source), which only covered 653 names and 98
+      ATK/DEF pairs.
   - "Game Yu-Gi-Oh! Forbidden Memories Quân Bài Phụ trợ.md"
-      #NNN <name> (<n> Equips) headers + their #NNN <item> lines -> the
-      number<->name roster (653 pairs) and per-monster equip lists.
+      #NNN <name> (<n> Equips) headers + their #NNN <item> lines -> 621
+      per-monster equip lists, joined onto the data/cards.json spine by
+      name (case-insensitive, via EQUIP_NAME_ALIASES for the handful of
+      spellings docs/guide and Yugipedia disagree on).
   - "Game Yu-Gi-Oh! Forbidden Memories fusion.md"
       three fenced sections: "Dung hợp cơ bản" ([Type]+[Type] = Name
       (ATK/DEF Star/Star)), "Dung hợp chính xác" (Name + Name = Name), and
-      "Dung hợp xung đột" (per-card fusion-system membership).
+      "Dung hợp xung đột" (per-card fusion-system membership) -- carried
+      through unchanged; only the fusion-system tags are joined onto the
+      spine (by name, matches Yugipedia's spelling directly, no alias
+      needed -- audited: 0 mismatches).
 
 D4 (docs/history/fm-guide-site/CONTEXT.md): a field with no source is
-`None` (-> JSON null). Never 0, never guessed.
+`None` (-> JSON null). Never 0, never guessed. D7 keeps this rule, only
+swaps the card table's source.
 
 Usage:
     python3 tools/extract_cards.py                  # print JS to stdout
@@ -34,17 +48,32 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GUIDE_DIR = REPO_ROOT / "docs" / "guide"
+CARDS_JSON = REPO_ROOT / "data" / "cards.json"
 
 EQUIP_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories Quân Bài Phụ trợ.md"
 FUSION_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories fusion.md"
 
-# Three names that are spelled differently in fusion.md than in the equip
-# file's #NNN roster (docs/history/fm-guide-site/plan.md, "Ba tên lệch giữa
-# hai file"). Fixed table, never fuzzy/prefix matching.
-NAME_ALIASES = {
-    "blue-eyed silver zombie": "139",   # -> #139 Blue Eyes Silver Zombie
-    "doma the angel of silence": "111",  # -> #111 Doma the Angel of Silence
-    "stone d.": "426",                   # -> #426 Stone Dragon
+# docs/guide's equip roster spells 15 names (13 monster headers, 2 equip
+# items) differently than Yugipedia (data/cards.json). Fixed table, never
+# fuzzy/prefix matching -- resolved by hand against data/cards.json for
+# cell fm-guide-site-3. Keys are lowercased docs/guide spellings; values
+# are the exact data/cards.json `name` to join against.
+EQUIP_NAME_ALIASES = {
+    "red eyes black dragon": "Red-eyes B. Dragon",
+    "spirit of the book": "Spirit of the Books",
+    "charubin the fire": "Charubin the Fire Knight",
+    "blue eyes silver zombie": "Blue-eyed Silver Zombie",
+    "black skull dragon": "B. Skull Dragon",
+    "one who hunts soul": "One Who Hunts Souls",
+    "blue eyes ultimate dragon": "Blue-eyes Ultimate Dragon",
+    "stone dragon": "Stone D.",
+    "millenium golem": "Millennium Golem",
+    "kuwagata a": "Kuwagata α",
+    "twin long rods #2": "Twin Long Rods 2",
+    "performance of swords": "Performance of Sword",
+    "meteor black dragon": "Meteor B. Dragon",
+    "lazer cannon armor": "Laser Cannon Armor",
+    "silver bow & arrow": "Silver Bow and Arrow",
 }
 
 EQUIP_HEADER_RE = re.compile(r'^#(\d+)\s+(.*?)\s*\(\s*(\d+)\s*Equips?\s*\)')
@@ -55,14 +84,6 @@ CONFLICT_TOP_HEADER_RE = re.compile(r'^\s*\[[^\]]+\]\s*\+\s*\[[^\]]+\]\s*=\s*.+$
 
 def read_lines(path: Path) -> list[str]:
     return path.read_text(encoding="utf-8").splitlines()
-
-
-def slugify(name: str) -> str:
-    """D3: lowercase; every run of non a-z0-9 chars becomes one '-'; trim
-    leading/trailing '-'."""
-    s = name.lower()
-    s = re.sub(r"[^a-z0-9]+", "-", s)
-    return s.strip("-")
 
 
 def extract_fenced_after(lines: list[str], marker: str, until: str | None = None) -> list[str]:
@@ -145,6 +166,13 @@ def parse_equip_file(lines: list[str]):
             item = EQUIP_ITEM_RE.match(line)
             if item:
                 inum, iname = item.group(1), item.group(2).strip()
+                # One item line (#668 Bright Castle, fusion.md-equivalent
+                # of the #395 header bug above) has the block's closing
+                # "===...===" separator glued onto the same line with no
+                # whitespace in between, so the greedy-to-EOL item regex
+                # swallows it into the name. Strip a glued trailing '='
+                # run rather than treat it as part of the card name.
+                iname = re.sub(r"=+$", "", iname).strip()
                 numbered_names.setdefault(inum, iname)
                 current["equips"].append({"number": inum, "name": iname})
 
@@ -403,71 +431,80 @@ def parse_fusion_conflict(lines: list[str]):
 # Join everything into one dataset
 # ---------------------------------------------------------------------------
 
-def build_name_lookup(numbered_names: dict[str, str]) -> dict[str, str]:
-    lookup: dict[str, str] = {}
-    for num, name in numbered_names.items():
-        lookup.setdefault(name.lower(), num)
-    return lookup
+# Fields kept from data/cards.json onto the spine. Deliberately excludes
+# `url`/`mainCardUrl`/`page`/`mainCardPage`/`file`: those are Yugipedia
+# bookkeeping and the first two are live http(s) URLs -- embedding them in
+# index.html's FM_DATA block would put a network-looking string in a page
+# that D1/D2 require to have none, so they never leave this script.
+SPINE_FIELDS = (
+    "number", "name", "slug", "cardType", "type", "guardianStars", "level",
+    "atk", "def", "password", "starChipCost", "lore", "japaneseName",
+    "romajiName", "obtainedBy",
+)
 
 
-def resolve_number(name: str, name_lookup: dict[str, str]) -> str | None:
-    key = name.strip().lower()
-    if key in NAME_ALIASES:
-        return NAME_ALIASES[key]
-    return name_lookup.get(key)
+def load_spine_cards() -> list[dict]:
+    """D7: the 722-card Yugipedia spine, read-only from data/cards.json.
+    Field coverage per docs/history/fm-guide-site/CONTEXT.md: 621 monsters
+    have type/guardianStars/level/atk/def, all 722 have lore, 698 have
+    password/starChipCost, 640 have obtainedBy -- everywhere else is
+    already `None` in the source file, so D4 ("missing is null, never 0")
+    holds without any extra work here."""
+    raw = json.loads(CARDS_JSON.read_text(encoding="utf-8"))
+    return [{field: c[field] for field in SPINE_FIELDS} for c in raw["cards"]]
 
 
 def extract_all() -> dict:
     numbered_names, equip_lists = parse_equip_file(read_lines(EQUIP_FILE))
 
     fusion_lines = read_lines(FUSION_FILE)
-    fusion_basic, atk_def_by_name = parse_fusion_basic(fusion_lines)
+    # fusion_basic/fusion_exact/fusion_conflict/groups are carried through
+    # unchanged (same column-splitting parse as before D7). atk_def_by_name
+    # is no longer joined onto the card spine -- data/cards.json already
+    # carries ATK/DEF for every monster -- so it is computed and dropped.
+    fusion_basic, _atk_def_by_name = parse_fusion_basic(fusion_lines)
     fusion_exact = parse_fusion_exact(fusion_lines)
     fusion_conflict, groups, member_names = parse_fusion_conflict(fusion_lines)
 
-    name_lookup = build_name_lookup(numbered_names)
+    cards = load_spine_cards()
+    cards_by_lower = {c["name"].lower(): c for c in cards}
 
-    atk_def_by_number: dict[str, dict] = {}
-    for name, stat in atk_def_by_name.items():
-        num = resolve_number(name, name_lookup)
-        if num:
-            atk_def_by_number[num] = stat
+    # Equip lists (621 monster headers mined from docs/guide) join onto the
+    # spine by name, case-insensitive, resolving the 15 spots docs/guide
+    # and Yugipedia disagree on spelling via EQUIP_NAME_ALIASES. A header
+    # whose resolved name still has no spine card is a real gap, not a
+    # ghost row -- surfaced in meta.equipNameMisses instead of silently
+    # dropped or invented.
+    equip_name_misses: list[str] = []
+    for card in cards:
+        card["equips"] = None
+    for block in equip_lists:
+        header_key = block["name"].strip().lower()
+        yugipedia_name = EQUIP_NAME_ALIASES.get(header_key, block["name"])
+        card = cards_by_lower.get(yugipedia_name.lower())
+        if card is None:
+            equip_name_misses.append(block["name"])
+            continue
+        card["equips"] = block["equips"]
 
+    # Fusion-system tags ("Dung hợp xung đột" member names) already match
+    # Yugipedia's spelling directly -- audited against the 722-card spine,
+    # 0 mismatches -- so no alias table is needed on this side.
     name_to_tags: dict[str, set[str]] = {}
     for tag, names in groups.items():
         for nm in names:
-            name_to_tags.setdefault(nm, set()).add(tag)
-
-    tags_by_number: dict[str, set[str]] = {}
-    for nm, tags in name_to_tags.items():
-        num = resolve_number(nm, name_lookup)
-        if num:
-            tags_by_number.setdefault(num, set()).update(tags)
-
-    equips_by_number = {e["number"]: e["equips"] for e in equip_lists}
-
-    cards = []
-    for num in sorted(numbered_names, key=int):
-        name = numbered_names[num]
-        stat = atk_def_by_number.get(num)
-        tags = tags_by_number.get(num)
-        cards.append(
-            {
-                "number": num,
-                "name": name,
-                "slug": slugify(name),
-                "atk": stat["atk"] if stat else None,
-                "def": stat["def"] if stat else None,
-                "guardianStars": [stat["star1"], stat["star2"]] if stat else None,
-                "fusionSystems": sorted(tags) if tags else None,
-                "equips": equips_by_number.get(num),
-            }
-        )
+            name_to_tags.setdefault(nm.lower(), set()).add(tag)
+    for card in cards:
+        tags = name_to_tags.get(card["name"].lower())
+        card["fusionSystems"] = sorted(tags) if tags else None
 
     meta = {
-        "totalNumberedCards": len(cards),
-        "atkDefEntriesInFusionSource": len(atk_def_by_name),
+        "totalCards": len(cards),
         "cardsWithAtkDef": sum(1 for c in cards if c["atk"] is not None),
+        "cardsWithEquips": sum(1 for c in cards if c["equips"]),
+        "cardsWithFusionSystems": sum(1 for c in cards if c["fusionSystems"]),
+        "equipListsCount": len(equip_lists),
+        "equipNameMisses": equip_name_misses,
         "fusionConflictMemberNames": sorted(member_names),
         "fusionGroupsWithMembers": sorted(tag for tag, names in groups.items() if names),
     }

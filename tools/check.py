@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Assert the data-layer invariants for tools/extract_cards.py.
 
-Runs the real extractor against docs/guide/ (never a fixture) and checks
-the shape/coverage promises made in docs/history/fm-guide-site/plan.md and
-CONTEXT.md's D4 ("no fabricated data; a missing field is null, never 0").
+Runs the real extractor against data/cards.json + docs/guide/ (never a
+fixture) and checks the shape/coverage promises made in
+docs/history/fm-guide-site/CONTEXT.md's D4 ("no fabricated data; a
+missing field is null, never 0") and D7 (the card table's spine is the
+722-card data/cards.json; docs/guide/ still supplies equip lists and
+fusion recipes, joined on top by card name).
 
 This is the project's declared test command (`commands.test` in
-.bee/config.json). Everything it writes goes to a fresh temp directory —
-it never touches a deliverable file (index.html, docs/guide/, etc).
+.bee/config.json). Everything it writes goes to a fresh temp directory --
+it never touches a deliverable file (index.html, docs/guide/, data/, etc).
 """
 from __future__ import annotations
 
@@ -22,6 +25,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXTRACTOR = REPO_ROOT / "tools" / "extract_cards.py"
 INDEX_HTML = REPO_ROOT / "index.html"
+CARDS_JSON = REPO_ROOT / "data" / "cards.json"
+IMAGES_DIR = REPO_ROOT / "images" / "cards"
 
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 import extract_cards  # noqa: E402  (import after sys.path tweak, by design)
@@ -93,69 +98,111 @@ def main() -> int:
     by_number = {c["number"]: c for c in cards}
     by_name_lower = {c["name"].lower(): c for c in cards}
 
-    # --- Card-level invariants named in the cell ---
-    check("đúng 653 cặp số-tên", len(cards) == 653, f"got {len(cards)}")
+    # --- D7: spine is the 722-card data/cards.json ---
+    spine_raw = json.loads(CARDS_JSON.read_text(encoding="utf-8"))
+    check("đúng 722 lá (spine data/cards.json)", len(cards) == 722, f"got {len(cards)}")
+    check(
+        "spine không bị sửa (số lá trích xuất == số lá trong data/cards.json)",
+        len(cards) == spine_raw["count"] == len(spine_raw["cards"]),
+        f"extracted {len(cards)}, data/cards.json count={spine_raw['count']}, cards={len(spine_raw['cards'])}",
+    )
 
     with_atk_def = [c for c in cards if c["atk"] is not None]
     check(
-        "101 lá có ATK/DEF trong nguồn fusion.md (trước khi join số thứ tự)",
-        data["meta"]["atkDefEntriesInFusionSource"] == 101,
-        f"got {data['meta']['atkDefEntriesInFusionSource']}",
-    )
-    check(
-        "ít nhất 96 lá join được cả số lẫn ATK/DEF",
-        len(with_atk_def) >= 96,
+        "621 lá quái vật có ATK/DEF (từ spine, không mine lại từ fusion.md)",
+        len(with_atk_def) == 621,
         f"got {len(with_atk_def)}",
     )
 
-    # docs/history/fm-guide-site/plan.md reports "261 tên" for this section,
-    # but that count was produced by a discovery script with the same bug
-    # this extractor was almost written with: fusion.md's "Dung hợp xung
-    # đột" section has exactly one spot (the seam between two adjacent ```
-    # fences, around "Witch's Apprentice" / "[Aqua] + [Dragon] = Kairyu-
-    # shin") where the source omits the blank line that normally separates
-    # stanzas. A parser that only stops a member block at a blank line
-    # swallows the next stanza's own header tokens ("[Aqua]",
-    # "+ [Dragon] = Kairyu-shin") as if they were card names, inflating the
-    # true count of 257 distinct names by exactly 4. Asserting 261 here
-    # would mean asserting that four non-card strings belong in the fusion
-    # table — the opposite of D4. Named deviation: this cell asserts the
-    # extractor's own audited count, 257, not plan.md's pre-fix estimate.
+    # docs/history/fm-guide-site/CONTEXT.md carries this count forward from
+    # the audited docs/guide mining -- unchanged by D7 since fusionConflict
+    # parsing (column-splitting logic) is untouched.
     fusion_conflict_members = data["meta"]["fusionConflictMemberNames"]
     check(
-        "257 lá có hệ fusion (mục 'Dung hợp xung đột', xem ghi chú lệch 261 ở trên)",
+        "257 lá có hệ fusion (mục 'Dung hợp xung đột')",
         len(fusion_conflict_members) == 257,
         f"got {len(fusion_conflict_members)}",
     )
 
-    aliases_expected = {
-        "blue-eyed silver zombie": "139",
-        "doma the angel of silence": "111",
-        "stone d.": "426",
-    }
-    for alias_name, expected_num in aliases_expected.items():
-        resolved = extract_cards.resolve_number(
-            alias_name, extract_cards.build_name_lookup(
-                {c["number"]: c["name"] for c in cards}
-            )
-        )
-        check(
-            f"alias '{alias_name}' -> #{expected_num}",
-            resolved == expected_num,
-            f"got {resolved!r}",
-        )
+    check(
+        "621 khối equip theo lá quái vật (equipLists, mined từ docs/guide)",
+        len(data["equipLists"]) == 621,
+        f"got {len(data['equipLists'])}",
+    )
+    check(
+        "621 lá join được equip lên spine (equipListsCount == cardsWithEquips, không lá ma)",
+        data["meta"]["cardsWithEquips"] == 621,
+        f"got {data['meta']['cardsWithEquips']}",
+    )
+    check(
+        "mọi header equip trong docs/guide join được vào spine 722 lá (alias table đủ, không có tên rơi rớt)",
+        data["meta"]["equipNameMisses"] == [],
+        f"misses: {data['meta']['equipNameMisses']}",
+    )
+    check("có công thức từ cả ba mục fusion.md", bool(data["fusionBasic"]) and bool(data["fusionExact"]) and bool(data["fusionConflict"]))
+
+    # The docs/guide equip roster spells 15 names differently than
+    # Yugipedia (13 monster headers + 2 equip items) -- every alias must
+    # resolve to a real spine card, and that card must carry equip data
+    # joined onto it (proves the alias table is actually wired in, not
+    # just declared).
+    check(
+        "bảng EQUIP_NAME_ALIASES có đúng 15 mục (13 lá quái vật + 2 vật phẩm equip)",
+        len(extract_cards.EQUIP_NAME_ALIASES) == 15,
+        f"got {len(extract_cards.EQUIP_NAME_ALIASES)}",
+    )
+    alias_misses = []
+    for guide_name, yugipedia_name in extract_cards.EQUIP_NAME_ALIASES.items():
+        card = by_name_lower.get(yugipedia_name.lower())
+        if card is None:
+            alias_misses.append((guide_name, yugipedia_name))
+    check(
+        "mỗi alias trong EQUIP_NAME_ALIASES trỏ tới đúng một lá có thật trong spine",
+        not alias_misses,
+        f"{alias_misses[:5]}",
+    )
+    b_skull = by_name_lower.get("b. skull dragon")
+    check(
+        "alias 'Black Skull Dragon' (docs/guide) -> 'B. Skull Dragon' (Yugipedia) có equip đi kèm",
+        b_skull is not None and bool(b_skull.get("equips")),
+        f"got {b_skull}",
+    )
+
+    # The #668 Bright Castle equip item line has fusion.md's own separator
+    # glued onto it with no whitespace ("#668 Bright Castle===...==="); a
+    # naive greedy-to-EOL parse would fold the dashes into the card name.
+    # Assert the fix holds: no equip item name in the mined equip lists
+    # carries a trailing run of '=' characters.
+    glued_names = [
+        it["name"]
+        for block in data["equipLists"]
+        for it in block["equips"]
+        if it["name"].rstrip().endswith("=")
+    ]
+    check(
+        "#668 Bright Castle không còn dính dấu '=' nối liền (bug dòng glued-separator đã sửa)",
+        not glued_names,
+        f"{glued_names}",
+    )
 
     slugs = [c["slug"] for c in cards]
     check(
-        "không slug nào trùng nhau trên toàn bộ 653 tên",
+        "không slug nào trùng nhau trên toàn bộ 722 lá",
         len(set(slugs)) == len(slugs),
         f"{len(slugs) - len(set(slugs))} duplicate(s)",
     )
     bad_slugs = [s for s in slugs if not SLUG_RE.match(s)]
     check("slug chỉ chứa a-z0-9 và dấu gạch", not bad_slugs, f"bad: {bad_slugs[:5]}")
 
+    missing_images = [s for s in slugs if not (IMAGES_DIR / f"{s}.png").is_file()]
+    check(
+        "cả 722 slug đều có ảnh thật trong images/cards/<slug>.png",
+        not missing_images,
+        f"{len(missing_images)} missing, e.g. {missing_images[:5]}",
+    )
+
     # A real ATK/DEF of 0 legitimately exists in the source (e.g. Dragon
-    # Zombie 1600/0) — the invariant is about *missing* data, not about
+    # Zombie 1600/0) -- the invariant is about *missing* data, not about
     # whether 0 can ever appear. So: every card with atk is None must also
     # have def is None (never a stray 0 standing in for "no data"), and
     # vice versa.
@@ -168,40 +215,48 @@ def main() -> int:
         f"{len(inconsistent_null)} card(s): {[c['name'] for c in inconsistent_null][:5]}",
     )
     check(
-        "654 lá không có nguồn ATK/DEF đều là null (không phải chuỗi rỗng hay 0)",
+        "mọi lá không có nguồn ATK/DEF đều là null (không phải chuỗi rỗng hay 0)",
         all(c["atk"] is None or isinstance(c["atk"], int) for c in cards)
         and all(c["def"] is None or isinstance(c["def"], int) for c in cards),
     )
 
-    check("'#721' không sinh dòng ma", "721" not in by_number)
-
-    dancing_elf = by_number.get("395")
-    check(
-        "dòng '#395 Dancing Elf' vẫn vào bảng",
-        dancing_elf is not None and dancing_elf["name"] == "Dancing Elf",
-        f"got {dancing_elf}",
-    )
-
-    # --- Structural guardrails so later cells inherit a sane base ---
-    check(
-        "621 khối equip theo lá quái vật (equipLists)",
-        len(data["equipLists"]) == 621,
-        f"got {len(data['equipLists'])}",
-    )
-    check("có công thức từ cả ba mục fusion.md", bool(data["fusionBasic"]) and bool(data["fusionExact"]) and bool(data["fusionConflict"]))
-
-    # Exact-name fusion recipes pointing at names with no #NNN entry must be
+    # Exact-name fusion recipes pointing at names with no spine card must be
     # kept as name-only references, never invented a ghost row for.
     exact_missing_numbers = [
         r["result"] for r in data["fusionExact"] if r["result"].lower() not in by_name_lower
     ]
     check(
-        "công thức 'Dung hợp chính xác' trỏ tới tên không có #NNN vẫn giữ dạng chỉ-có-tên, không crash",
+        "công thức 'Dung hợp chính xác' trỏ tới tên không có trong spine vẫn giữ dạng chỉ-có-tên, không crash",
         isinstance(exact_missing_numbers, list),
         f"{len(exact_missing_numbers)} name-only result(s), e.g. {exact_missing_numbers[:3]}",
     )
 
-    # --- index.html invariants (cell fm-guide-site-2, D1/D2/D3/D4) ---
+    # --- The cell's must_have worked example: Blue-eyes White Dragon ---
+    bews = by_name_lower.get("blue-eyes white dragon")
+    check(
+        "gõ 'Blue-eyes White Dragon' hiện 3000/2500, type Dragon, Sun/Mars, level 8, lore, password",
+        bews is not None
+        and bews["atk"] == 3000
+        and bews["def"] == 2500
+        and bews["type"] == "Dragon"
+        and bews["guardianStars"] == ["Sun", "Mars"]
+        and bews["level"] == 8
+        and bews["lore"]
+        and bews["password"],
+        f"got {bews}",
+    )
+
+    # Data-layer fields that must never leak an http(s) URL into the shipped
+    # page (D1/D2: no network dependency). Confirms load_spine_cards()'s
+    # SPINE_FIELDS allowlist is actually excluding them, not just declared.
+    url_leaks = [c for c in cards if "url" in c or "mainCardUrl" in c or "page" in c or "mainCardPage" in c or "file" in c]
+    check(
+        "trường dữ liệu không mang theo url/mainCardUrl/page/mainCardPage/file từ data/cards.json",
+        not url_leaks,
+        f"{len(url_leaks)} card(s) leaking a dropped field",
+    )
+
+    # --- index.html invariants (cell fm-guide-site-2/3, D1/D2/D3/D4/D7) ---
     html_text = INDEX_HTML.read_text(encoding="utf-8")
 
     check(
@@ -219,6 +274,18 @@ def main() -> int:
     check(
         "chuỗi 'chưa có dữ liệu' có mặt trong index.html (D4)",
         "chưa có dữ liệu" in html_text,
+    )
+    check(
+        "bộ lọc theo Type và theo Loại lá (cardType) có trong index.html",
+        'id="type-filter"' in html_text and 'id="cardtype-filter"' in html_text,
+    )
+    check(
+        "panel chi tiết hiện Password, Star Chip Cost, Cách lấy, Tên Nhật, Lore",
+        "Password</dt>" in html_text
+        and "Star Chip Cost</dt>" in html_text
+        and "Cách lấy</dt>" in html_text
+        and "Tên Nhật</dt>" in html_text
+        and "Lore</dt>" in html_text,
     )
 
     fm_begin = extract_cards.FM_DATA_BEGIN_MARKER
@@ -246,8 +313,8 @@ def main() -> int:
         )
         if embedded_parses:
             check(
-                "khối FM_DATA nhúng trong index.html chứa đúng 653 lá (dữ liệu thật, không rỗng)",
-                len(embedded.get("cards", [])) == 653,
+                "khối FM_DATA nhúng trong index.html chứa đúng 722 lá (dữ liệu thật, không rỗng)",
+                len(embedded.get("cards", [])) == 722,
                 f"got {len(embedded.get('cards', []))}",
             )
 
@@ -291,10 +358,10 @@ def main() -> int:
 
     print()
     print("Summary:")
-    print(f"  cards (number<->name pairs):        {len(cards)}")
-    print(f"  cards with ATK/DEF (joined):         {len(with_atk_def)}")
-    print(f"  ATK/DEF entries in fusion.md source: {data['meta']['atkDefEntriesInFusionSource']}")
-    print(f"  cards with fusion system:            {sum(1 for c in cards if c['fusionSystems'])}")
+    print(f"  cards (spine, data/cards.json):      {len(cards)}")
+    print(f"  cards with ATK/DEF:                  {len(with_atk_def)}")
+    print(f"  cards with equips joined:            {data['meta']['cardsWithEquips']}")
+    print(f"  cards with fusion system:            {data['meta']['cardsWithFusionSystems']}")
     print(f"  distinct fusion-conflict member names: {len(fusion_conflict_members)}")
     print(f"  fusion groups with a member list:    {len(data['meta']['fusionGroupsWithMembers'])}")
     print(f"  equip lists (monster headers):       {len(data['equipLists'])}")
