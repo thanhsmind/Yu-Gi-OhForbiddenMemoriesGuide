@@ -666,6 +666,50 @@ def main() -> int:
         not bad_history_calls,
         f"{bad_history_calls}",
     )
+
+    # cell fm-guide-site-14, D1: some file:// history implementations throw
+    # a SecurityError (opaque origin) from pushState/replaceState even
+    # though the spec permits a hash-only same-document change there.
+    # safeHistoryWrite(commit, newHash) is the one wrapper every call site
+    # must go through: try the real call, and on rejection fall back to a
+    # direct `location.hash = newHash` assignment that never throws.
+    safe_history_match = re.search(
+        r"function safeHistoryWrite\(commit, newHash\) \{\s*"
+        r"try \{\s*"
+        r"if \(commit\) \{\s*"
+        r"history\.pushState\(null, \"\", newHash\);\s*"
+        r"\} else \{\s*"
+        r"history\.replaceState\(null, \"\", newHash\);\s*"
+        r"\}\s*"
+        r"\} catch \(e\) \{\s*"
+        r"location\.hash = newHash;\s*"
+        r"\}\s*"
+        r"\}",
+        html_text,
+    )
+    check(
+        "index.html có safeHistoryWrite(commit, newHash) bọc pushState/replaceState trong try/catch, rơi về gán location.hash = newHash khi bị từ chối",
+        safe_history_match is not None,
+    )
+    if safe_history_match:
+        outside_wrapper = html_text[: safe_history_match.start()] + html_text[safe_history_match.end() :]
+        bare_history_calls_outside = re.findall(r"history\.(?:pushState|replaceState)\(", outside_wrapper)
+    else:
+        bare_history_calls_outside = push_or_replace_calls
+    check(
+        "mọi lệnh gọi history.pushState/replaceState trong index.html đều nằm trong safeHistoryWrite (không lệnh gọi trần nào còn sót ngoài hàm bọc)",
+        safe_history_match is not None and not bare_history_calls_outside,
+        f"{len(bare_history_calls_outside)} lệnh gọi history.pushState/replaceState nằm ngoài safeHistoryWrite",
+    )
+    check(
+        "writeHash(commit) ghi trạng thái qua safeHistoryWrite(commit, newHash) thay vì gọi pushState/replaceState trực tiếp",
+        "safeHistoryWrite(commit, newHash);" in html_text,
+    )
+    check(
+        "lệnh replaceState khởi tạo lúc load trang cũng đi qua safeHistoryWrite(false, currentHash()) thay vì gọi history.replaceState trần",
+        "safeHistoryWrite(false, currentHash());" in html_text,
+    )
+
     # Judge fix fm-guide-site-7 FAIL 1: a typing-burst checkpoint was lost
     # when the burst's first keystroke didn't change the trimmed hash --
     # writeHash() early-returned (no push) but scheduleHashWrite() still

@@ -75336,6 +75336,30 @@ window.FM_DATA = {
     ]);
   }
 
+  // Some file:// history implementations refuse pushState/replaceState
+  // with a SecurityError (opaque origin) even though the HTML spec permits
+  // a same-document hash-only state change there -- this is very likely a
+  // bug in the refusing implementation, not real browser behaviour, but it
+  // can't be verified against a real browser from this environment, so the
+  // page must survive either world. Every History API call site goes
+  // through this one wrapper: try the real call, and on rejection fall
+  // back to a direct `location.hash` assignment, which always resolves
+  // and always creates a history entry (losing the ability to *replace*
+  // an entry, never losing functionality -- Back still walks the states).
+  // The try/catch is narrow around the state call itself so it never masks
+  // an unrelated bug.
+  function safeHistoryWrite(commit, newHash) {
+    try {
+      if (commit) {
+        history.pushState(null, "", newHash);
+      } else {
+        history.replaceState(null, "", newHash);
+      }
+    } catch (e) {
+      location.hash = newHash;
+    }
+  }
+
   // `commit` false -> replaceState (live-typing, never grows history);
   // `commit` true  -> pushState (a real Back/Forward stop). Both pass only
   // a hash-prefixed string as the URL argument -- file:// refuses a path
@@ -75348,11 +75372,7 @@ window.FM_DATA = {
   function writeHash(commit) {
     var newHash = currentHash();
     if (location.hash === newHash) return false;
-    if (commit) {
-      history.pushState(null, "", newHash);
-    } else {
-      history.replaceState(null, "", newHash);
-    }
+    safeHistoryWrite(commit, newHash);
     return true;
   }
 
@@ -75476,7 +75496,7 @@ window.FM_DATA = {
   // bare load normalizes to "#tra-cuu" via replaceState so the very first
   // screen is deep-linkable too, without adding a spurious history entry.
   if (location.hash) applyState(readStateFromHash());
-  history.replaceState(null, "", currentHash());
+  safeHistoryWrite(false, currentHash());
 })();
 </script>
 </body>
