@@ -1,0 +1,67 @@
+{
+  "id": "fm-guide-site-9",
+  "feature": "fm-guide-site",
+  "title": "Dịch lore tiếng Việt cho lá #1-#181",
+  "lane": "small",
+  "status": "capped",
+  "deps": [],
+  "decisions": [
+    "D5"
+  ],
+  "files": [
+    "data/lore-vi/part-1.json"
+  ],
+  "read_first": [],
+  "verify": "python3 tools/check.py",
+  "action": "Dịch lore sang tiếng Việt cho 181 lá đầu, xem prompt dispatch để biết nguồn và giọng văn. Ghi ra data/lore-vi/part-1.json.",
+  "must_haves": {
+    "truths": [
+      "Đủ 181 khóa, không khóa nào rỗng"
+    ],
+    "artifacts": [
+      {
+        "path": "data/lore-vi/part-1.json",
+        "substantive": "181 bản dịch tiếng Việt, JSON hợp lệ, khóa là số thứ tự dạng chuỗi"
+      }
+    ],
+    "key_links": [
+      "Khóa khớp số thứ tự lá trong data/cards.json"
+    ],
+    "prohibitions": [
+      "Không sửa file nào khác",
+      "Không để nguyên tiếng Anh"
+    ]
+  },
+  "trace": {
+    "worker": "dich1",
+    "outcome": "Translated cards #1-181 lore into Vietnamese, natural spoken register, card/type names kept in English",
+    "files_changed": [
+      "data/lore-vi/part-1.json"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T15:19:23.061Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T15:13:25.906Z",
+    "report": {
+      "outcome": "Translated cards #1-181 lore into Vietnamese, natural spoken register, card/type names kept in English",
+      "commit": "f510b87",
+      "files": [
+        "data/lore-vi/part-1.json"
+      ],
+      "tests": "green",
+      "deviations": []
+    },
+    "warnings": [
+      "advisory: this cap's commit changes 183 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T15:19:22.309Z"
+  },
+  "tier": "generation"
+}

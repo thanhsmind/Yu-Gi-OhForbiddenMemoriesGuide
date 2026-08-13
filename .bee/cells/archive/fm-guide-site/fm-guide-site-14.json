@@ -1,0 +1,112 @@
+{
+  "id": "fm-guide-site-14",
+  "feature": "fm-guide-site",
+  "title": "Chống vỡ định tuyến khi trình duyệt từ chối History API trên file://",
+  "lane": "small",
+  "status": "capped",
+  "deps": [],
+  "decisions": [
+    "D1"
+  ],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "D1 hứa trang mở được bằng cách nhấp đúp vào file. Vòng soi chạy trên jsdom với URL file:// thấy history.pushState và history.replaceState ném SecurityError vì origin dạng opaque, khiến hash không bao giờ cập nhật và log ra lỗi không bắt. Nhiều khả năng đây là lỗi của jsdom chứ không phải hành vi trình duyệt thật, nhưng KHÔNG kiểm chứng được trên trình duyệt thật ở môi trường này, nên trang phải tự chịu được cả hai khả năng. Bọc cả ba lời gọi History API trong một hàm bọc an toàn duy nhất: thử pushState/replaceState, nếu ném lỗi thì rơi về gán location.hash trực tiếp (gán trực tiếp luôn tạo một mục lịch sử, chấp nhận được — mất khả năng replace nhưng không mất chức năng, và Back vẫn đi qua các trạng thái). Trường hợp rơi về không được ném lỗi ra ngoài, không được log lỗi đỏ ra console, và định tuyến vẫn phải đọc/ghi đúng trạng thái. Thêm khẳng định vào tools/check.py: mọi lời gọi pushState/replaceState trong index.html đều nằm trong hàm bọc đó, không lời gọi trần nào còn sót.",
+  "must_haves": {
+    "truths": [
+      "Khi History API bị từ chối, định tuyến vẫn chạy qua location.hash và không ném lỗi",
+      "Khi History API chạy bình thường, hành vi không đổi so với hiện tại",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "một hàm bọc an toàn cho History API, rơi về location.hash khi bị từ chối"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định không còn lời gọi History API trần"
+      }
+    ],
+    "key_links": [
+      "Mọi đường ghi hash đi qua đúng một hàm bọc"
+    ],
+    "prohibitions": [
+      "Không đổi hành vi khi History API hoạt động bình thường",
+      "Không nuốt lỗi khác ngoài lỗi bị từ chối của History API",
+      "Không thêm URL http/https, script src, fetch"
+    ]
+  },
+  "trace": {
+    "worker": "shield",
+    "outcome": "Wrapped all History API call sites in safeHistoryWrite, falling back to location.hash on SecurityError; verified byte-identical behavior with working history and no uncaught/console errors with rejecting history via a jsdom harness with the pushState/replaceState file:// bug patched out",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T15:54:38.089Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T15:46:53.721Z",
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T15:54:37.338Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "single-wrapper",
+            "name": "All three History API call sites go through one safe wrapper",
+            "status": "PASS",
+            "evidence": "safeHistoryWrite(commit, newHash) wraps writeHash's pushState/replaceState and the init-time normalizing replaceState; tools/check.py asserts no bare history.pushState/replaceState remains outside it, and the suite is green."
+          },
+          {
+            "id": "normal-path-unchanged",
+            "name": "Behaviour is unchanged when the History API works",
+            "status": "PASS",
+            "evidence": "jsdom harness with jsdom's own file:// path-comparison bug patched out: hash values, history lengths, Back behaviour and typing-burst cost (exactly one entry) all matched the pre-change file."
+          },
+          {
+            "id": "fallback-path",
+            "name": "Routing survives a History API that always rejects",
+            "status": "PASS",
+            "evidence": "Second harness run forcing pushState/replaceState to throw SecurityError: zero uncaught errors, zero console.error, and tab switches, filter changes, Back and cold-load-from-hash all still routed through location.hash. Accepted degradation: a typing burst then costs one entry per keystroke."
+          },
+          {
+            "id": "narrow-catch",
+            "name": "Only the state call is inside the try",
+            "status": "PASS",
+            "evidence": "The try encloses the history call itself, not surrounding logic, so unrelated errors still surface."
+          },
+          {
+            "id": "suite-green",
+            "name": "python3 tools/check.py green and no scratch files left",
+            "status": "PASS",
+            "evidence": "Exit 0, re-run independently by the orchestrator; repo root holds no stray .js files."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "sonnet",
+        "model_independence": "same-model",
+        "recorded_at": "2026-08-13T15:55:02.760Z"
+      }
+    ]
+  },
+  "tier": "generation"
+}

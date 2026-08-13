@@ -1,0 +1,150 @@
+{
+  "id": "fm-guide-site-13",
+  "feature": "fm-guide-site",
+  "title": "Nhúng lore tiếng Việt vào trang, giữ nguyên văn tiếng Anh bên dưới",
+  "lane": "standard",
+  "status": "capped",
+  "deps": [
+    "fm-guide-site-9",
+    "fm-guide-site-10",
+    "fm-guide-site-11",
+    "fm-guide-site-12"
+  ],
+  "decisions": [
+    "D1",
+    "D4",
+    "D5"
+  ],
+  "files": [
+    "tools/extract_cards.py",
+    "tools/check.py",
+    "index.html",
+    "docs/specs/guide-site.md"
+  ],
+  "read_first": [
+    "tools/extract_cards.py",
+    "data/lore-vi/part-1.json"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Bốn file data/lore-vi/part-1.json .. part-4.json chứa bản dịch lore tiếng Việt, khóa là số thứ tự lá dạng chuỗi. Sửa tools/extract_cards.py đọc cả bốn file, gộp lại, và thêm trường loreVi vào mỗi lá; lá nào không có bản dịch thì loreVi là null, không bao giờ là chuỗi rỗng. Sửa bảng chi tiết trong index.html: dòng Lore hiện bản tiếng Việt làm nội dung chính, và ngay dưới nó hiện nguyên văn tiếng Anh với nhãn 'Nguyên văn' ở cỡ chữ nhỏ hơn và màu nhạt hơn — người đọc phải luôn thấy được câu gốc, vì bản dịch là sản phẩm phái sinh chứ không phải nguồn. Lá không có bản dịch thì chỉ hiện nguyên văn tiếng Anh. Thêm vào tab Độ phủ dữ liệu một dòng nói rõ: bao nhiêu lá đã có lore tiếng Việt trên tổng số, và ghi thẳng rằng phần dịch do máy dịch chứ không phải trích từ nguồn tiếng Việt nào — con số đọc từ FM_DATA.meta, không gõ cứng. Cập nhật docs/specs/guide-site.md ghi nhận lore có hai bản và bản dịch luôn hiển thị kèm nguyên văn. Chạy lại --inject. Thêm khẳng định vào tools/check.py: mọi khóa trong bốn file dịch đều là số thứ tự của một lá có thật; số lá có loreVi khớp số đếm lại; không bản dịch nào là chuỗi rỗng hoặc y hệt nguyên văn tiếng Anh; bảng chi tiết có nhãn 'Nguyên văn'.",
+  "must_haves": {
+    "truths": [
+      "Bảng chi tiết hiện lore tiếng Việt, ngay dưới là nguyên văn tiếng Anh có nhãn",
+      "Lá thiếu bản dịch chỉ hiện nguyên văn, không hiện ô trống",
+      "Tab Độ phủ nói rõ số lá đã dịch và rằng đây là bản dịch máy",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "tools/extract_cards.py",
+        "substantive": "gộp 4 file dịch vào trường loreVi"
+      },
+      {
+        "path": "index.html",
+        "substantive": "bảng chi tiết hai lớp lore, tab độ phủ có dòng bản dịch"
+      },
+      {
+        "path": "docs/specs/guide-site.md",
+        "substantive": "ghi nhận lore hai bản và luật hiển thị kèm nguyên văn"
+      }
+    ],
+    "key_links": [
+      "loreVi ghép theo số thứ tự lá, hiển thị kèm lore gốc"
+    ],
+    "prohibitions": [
+      "Không giấu nguyên văn tiếng Anh",
+      "Không gõ cứng số lá đã dịch vào HTML",
+      "Không sửa file trong docs/guide/ hay data/cards.json",
+      "Không thêm URL http/https, script src, fetch"
+    ]
+  },
+  "trace": {
+    "worker": "weaver",
+    "outcome": "Embed loreVi from data/lore-vi into FM_DATA, show it in the detail panel above a labelled English original, add a machine-translated coverage row read from meta.cardsWithLoreVi, extend tools/check.py with the new invariants",
+    "files_changed": [
+      "tools/extract_cards.py",
+      "tools/check.py",
+      "index.html",
+      "docs/specs/guide-site.md"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T15:31:25.731Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T15:26:41.696Z",
+    "report": {
+      "outcome": "Embed loreVi from data/lore-vi into FM_DATA, show it in the detail panel above a labelled English original, add a machine-translated coverage row read from meta.cardsWithLoreVi, extend tools/check.py with the new invariants",
+      "commit": "f643eb3",
+      "files": [
+        "tools/extract_cards.py",
+        "tools/check.py",
+        "index.html",
+        "docs/specs/guide-site.md"
+      ],
+      "tests": "green",
+      "deviations": []
+    },
+    "warnings": [
+      "advisory: this cap's commit changes 2331 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T15:31:24.959Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "lorevi-integrity",
+            "name": "722 non-null loreVi matching the four shards",
+            "status": "PASS",
+            "evidence": "Independent parse of the embedded block: 722 cards, 0 null, 0 empty, 0 identical to the English (also under case/space normalization), 0 entries without a non-ASCII character. Shards merge to exactly 722 keys with no duplicate, no key that is not a real card, no card uncovered; 0 mismatches between shard and embedded value."
+          },
+          {
+            "id": "two-version-display",
+            "name": "Vietnamese primary with the English original visible beneath under 'Nguyen van'",
+            "status": "PASS",
+            "evidence": "Rendered four cards under jsdom: VI text at index 0 of the dd, English verbatim inside .lore-original. Computed style display=block, visibility=visible, font-size 0.82rem; no clipping anywhere on the ancestor chain; dim colour still ~6:1 contrast."
+          },
+          {
+            "id": "coverage-runtime",
+            "name": "Coverage count read from meta at runtime and labelled machine-translated",
+            "status": "PASS",
+            "evidence": "Static tbody is empty. Judge patched the in-memory HTML only, changing meta.cardsWithLoreVi 722->313, and the rendered row followed while the 'tren tong 722' half stayed — proving a runtime read. Row text carries 'ban dich may, khong trich tu nguon tieng Viet nao'."
+          },
+          {
+            "id": "spec-updated",
+            "name": "Area spec records the two-version lore rule",
+            "status": "PASS",
+            "evidence": "docs/specs/guide-site.md records that lore has two versions, that the original is always shown, that an untranslated card shows only the original, and the null-not-empty-string storage rule."
+          },
+          {
+            "id": "shared-gates",
+            "name": "check.py green, no external resources, no scratch files",
+            "status": "PASS",
+            "evidence": "python3 tools/check.py exit 0 with 85 [ok] lines. index.html: 0 '<script src=', 0 'fetch(', 0 '<link '; the three '://' hits are prose in JS comments about file://. Repo root holds no stray .js."
+          },
+          {
+            "id": "translation-quality",
+            "name": "35 entries read against their English originals across all four shards",
+            "status": "PASS",
+            "evidence": "Zero meaning-level mistranslations. Card names and game terms held in English throughout (Legendary Sword, Blue-eyes, Life Points, ATK, Type names). Imperfect-but-acceptable rate about 5 in 35: one ritual card name dissolved into descriptive Vietnamese (#694 Resurrection of Chakra), one added verb not in the English (#514), one common noun swapped for an English Type token (#262), one wobbly clause (#233). Glossary drifts between 'quai vat' (94) and 'quai thu' (28) for monster."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T15:43:40.890Z"
+      }
+    ]
+  },
+  "tier": "generation"
+}

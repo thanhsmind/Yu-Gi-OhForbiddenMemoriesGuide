@@ -1,0 +1,58 @@
+{
+  "id": "fm-guide-site-12",
+  "feature": "fm-guide-site",
+  "title": "Dịch lore tiếng Việt cho lá #544-#722",
+  "lane": "small",
+  "status": "capped",
+  "deps": [],
+  "decisions": [
+    "D5"
+  ],
+  "files": [
+    "data/lore-vi/part-4.json"
+  ],
+  "read_first": [],
+  "verify": "python3 tools/check.py",
+  "action": "Dịch lore sang tiếng Việt cho 179 lá cuối, xem prompt dispatch để biết nguồn và giọng văn. Ghi ra data/lore-vi/part-4.json.",
+  "must_haves": {
+    "truths": [
+      "Đủ 179 khóa, không khóa nào rỗng"
+    ],
+    "artifacts": [
+      {
+        "path": "data/lore-vi/part-4.json",
+        "substantive": "179 bản dịch tiếng Việt, JSON hợp lệ, khóa là số thứ tự dạng chuỗi"
+      }
+    ],
+    "key_links": [
+      "Khóa khớp số thứ tự lá trong data/cards.json"
+    ],
+    "prohibitions": [
+      "Không sửa file nào khác",
+      "Không để nguyên tiếng Anh"
+    ]
+  },
+  "trace": {
+    "worker": "dich4",
+    "outcome": "Translated 179 card lore entries (#544-#722) into Vietnamese in data/lore-vi/part-4.json",
+    "files_changed": [
+      "data/lore-vi/part-4.json"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T15:15:16.173Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T15:10:33.424Z",
+    "warnings": [
+      "advisory: this cap's commit changes 181 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T15:15:15.170Z"
+  },
+  "tier": "generation"
+}

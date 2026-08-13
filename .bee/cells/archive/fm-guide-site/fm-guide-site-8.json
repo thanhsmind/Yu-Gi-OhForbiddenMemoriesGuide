@@ -1,0 +1,131 @@
+{
+  "id": "fm-guide-site-8",
+  "feature": "fm-guide-site",
+  "title": "Biến chỉ số trong bảng chi tiết thành link lọc, thêm bộ lọc Guardian Star",
+  "lane": "standard",
+  "status": "capped",
+  "deps": [],
+  "decisions": [
+    "D1",
+    "D2"
+  ],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html",
+    "docs/specs/guide-site.md"
+  ],
+  "verify": "python3 tools/check.py",
+  "action": "Trong bảng chi tiết một lá bài, mọi giá trị nào lọc được thì phải là link dẫn tới đúng bộ lọc đó ở tab tra cứu, dùng hệ định tuyến hash đã có. Cụ thể: 'Loại lá' link tới #tra-cuu?loai=<giá trị>; 'Type' link tới #tra-cuu?type=<giá trị>; 'Hệ fusion' mỗi hệ là một link riêng tới #tra-cuu?he=<hệ>; 'Guardian Star' tách thành hai link riêng cho hai sao. Bộ lọc theo Guardian Star hiện CHƯA TỒN TẠI — thêm nó: một dropdown mới ở tab tra cứu liệt kê 10 sao (Jupiter, Mars, Mercury, Moon, Neptune, Pluto, Saturn, Sun, Uranus, Venus), lọc ra mọi lá có sao đó ở một trong hai vị trí, và tham số hash là 'sao'. Danh sách Equip trong bảng chi tiết: mỗi dòng '#NNN Tên' thành link mở chi tiết lá đó (#tra-cuu?la=NNN), dùng đúng cơ chế nhảy theo tên lá đã có, không tạo cơ chế thứ hai. KHÔNG thêm bộ lọc theo 'Cách lấy' — toàn bộ 722 lá chỉ có duy nhất giá trị 'Drop', bộ lọc đó vô nghĩa. Trường không có dữ liệu vẫn hiện 'chưa có dữ liệu' và KHÔNG được thành link. Link phải trông ra link (có gạch chân hoặc màu nhấn) để người dùng biết bấm được, và phải đi vào lịch sử duyệt như mọi thay đổi bộ lọc khác. Thêm khẳng định vào tools/check.py: có dropdown lọc Guardian Star với đủ 10 giá trị, tham số 'sao' được đọc và ghi trong định tuyến hash, và bảng chi tiết sinh link cho loại lá / Type / hệ fusion / từng Guardian Star / từng dòng equip.",
+  "must_haves": {
+    "truths": [
+      "Bấm 'Dragon' ở dòng Type mở tab tra cứu đã lọc sẵn Type=Dragon, và Back quay lại đúng lá vừa xem",
+      "Bấm 'Sun' ở dòng Guardian Star lọc ra mọi lá có sao Sun ở một trong hai vị trí",
+      "Bấm '#315 Dragon Treasure' trong danh sách Equip mở chi tiết lá #315",
+      "Ô 'chưa có dữ liệu' không phải là link",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "bảng chi tiết sinh link lọc, thêm dropdown và tham số hash cho Guardian Star"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định bộ lọc sao và các link trong bảng chi tiết"
+      }
+    ],
+    "key_links": [
+      "Link trong bảng chi tiết dùng lại router hash và cơ chế jumpToCard sẵn có"
+    ],
+    "prohibitions": [
+      "Không thêm URL http/https, script src, fetch",
+      "Không tạo cơ chế nhảy tới lá thứ hai bên cạnh cái đã có",
+      "Không biến ô 'chưa có dữ liệu' thành link",
+      "Không thêm bộ lọc theo Cách lấy"
+    ]
+  },
+  "trace": {
+    "worker": "linker",
+    "outcome": "Detail-panel values (cardType, Type, fusion systems, Guardian Star) now link into the card-lookup filters, equip rows reuse the existing card-link jump; added the missing Guardian Star (sao) filter wired through the hash router.",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-13T15:23:15.785Z",
+    "behavior_change": true,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "6020bd15-013c-4a9b-9c10-a9a445839831",
+    "claimed_at": "2026-08-13T15:13:02.259Z",
+    "warnings": [
+      "advisory: this cap's commit changes 164 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-13T15:23:15.053Z",
+    "semantic_judge": [
+      {
+        "schema": "judge-verdict/1",
+        "verdict": "PASS",
+        "checks": [
+          {
+            "id": "type-link-roundtrip",
+            "name": "Type value links to filtered lookup; Back returns to the open card",
+            "status": "PASS",
+            "evidence": "jsdom harness: Spellcaster link -> #tra-cuu?type=Spellcaster, count 56/722 matching an independent filter over FM_DATA.cards; history.back() restored the open card detail. Keyboard Enter also fires."
+          },
+          {
+            "id": "star-either-position",
+            "name": "Guardian Star link matches either position",
+            "status": "PASS",
+            "evidence": "Card with differing stars (Sun/Mars): clicking the SECOND star gave 102, independent either-position count 102, position-1-only would have been 32. Row order matched an independent slice."
+          },
+          {
+            "id": "loai-and-fusion-links",
+            "name": "Loai la and each He fusion link the same way",
+            "status": "PASS",
+            "evidence": "loai=Monster 621/621; he=Dragon 24/24; he=MercuryMagicUser 20/20. Each fusion tag is its own link element."
+          },
+          {
+            "id": "equip-reuses-jump",
+            "name": "Equip rows reuse the pre-existing card-link mechanism",
+            "status": "PASS",
+            "evidence": "Equip rows render .card-link[data-cardname] spans; grep shows exactly one jumpToCard/wireCardLinks and one goToCardFilter/wireFilterLinks — no duplicate jump mechanism, and filter links carry no data-cardname so they cannot cross-wire."
+          },
+          {
+            "id": "missing-value-no-anchor",
+            "name": "'chua co du lieu' renders no link",
+            "status": "PASS",
+            "evidence": "101 cards have null type/fusionSystems/guardianStars. Card #301: those three dd elements contain exactly the text and querySelectorAll('.filter-link,a').length is 0."
+          },
+          {
+            "id": "sao-roundtrip",
+            "name": "sao parameter cold-load, combination, Back/Forward, unknown value",
+            "status": "PASS",
+            "evidence": "#tra-cuu?sao=Venus 82/82; combined with type=Dragon 3/3; Back and Forward both correct; ?sao=NotAStar degrades to no filter without throwing."
+          },
+          {
+            "id": "router-no-regression",
+            "name": "Earlier router behaviour intact",
+            "status": "PASS",
+            "evidence": "#sec-3 lands on the guide tab with the hash unchanged; 10 keystrokes create exactly one history entry and Back clears the box; ?q=%zz does not throw on cold load or mid-session."
+          }
+        ],
+        "failure_signature": null,
+        "fixability": "automatic",
+        "confidence": "high",
+        "builder_model": "sonnet",
+        "judge_model": "opus",
+        "model_independence": "confirmed",
+        "recorded_at": "2026-08-13T15:43:40.886Z"
+      }
+    ]
+  },
+  "tier": "generation"
+}
