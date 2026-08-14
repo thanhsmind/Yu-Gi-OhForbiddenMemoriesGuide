@@ -463,9 +463,64 @@
     flex-wrap: wrap;
   }
 
+  /* Gives .detail-info a base main-size on the row so the flex line-packing
+     algorithm no longer falls back to a max-content hypothetical size for
+     it -- without this, .detail-info's content (long lore, equip list) made
+     it wider than the remaining row width, so it wrapped to its own line
+     below the image, leaving a big empty gap to the image's right (cell
+     fm-guide-site-18). min-width: 0 lets it actually shrink/wrap instead of
+     forcing the row wider than the panel. Only applies to the row main axis
+     (width) while .detail-body is a row; the max-width:640px override below
+     resets it back to a plain block once .detail-body switches to a column,
+     where flex-basis would otherwise size height instead of width. */
+  .detail-info {
+    flex: 1 1 320px;
+    min-width: 0;
+  }
+
   .detail-info h3 {
     margin: 0 0 0.5rem;
     color: var(--accent);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .detail-title-text {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* Prev/next card buttons next to the detail h3 (cell fm-guide-site-18).
+     flex-shrink: 0 keeps them from being squeezed by a long card name --
+     .detail-title-text (min-width: 0, break-word) absorbs that instead. */
+  .detail-nav {
+    display: flex;
+    gap: 0.3rem;
+    flex-shrink: 0;
+  }
+
+  .detail-nav-btn {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  .detail-nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .detail-nav-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .detail-nav-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
   }
 
   .detail-info dl {
@@ -697,6 +752,10 @@
     :root { font-size: 15px; }
     .result-count { margin-left: 0; width: 100%; }
     .detail-body { flex-direction: column; }
+    /* .detail-body is now a column, so main-axis size (flex-basis) is
+       height, not width -- reset .detail-info's 320px basis back to auto so
+       it takes its natural content height instead of a forced minimum. */
+    .detail-info { flex-basis: auto; }
     .img-wrap.detail-img { width: 100%; height: auto; }
     .card-detail { padding: 0.75rem 0.5rem; }
     .detail-panel { padding: 0.9rem 0.85rem; }
@@ -75024,6 +75083,11 @@ window.FM_DATA = {
     });
     state.page = 1;
     render();
+    // The filter controls stay reachable behind the modal overlay (Tab, or
+    // a debounced keystroke that lands while the popup is open) -- refresh
+    // the prev/next buttons in place so they never point at a card outside
+    // the just-changed state.filtered (cell fm-guide-site-18).
+    updateDetailNavButtons();
   }
 
   var debounceTimer = null;
@@ -75357,8 +75421,86 @@ window.FM_DATA = {
   });
 
   document.addEventListener("keydown", function (ev) {
-    if (ev.key === "Escape") closeDetail();
+    if (ev.key === "Escape") { closeDetail(); return; }
+    // Left/right steps the open card detail through state.filtered -- the
+    // same list the table/grid and pager already read (cell fm-guide-site-18).
+    // Only while the popup is open, and never while the cursor is in a text
+    // field (the search inputs and the ph-filename readonly input all sit in
+    // the DOM behind the modal and stay reachable by Tab).
+    if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;
+    if (elDetail.hidden) return;
+    var t = ev.target;
+    var tag = t && t.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
+    ev.preventDefault();
+    navigateDetail(ev.key === "ArrowLeft" ? -1 : 1);
   });
+
+  // Index of `card` inside the currently filtered list -- -1 when the open
+  // card fell out of state.filtered (filters changed while the popup stayed
+  // open). Compares by number, not by reference, since state.filtered is a
+  // fresh array from every applyFilters() call.
+  function getFilteredIndex(card) {
+    if (!card) return -1;
+    for (var i = 0; i < state.filtered.length; i++) {
+      if (state.filtered[i].number === card.number) return i;
+    }
+    return -1;
+  }
+
+  // Markup for the two prev/next buttons rendered next to the h3 in
+  // showDetail() below. Real <button disabled> at the edges of
+  // state.filtered -- never a CSS-only dimmed state -- and both disabled
+  // together when the open card is not in state.filtered at all.
+  function detailNavHtml(card) {
+    var idx = getFilteredIndex(card);
+    var hasPrev = idx > 0;
+    var hasNext = idx !== -1 && idx < state.filtered.length - 1;
+    return (
+      '<span class="detail-nav">' +
+        '<button type="button" class="detail-nav-btn detail-nav-prev" aria-label="Lá trước"' +
+          (hasPrev ? "" : " disabled") + ">‹</button>" +
+        '<button type="button" class="detail-nav-btn detail-nav-next" aria-label="Lá sau"' +
+          (hasNext ? "" : " disabled") + ">›</button>" +
+      "</span>"
+    );
+  }
+
+  // Refreshes just the disabled state of the already-rendered nav buttons,
+  // without rebuilding the popup -- called from applyFilters() so a filter
+  // change made while the popup stays open (background control reached by
+  // Tab) never leaves the buttons pointing past the new state.filtered.
+  function updateDetailNavButtons() {
+    if (elDetail.hidden || openCardNumber === null) return;
+    var idx = getFilteredIndex(byNumber[openCardNumber]);
+    var prevBtn = elDetail.querySelector(".detail-nav-prev");
+    var nextBtn = elDetail.querySelector(".detail-nav-next");
+    if (prevBtn) prevBtn.disabled = !(idx > 0);
+    if (nextBtn) nextBtn.disabled = !(idx !== -1 && idx < state.filtered.length - 1);
+  }
+
+  // Moves the open detail popup by `delta` (-1 / +1) through state.filtered
+  // -- the filtered list, never the full CARDS array, so navigation always
+  // matches whatever the table/grid behind it is currently showing. Jumps
+  // state.page and re-renders when the target card lives on another page,
+  // reusing render() rather than a second pagination path. Reuses showDetail()
+  // itself for the popup rebuild and the existing scheduleHashWrite(true)
+  // path for history, so Back steps back through the cards one at a time.
+  function navigateDetail(delta) {
+    if (elDetail.hidden || openCardNumber === null) return;
+    var idx = getFilteredIndex(byNumber[openCardNumber]);
+    if (idx === -1) return;
+    var targetIdx = idx + delta;
+    if (targetIdx < 0 || targetIdx >= state.filtered.length) return;
+    var targetCard = state.filtered[targetIdx];
+    var neededPage = Math.floor(targetIdx / PAGE_SIZE) + 1;
+    if (neededPage !== state.page) {
+      state.page = neededPage;
+      render();
+    }
+    showDetail(targetCard);
+    scheduleHashWrite(true);
+  }
 
   function showDetail(card) {
     openCardNumber = card.number;
@@ -75383,7 +75525,8 @@ window.FM_DATA = {
       '<div class="detail-body">' +
         '<div class="detail-img-wrap">' + imgCellHtml(card, "detail") + "</div>" +
         '<div class="detail-info">' +
-          "<h3>" + escapeHtml(card.name) + "</h3>" +
+          "<h3><span class=\"detail-title-text\">" + escapeHtml(card.name) + "</span>" +
+            detailNavHtml(card) + "</h3>" +
           "<dl>" +
             "<dt>Số thứ tự</dt><dd>#" + escapeHtml(card.number) + "</dd>" +
             "<dt>Loại lá</dt><dd>" + filterLinkHtml("loai", card.cardType) + "</dd>" +
@@ -75406,6 +75549,10 @@ window.FM_DATA = {
       "</div>" +
       "</div>";
     elDetail.querySelector(".detail-close").addEventListener("click", closeDetail);
+    var navPrevBtn = elDetail.querySelector(".detail-nav-prev");
+    var navNextBtn = elDetail.querySelector(".detail-nav-next");
+    if (navPrevBtn) navPrevBtn.addEventListener("click", function () { navigateDetail(-1); });
+    if (navNextBtn) navNextBtn.addEventListener("click", function () { navigateDetail(1); });
     wireCardLinks(elDetail);
     wireFilterLinks(elDetail);
     // The modal is its own scroll container -- a re-open must not inherit the
