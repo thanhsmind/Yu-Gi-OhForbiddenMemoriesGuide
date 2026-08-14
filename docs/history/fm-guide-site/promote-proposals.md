@@ -1,4 +1,4 @@
-promote proposal for work item "fm-guide-site" (docs/history/fm-guide-site/CONTEXT.md + docs/history/fm-guide-site/plan.md) — 16 capped cell(s): fm-guide-site-1, fm-guide-site-2, fm-guide-site-3, fm-guide-site-4, fm-guide-site-5, fm-guide-site-6, fm-guide-site-7, fm-guide-site-8, fm-guide-site-9, fm-guide-site-10, fm-guide-site-11, fm-guide-site-12, fm-guide-site-13, fm-guide-site-14, fm-guide-site-15, fm-guide-site-16
+promote proposal for work item "fm-guide-site" (docs/history/fm-guide-site/CONTEXT.md + docs/history/fm-guide-site/plan.md) — 29 capped cell(s): fm-guide-site-1, fm-guide-site-2, fm-guide-site-3, fm-guide-site-4, fm-guide-site-5, fm-guide-site-6, fm-guide-site-7, fm-guide-site-8, fm-guide-site-9, fm-guide-site-10, fm-guide-site-11, fm-guide-site-12, fm-guide-site-13, fm-guide-site-14, fm-guide-site-15, fm-guide-site-16, fm-guide-site-17, fm-guide-site-18, fm-guide-site-19, fm-guide-site-20, fm-guide-site-21, fm-guide-site-22, fm-guide-site-23, fm-guide-site-24, fm-guide-site-25, fm-guide-site-26, fm-guide-site-27, fm-guide-site-28, fm-guide-site-29
 anchor: history — docs/history/fm-guide-site/CONTEXT.md, docs/history/fm-guide-site/plan.md
 PROPOSAL ONLY — nothing was written. Applying any section below is a human or agent decision.
 
@@ -7,14 +7,14 @@ PROPOSAL ONLY — nothing was written. Applying any section below is a human or 
 ---
 type: bee.delivery
 title: fm-guide-site — delivery
-description: "Delivery record proposed by bee knowledge promote for work item fm-guide-site: 16 capped cell(s), 0 recorded deviation(s)."
-timestamp: 2026-08-13
+description: "Delivery record proposed by bee knowledge promote for work item fm-guide-site: 29 capped cell(s), 0 recorded deviation(s)."
+timestamp: 2026-08-14
 bee:
   id: fm-guide-site-delivery
   lifecycle: active
   areas: [guide-site]
   required_context: [docs/history/fm-guide-site/CONTEXT.md, docs/history/fm-guide-site/plan.md]
-  sources: [docs/history/fm-guide-site/CONTEXT.md, docs/history/fm-guide-site/plan.md, .bee/cells/archive/fm-guide-site/fm-guide-site-1.json, .bee/cells/archive/fm-guide-site/fm-guide-site-2.json, .bee/cells/archive/fm-guide-site/fm-guide-site-3.json, .bee/cells/archive/fm-guide-site/fm-guide-site-4.json, .bee/cells/archive/fm-guide-site/fm-guide-site-5.json, .bee/cells/archive/fm-guide-site/fm-guide-site-6.json, .bee/cells/archive/fm-guide-site/fm-guide-site-7.json, .bee/cells/archive/fm-guide-site/fm-guide-site-8.json, .bee/cells/archive/fm-guide-site/fm-guide-site-9.json, .bee/cells/archive/fm-guide-site/fm-guide-site-10.json, .bee/cells/archive/fm-guide-site/fm-guide-site-11.json, .bee/cells/archive/fm-guide-site/fm-guide-site-12.json, .bee/cells/archive/fm-guide-site/fm-guide-site-13.json, .bee/cells/archive/fm-guide-site/fm-guide-site-14.json, .bee/cells/archive/fm-guide-site/fm-guide-site-15.json, .bee/cells/fm-guide-site-16.json]
+  sources: [docs/history/fm-guide-site/CONTEXT.md, docs/history/fm-guide-site/plan.md, .bee/cells/archive/fm-guide-site/fm-guide-site-1.json, .bee/cells/archive/fm-guide-site/fm-guide-site-2.json, .bee/cells/archive/fm-guide-site/fm-guide-site-3.json, .bee/cells/archive/fm-guide-site/fm-guide-site-4.json, .bee/cells/archive/fm-guide-site/fm-guide-site-5.json, .bee/cells/archive/fm-guide-site/fm-guide-site-6.json, .bee/cells/archive/fm-guide-site/fm-guide-site-7.json, .bee/cells/archive/fm-guide-site/fm-guide-site-8.json, .bee/cells/archive/fm-guide-site/fm-guide-site-9.json, .bee/cells/archive/fm-guide-site/fm-guide-site-10.json, .bee/cells/archive/fm-guide-site/fm-guide-site-11.json, .bee/cells/archive/fm-guide-site/fm-guide-site-12.json, .bee/cells/archive/fm-guide-site/fm-guide-site-13.json, .bee/cells/archive/fm-guide-site/fm-guide-site-14.json, .bee/cells/archive/fm-guide-site/fm-guide-site-15.json, .bee/cells/archive/fm-guide-site/fm-guide-site-16.json, .bee/cells/archive/fm-guide-site/fm-guide-site-17.json, .bee/cells/archive/fm-guide-site/fm-guide-site-18.json, .bee/cells/archive/fm-guide-site/fm-guide-site-19.json, .bee/cells/archive/fm-guide-site/fm-guide-site-20.json, .bee/cells/archive/fm-guide-site/fm-guide-site-21.json, .bee/cells/archive/fm-guide-site/fm-guide-site-22.json, .bee/cells/archive/fm-guide-site/fm-guide-site-23.json, .bee/cells/archive/fm-guide-site/fm-guide-site-24.json, .bee/cells/archive/fm-guide-site/fm-guide-site-25.json, .bee/cells/archive/fm-guide-site/fm-guide-site-26.json, .bee/cells/archive/fm-guide-site/fm-guide-site-27.json, .bee/cells/archive/fm-guide-site/fm-guide-site-28.json, .bee/cells/archive/fm-guide-site/fm-guide-site-29.json]
 ---
 
 # fm-guide-site — Delivery
@@ -37,6 +37,19 @@ bee:
 - **fm-guide-site-14** — Wrapped all History API call sites in safeHistoryWrite, falling back to location.hash on SecurityError; verified byte-identical behavior with working history and no uncaught/console errors with rejecting history via a jsdom harness with the pushState/replaceState file:// bug patched out (2 file(s) changed)
 - **fm-guide-site-15** — Unified monster term to quái vật across lore-vi + index.html, restored Resurrection of Chakra's English name for card #694, fixed three flagged sentences (#514/#262/#233), and added two regression assertions to tools/check.py (6 file(s) changed)
 - **fm-guide-site-16** — Added a self-drawn clear (x) button to #search-name, #search-number, and #fusion-search that appears only when the field has text, clears+refilters+refocuses on click, and commits a real history entry via the existing scheduleHashWrite(true) path (2 file(s) changed)
+- **fm-guide-site-17** — Added an image-grid view mode (Bảng/Lưới toggle) to the card lookup tab, sharing filter/pagination state and the detail popup, addressable via a new xem= hash param (2 file(s) changed)
+- **fm-guide-site-18** — Two-column detail popup layout plus real prev/next card navigation through state.filtered (2 file(s) changed)
+- **fm-guide-site-19** — Added the Auto/4/6/8 grid-size picker with CSS clamp columns and hash param cot (2 file(s) changed)
+- **fm-guide-site-20** — Add a sort-order picker (number/ATK/DEF) sharing table and grid views, sorting state.filtered in-place inside applyFilters() with a new 'sap' hash param (2 file(s) changed)
+- **fm-guide-site-21** — Fusion List trong popup chi tiết chuyển sang dạng ảnh bài, xoá bản chữ cũ (2 file(s) changed)
+- **fm-guide-site-22** — Nới cỡ ô ảnh trong Fusion List và bỏ ngắt chữ giữa tên hệ (0 file(s) changed)
+- **fm-guide-site-23** — Thay bảng Fusion Chính xác 150 dòng bằng 25.504 công thức từ fusion_unique.json, mã hoá thành fusionNames/fusionPairs, check.py đếm lại từ nguồn (6 file(s) changed)
+- **fm-guide-site-24** — Fusion tab decodes fusionPairs/fusionNames into FUSION_EXACT once at load; the Chính xác table now paginates 50 rows at a time with a name search box and an honest match count, and type+ATK-range operands render as badges instead of raw bracket text. (1 file(s) changed)
+- **fm-guide-site-25** — Paginated the detail popup's Fusion List 30 rows per group with independent Xem thêm buttons; header keeps the real total (1 file(s) changed)
+- **fm-guide-site-26** — Merged 360 outside-FM cards into the card table (D10/D11), splitting FM-only vs total counts in meta and check.py (3 file(s) changed)
+- **fm-guide-site-27** — Slug-keyed card lookup, FM/outside-FM labels, D11 sort, and scope filter added to the card lookup tab (1 file(s) changed)
+- **fm-guide-site-28** — Built the second WebP art set (1056/1082 cards, 22.12MB) and joined artImage onto FM_DATA (5 file(s) changed)
+- **fm-guide-site-29** — Detail popup image now flips between the in-game image and second art on click/Enter/Space, with an indicator only for cards that have a second image (1 file(s) changed)
 
 ## Verify
 
@@ -58,6 +71,19 @@ Each cell below was capped only against a recorded passing verify result — bee
 - **fm-guide-site-14** — `python3 tools/check.py`
 - **fm-guide-site-15** — `python3 tools/check.py`
 - **fm-guide-site-16** — `python3 tools/check.py`
+- **fm-guide-site-17** — `python3 tools/check.py`
+- **fm-guide-site-18** — `python3 tools/check.py`
+- **fm-guide-site-19** — `python3 tools/check.py`
+- **fm-guide-site-20** — `python3 tools/check.py`
+- **fm-guide-site-21** — `python3 tools/check.py`
+- **fm-guide-site-22** — `python3 tools/check.py`
+- **fm-guide-site-23** — `python3 tools/check.py`
+- **fm-guide-site-24** — `python3 tools/check.py`
+- **fm-guide-site-25** — `python3 tools/check.py`
+- **fm-guide-site-26** — `python3 tools/check.py`
+- **fm-guide-site-27** — `python3 tools/check.py`
+- **fm-guide-site-28** — `python3 tools/check.py`
+- **fm-guide-site-29** — `python3 tools/check.py`
 
 ## Deviations
 
@@ -65,11 +91,11 @@ None recorded in the capped cell traces.
 
 ## Provenance
 
-Proposed by `bee knowledge promote --work fm-guide-site` from 16 capped cell trace(s) in `.bee/cells/` and the anchor `docs/history/fm-guide-site/CONTEXT.md`, `docs/history/fm-guide-site/plan.md`. Every line above is copied from a trace or from the work item; nothing here is curated truth until a human or agent accepts it.
+Proposed by `bee knowledge promote --work fm-guide-site` from 29 capped cell trace(s) in `.bee/cells/` and the anchor `docs/history/fm-guide-site/CONTEXT.md`, `docs/history/fm-guide-site/plan.md`. Every line above is copied from a trace or from the work item; nothing here is curated truth until a human or agent accepts it.
 
 (b) AREA UPDATES — candidate spec-sync bullets, each citing its cell
 
-areas: from the scribing stamp for "fm-guide-site" — .bee/logs/scribing-runs.jsonl's most recent entry (2026-08-13T16:47:35.222Z), the work item declares no bee.areas.
+areas: from the scribing stamp for "fm-guide-site" — .bee/logs/scribing-runs.jsonl's most recent entry (2026-08-14T06:02:42.330Z), the work item declares no bee.areas.
 
 area guide-site:
   - [fm-guide-site-1] Extractor mines docs/guide into window.FM_DATA (653 cards, 101 ATK/DEF, 257 fusion-system names — corrected from plan.md's 261, a discovery-time parsing artifact); check.py asserts the data-layer invariants — feature-wide sync per the scribing stamp, 2 file(s) changed (trace .bee/cells/archive/fm-guide-site/fm-guide-site-1.json)
@@ -83,7 +109,7 @@ area guide-site:
   - [fm-guide-site-13] Embed loreVi from data/lore-vi into FM_DATA, show it in the detail panel above a labelled English original, add a machine-translated coverage row read from meta.cardsWithLoreVi, extend tools/check.py with the new invariants — feature-wide sync per the scribing stamp, 4 file(s) changed (trace .bee/cells/archive/fm-guide-site/fm-guide-site-13.json)
   - [fm-guide-site-14] Wrapped all History API call sites in safeHistoryWrite, falling back to location.hash on SecurityError; verified byte-identical behavior with working history and no uncaught/console errors with rejecting history via a jsdom harness with the pushState/replaceState file:// bug patched out — feature-wide sync per the scribing stamp, 2 file(s) changed (trace .bee/cells/archive/fm-guide-site/fm-guide-site-14.json)
   - [fm-guide-site-15] Unified monster term to quái vật across lore-vi + index.html, restored Resurrection of Chakra's English name for card #694, fixed three flagged sentences (#514/#262/#233), and added two regression assertions to tools/check.py — feature-wide sync per the scribing stamp, 6 file(s) changed (trace .bee/cells/archive/fm-guide-site/fm-guide-site-15.json)
-  - [fm-guide-site-16] Added a self-drawn clear (x) button to #search-name, #search-number, and #fusion-search that appears only when the field has text, clears+refilters+refocuses on click, and commits a real history entry via the existing scheduleHashWrite(true) path — feature-wide sync per the scribing stamp, 2 file(s) changed (trace .bee/cells/fm-guide-site-16.json)
+  - [fm-guide-site-16] Added a self-drawn clear (x) button to #search-name, #search-number, and #fusion-search that appears only when the field has text, clears+refilters+refocuses on click, and commits a real history entry via the existing scheduleHashWrite(true) path — feature-wide sync per the scribing stamp, 2 file(s) changed (trace .bee/cells/archive/fm-guide-site/fm-guide-site-16.json)
 
 (c) PATTERN CANDIDATES — candidate bee.pattern concepts, bee.polarity pitfall
 
@@ -145,25 +171,4 @@ Deep-link hash router cho tab, bo loc, phan trang va la dang mo; Back/Forward du
 
 Candidate only. `bee knowledge promote` proposes; naming the pattern, generalizing it beyond this cell, and moving `bee.lifecycle` to `active` are a human or agent decision.
 
-knowledge promote: 16 capped cell(s) mined, 1 delivery draft, 12 area bullet(s), 2 pattern candidate(s), 0 file(s) written.
----
-
-## Review outcome (2026-08-14)
-
-Đã soi từng phần của đề xuất trên. Kết quả:
-
-- **(a) Delivery draft → không áp.** Đề xuất ghi vào `docs/knowledge/work/…`,
-  nhưng repo này không có bundle `docs/knowledge/`; state layer là
-  `docs/specs/`. Nội dung delivery là bản kể lại 16 cell trace — git log và
-  `.bee/cells/` đã giữ đúng thông tin đó, chép lại chỉ tạo bản sao dễ mục.
-- **(b) 12 area bullet → đã có sẵn.** Đối chiếu từng bullet với
-  `docs/specs/guide-site.md`: mọi hành vi được nêu (bộ lọc, router hash, tab
-  Fusion, tab độ phủ, lore hai bản, nút xoá nhanh, Guardian Star) đều đã nằm
-  trong spec bằng ngôn ngữ nghiệp vụ. Không bullet nào thêm nghĩa mới.
-- **(c) 2 pattern candidate → không nâng lên.** Cả hai là chữ ký lỗi của một
-  cell cụ thể (alias tên công thức ở cell 5; checkpoint burst gõ phím và hash
-  hỏng ở cell 7), đã sửa và đã có khẳng định trong `tools/check.py` canh giữ.
-  Không đạt bar "tái diễn ở nhiều feature".
-
-Đã ghi thay vào đó: `docs/history/learnings/2026-08-14-fm-guide-site.md` (bài
-học của cell 17-20) và hai mục trong `docs/history/learnings/critical-patterns.md`.
+knowledge promote: 29 capped cell(s) mined, 1 delivery draft, 12 area bullet(s), 2 pattern candidate(s), 0 file(s) written.

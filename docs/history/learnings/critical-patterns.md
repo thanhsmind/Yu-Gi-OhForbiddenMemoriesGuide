@@ -12,6 +12,25 @@ sửa file trong worktree thì MỌI lệnh ghi bị từ chối, kể cả `tou
 Dấu hiệu: chặn đồng đều ở mọi đường ghi = môi trường, không phải phạm vi.
 (2026-08-14, cell fm-guide-site-19)
 
+## Đếm thực thể, không đếm dòng nguồn
+
+Nguồn hay chứa dư thừa có chủ ý — công thức lưu cả hai chiều, bản ghi nhiều
+ngôn ngữ, nhiều phiên bản của một thứ. Đếm dòng rồi báo ra là báo sai, và trang
+này có ràng buộc "mọi con số hiển thị khớp số đếm lại từ dữ liệu" nên con số
+sai sẽ được kiểm tra tự động bảo vệ. Chuẩn hoá về thực thể logic TRƯỚC khi báo
+bất kỳ con số phủ dữ liệu nào, kể cả khi mới chỉ nói với người dùng.
+Kèm theo: đo cả **phân bố**, không chỉ tổng — chỗ tầng render vỡ nằm ở đuôi.
+(2026-08-14, cell fm-guide-site-23; `fusion_unique.json` 50.937 dòng = 25.504
+công thức; trung vị 16 công thức/lá nhưng có lá 1.200)
+
+## Nhả reservation trước khi dispatch lát tiếp theo
+
+`bee cells finish` cap cell nhưng reservation của nó có thể còn giữ file. Lát
+sau chạm cùng file thì worker báo `[BLOCKED]` dù cell hoàn toàn đúng và cell
+giữ chỗ đã commit xong từ lâu. Orchestrator quét `bee reservations release
+--cell <id> --agent <nick>` cho mọi cell đã cap trước khi dispatch.
+(2026-08-14, cell fm-guide-site-26 bị chặn bởi cell 23/24/25)
+
 ## Trang tra cứu bài chỉ có MỘT danh sách thật
 
 `state.filtered` là danh sách đã lọc và đã sắp; bảng, lưới, phân trang, số đếm,

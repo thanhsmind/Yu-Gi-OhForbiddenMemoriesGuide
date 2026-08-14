@@ -16,7 +16,7 @@ Người chơi mở trang lên để trả lời bốn loại câu hỏi:
 
 | Khu vực | Trả lời câu hỏi | Nội dung |
 |---|---|---|
-| Tra cứu bài | "Lá này là gì" | Danh sách toàn bộ 722 lá, lọc và tìm được, mở ra bảng chi tiết một lá |
+| Tra cứu bài | "Lá này là gì" | Danh sách toàn bộ lá — 722 lá Forbidden Memories cộng một nhóm lá ngoài game mang nhãn riêng — lọc và tìm được, mở ra bảng chi tiết một lá |
 | Hướng dẫn | "Chơi thế nào" | Chín mục nội dung, có mục lục nhảy được |
 | Fusion | "Ghép thế nào" | Tra cứu hai chiều theo tên lá, cộng ba bảng công thức |
 | Độ phủ dữ liệu | "Dữ liệu tới đâu" | Số đếm thật của từng loại dữ liệu, và danh sách thứ chưa có |
@@ -30,9 +30,27 @@ Bảng liệt kê mọi lá bài. Người dùng lọc bằng:
   xoá bằng nút là hành động dứt khoát nên Back trả lại từ khoá vừa xoá,
 - chọn loại lá (quái vật, phép, bẫy, trang bị, nghi lễ),
 - chọn Type quái vật,
-- bật tùy chọn chỉ hiện lá có chỉ số.
+- bật tùy chọn chỉ hiện lá có chỉ số,
+- chọn phạm vi: chỉ lá Forbidden Memories, chỉ lá ngoài game, hoặc cả hai
+  (mặc định cả hai).
 
 Kết quả hiện theo trang, kèm số lượng khớp trên tổng số.
+
+### Lá ngoài Forbidden Memories
+
+Bảng chứa hai nhóm lá. Nhóm lõi là 722 lá có thật trong game. Nhóm thứ hai là
+lá của nguồn công thức nhưng không thuộc game — chúng có mặt để công thức nhắc
+tới chúng vẫn tra được, và mang **nhãn chữ** phân biệt trên cả dòng bảng lẫn
+hộp thoại chi tiết; nhãn là chữ chứ không chỉ là màu.
+
+Lá ngoài game **không có số thứ tự và không có Guardian Star** — hai ô đó hiện
+"chưa có dữ liệu" đúng như mọi ô thiếu nguồn khác, không hiện `0` và không được
+đánh số nối tiếp sau 722. Số thứ tự là thứ của game; bịa ra một dãy số mới sẽ
+biến trang thành nguồn sai.
+
+Vì thiếu số nên khi sắp theo số — cả tăng lẫn giảm dần — nhóm này dồn xuống
+cuối danh sách và tự sắp theo tên A–Z, còn 722 lá game giữ nguyên trật tự
+1–722 ở đầu. Đây cùng một quy ước với cách lá thiếu ATK/DEF dồn xuống cuối.
 
 Thứ tự kết quả do một ô chọn "Sắp xếp" duy nhất quyết định, dùng chung cho mọi
 chế độ xem, sáu mức: số tăng dần (mặc định), số giảm dần, ATK giảm dần, ATK tăng
@@ -79,6 +97,21 @@ nhỏ hơn, màu nhạt hơn — bản dịch là sản phẩm phái sinh, khôn
 thế hay che nguyên văn. Lá chưa có bản dịch chỉ hiện nguyên văn tiếng Anh,
 không có ô trống.
 
+Ảnh trong hộp thoại chi tiết có **hai mặt**. Mặt mặc định là ảnh chụp trong
+game — đó là hình người chơi thật sự thấy khi chơi, nên nó phải là thứ mở ra
+đầu tiên. Bấm thẳng vào ảnh thì đảo sang mặt thứ hai (bản vẽ minh hoạ hiện đại
+của cùng lá đó), bấm lần nữa đảo về. Một chỉ báo nhỏ cho biết ảnh bấm được và
+đang xem mặt nào.
+
+Lá không có mặt thứ hai thì ảnh **không bấm được và không có chỉ báo** — không
+bày nút chết. Trạng thái đảo thuộc về riêng lá đang mở: đóng hộp thoại rồi mở
+lại, hoặc chuyển sang lá khác, đều quay về mặt in-game. Chỉ ảnh trong hộp thoại
+chi tiết mới đảo được; ảnh trong bảng, trong lưới và trong Fusion List luôn là
+mặt in-game.
+
+Ô ảnh đảo được là một nút thật với người dùng bàn phím và trình đọc màn hình:
+nhận Enter và Space, có nhãn đọc được, và nói rõ đang ở mặt nào.
+
 Hộp thoại chi tiết chia hai panel khi bề ngang đủ chỗ: panel trái là ảnh mặt
 bài, khối thông tin và danh sách trang bị; panel phải là **Fusion List** —
 mọi công thức liên quan tới lá đó, kể bằng ảnh chứ không bằng câu chữ. Màn
@@ -103,6 +136,12 @@ Ghi chú riêng của từng công thức ("có thể ra thêm — cần điều
 "công thức xung đột, ghi đè …") nằm ngay dưới hàng ảnh của công thức đó. Lá
 chưa có công thức nào thì Fusion List hiện đúng một câu nói vậy, không bày
 khung rỗng.
+
+Một lá có thể liên quan tới hàng nghìn công thức — có lá được hơn một nghìn
+cặp ghép ra. Fusion List **không bao giờ cắt cụt** danh sách: hai nhóm phân
+trang độc lập, mỗi lần bày thêm một nhóm nhỏ hàng, kèm nút xem tiếp. Tiêu đề
+panel luôn ghi **tổng số thật**, và mỗi nhóm nói rõ đang hiện bao nhiêu trên
+tổng bao nhiêu — người đọc không bao giờ nhầm phần đang thấy là toàn bộ.
 
 Trong hộp thoại có hai nút mũi tên "lá trước" / "lá sau" để đi nhanh qua các lá
 mà không phải đóng hộp thoại. Chúng đi theo **danh sách đang lọc**, đúng thứ tự
@@ -155,8 +194,28 @@ Ba bảng công thức, phản ánh ba cách nguồn mô tả việc ghép bài:
 | Bảng | Dạng công thức |
 |---|---|
 | Cơ bản | hệ + hệ ra một lá; lọc được theo hệ |
-| Chính xác | tên lá + tên lá ra một lá |
+| Chính xác | cặp cụ thể ra một lá — bảng liệt kê đầy đủ, không phải một tuyển tập |
 | Xung đột | khi một lá thuộc hai hệ, cột trái ghép với cột phải cho ra kết quả ưu tiên thay vì kết quả chung |
+
+### Bảng Chính xác
+
+Bảng này liệt kê **mọi** cặp ghép mà nguồn biết, không phải vài công thức tiêu
+biểu. Nó lớn tới mức phải phân trang và có ô tìm theo tên riêng của nó; số
+hiện lên là "khớp X trên tổng Y", với Y đếm lại từ dữ liệu.
+
+Hai quy tắc đọc số của bảng này:
+
+- **Công thức không phân biệt thứ tự.** `A + B` và `B + A` là một công thức,
+  không phải hai. Nguồn lưu sẵn cả hai chiều, nên số dòng trong nguồn gấp đôi
+  số công thức thật — trang đếm theo công thức, không đếm theo dòng nguồn.
+  Đếm nhầm ở đây làm mọi con số độ phủ nói dối gấp đôi.
+- **Một vế có thể là điều kiện thay vì một lá.** Vài công thức đòi "một lá
+  thuộc hệ này, có ATK nằm trong khoảng này" chứ không đòi một lá cụ thể. Vế
+  đó bày thành ô badge ghi tên hệ kèm khoảng ATK, giống hệt cách vế hệ được
+  bày trong Fusion List — không bao giờ dựng ảnh cho một vế không phải là lá.
+
+Một cặp có thể cho nhiều hơn một kết quả; trang giữ đủ mọi kết quả, không tự
+chọn một cái.
 
 **Quy tắc tên trong công thức:** một tên khớp được lá có thật thì thành liên
 kết sang bảng chi tiết. Tên không khớp hiện dạng chữ thường, không liên kết,
@@ -166,10 +225,15 @@ một số lá.
 
 ## Độ phủ dữ liệu
 
-Liệt kê số đếm thật của dữ liệu đang nhúng trong trang — tổng số lá, số lá có
-chỉ số, số lá có Type, số lá có danh sách trang bị, số công thức mỗi loại, số
-lá đã có lore tiếng Việt trên tổng số — và nói rõ những thứ dự án KHÔNG có:
-bảng công thức Ritual, bảng drop theo đối thủ, danh sách password đầy đủ.
+Liệt kê số đếm thật của dữ liệu đang nhúng trong trang — số lá Forbidden
+Memories, số lá ngoài game và tổng của hai nhóm, số lá có chỉ số, số lá có
+Type, số lá có danh sách trang bị, số lá có ảnh mặt thứ hai, số công thức mỗi
+loại, số lá đã có lore tiếng Việt trên tổng số — và nói rõ những thứ dự án
+KHÔNG có: bảng công thức Ritual, bảng drop theo đối thủ, danh sách password
+đầy đủ.
+
+Số lá luôn tách làm ba dòng chứ không gộp một: gộp lại thì người đọc không
+biết bao nhiêu phần là bài Forbidden Memories thật.
 
 Dòng số lá đã có lore tiếng Việt ghi rõ đây là **bản dịch máy**, không phải
 trích từ nguồn tiếng Việt nào.
@@ -217,17 +281,27 @@ nào và không ném lỗi.
 
 ## Nguồn dữ liệu và ranh giới
 
-Ba nguồn, chia việc rõ ràng:
+Bốn nguồn, chia việc rõ ràng:
 
 | Nguồn | Cung cấp |
 |---|---|
-| Bộ dữ liệu bài (722 lá, lấy từ bách khoa Yu-Gi-Oh) | Xương sống bảng tra cứu: số thứ tự, tên, loại lá, Type, cấp độ, ATK, DEF, Guardian Star, password, giá StarChip, lore (nguyên văn tiếng Anh), tên tiếng Nhật, cách lấy, và ảnh mặt bài |
-| Ba tài liệu hướng dẫn tiếng Việt | Công thức fusion, danh sách trang bị theo từng lá, và toàn bộ nội dung mục Hướng dẫn |
+| Bộ dữ liệu bài (722 lá, lấy từ bách khoa Yu-Gi-Oh) | Xương sống bảng tra cứu: số thứ tự, tên, loại lá, Type, cấp độ, ATK, DEF, Guardian Star, password, giá StarChip, lore (nguyên văn tiếng Anh), tên tiếng Nhật, cách lấy, và ảnh mặt bài chụp trong game |
+| Ba tài liệu hướng dẫn tiếng Việt | Bảng công thức Cơ bản và Xung đột, danh sách trang bị theo từng lá, và toàn bộ nội dung mục Hướng dẫn |
 | Bốn file lore dịch máy (`data/lore-vi/`, khóa theo số thứ tự lá) | Bản dịch tiếng Việt của trường lore, ghép thêm bên cạnh nguyên văn — lá nào chưa có bản dịch giữ `null`, không phải chuỗi rỗng |
+| Bộ dữ liệu công thức đầy đủ | Toàn bộ bảng công thức Chính xác, nhóm lá ngoài Forbidden Memories, và ảnh mặt thứ hai của lá |
 
 Dữ liệu từ tài liệu hướng dẫn được ghép LÊN xương sống theo tên lá, không tạo
 dòng mới. Một tên trong tài liệu không khớp lá nào thì giữ nguyên dạng tên, không
 biến thành một lá.
+
+Nguồn thứ tư là ngoại lệ có kiểm soát của quy tắc trên: nó **được phép** tạo
+dòng mới, nhưng chỉ cho lá không thuộc Forbidden Memories, và mọi dòng nó tạo
+đều mang nhãn phân biệt. 722 lá game vẫn chỉ đến từ nguồn thứ nhất — nguồn thứ
+tư không được sửa, đè hay bổ sung chỉ số cho chúng.
+
+Ảnh mặt thứ hai không vào repo ở dạng gốc: bản gốc nặng gấp hơn mười lần cả
+thư mục ảnh hiện có. Một công cụ riêng nén chúng xuống bề rộng vừa đủ đọc
+trong hộp thoại chi tiết, và chỉ bản đã nén mới được lưu.
 
 ## Cách dữ liệu vào trang
 
@@ -248,16 +322,30 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
 
 - Trang không tham chiếu bất kỳ địa chỉ mạng nào, không nạp mã hay phông chữ
   từ bên ngoài, không gọi mạng lúc chạy.
-- Mỗi lá có đúng một khóa ảnh; không hai lá nào trùng khóa; khóa chỉ gồm chữ
-  thường, chữ số và dấu gạch ngang.
-- Mọi lá đều có ảnh tương ứng trong thư mục ảnh.
+- Mỗi lá có đúng một khóa ảnh; không hai lá nào trùng khóa — kể cả giữa lá
+  game và lá ngoài game; khóa chỉ gồm chữ thường, chữ số và dấu gạch ngang.
+- Mọi lá Forbidden Memories đều có ảnh in-game tương ứng trong thư mục ảnh.
+  Lá ngoài game không có ảnh in-game và không bị đòi phải có.
+- Mọi lá khai có ảnh mặt thứ hai thì file đó phải tồn tại thật; lá không có
+  thì trường ảnh thứ hai để rỗng, không trỏ tới một đường dẫn không tồn tại.
+- Thư mục ảnh mặt thứ hai nằm dưới một ngân sách dung lượng cố định, đo lại
+  từ đĩa chứ không ước lượng.
+- Đúng 722 lá Forbidden Memories, và tổng số lá của dữ liệu khớp tổng số lá
+  của khối nhúng trong trang.
+- Không lá ngoài game nào có số thứ tự hay Guardian Star khác rỗng.
 - Trường thiếu dữ liệu lưu dạng rỗng thật sự, không phải `0` và không phải
   chuỗi trống.
 - Mọi con số hiển thị ở khu vực Độ phủ dữ liệu khớp với số đếm lại từ dữ liệu.
-- Cả ba bảng công thức phủ **hết** nguồn, đếm lại từ chính file nguồn chứ không
-  gõ cứng: số công thức mỗi bảng bằng số dòng tương ứng trong tài liệu, và bộ ba
-  (vế trái, vế phải, kết quả) của bảng xung đột khớp nguồn theo đúng bội số —
-  một công thức lặp lại nhiều lần trong nguồn phải xuất hiện đúng số lần đó.
+- Cả ba bảng công thức phủ **hết** nguồn của mình, đếm lại từ chính file nguồn
+  chứ không gõ cứng. Với bảng Cơ bản và Xung đột: số công thức bằng số dòng
+  tương ứng trong tài liệu, và bộ ba (vế trái, vế phải, kết quả) của bảng xung
+  đột khớp nguồn theo đúng bội số — một công thức lặp lại nhiều lần trong nguồn
+  phải xuất hiện đúng số lần đó. Với bảng Chính xác: số công thức bằng số cặp
+  không phân biệt thứ tự đếm lại từ nguồn, gộp hai chiều không được làm mất
+  công thức nào, và mọi tham chiếu trong dạng lưu gọn đều giải ra một tên có
+  trong bảng tên.
+- Công cụ kiểm tra không được phụ thuộc thư viện ngoài nào; công cụ nén ảnh
+  thì được, vì nó chỉ chạy khi dựng lại bộ ảnh, không chạy khi kiểm tra.
 - Mọi tên trong bảng tên đồng nghĩa trỏ tới đúng một lá có thật.
 - Bản dịch giữ nguyên tên lá bài: tên lá **nhiều chữ** nào xuất hiện trong lore
   tiếng Anh của một lá thì phải xuất hiện nguyên dạng trong bản dịch của chính
@@ -284,6 +372,13 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
 - Danh sách password đầy đủ: nguồn chỉ có khoảng 13 dòng.
 - 11 trong 37 nhóm hệ fusion không có danh sách thành viên trong nguồn, nên
   không suy ra được lá nào thuộc nhóm đó.
+- Lá ngoài Forbidden Memories không có số thứ tự, Guardian Star, password,
+  giá StarChip, cách lấy, danh sách trang bị hay hệ fusion — nguồn của chúng
+  không có những trường đó, và không nguồn nào khác trong dự án bù được.
+- 26 lá Ritual của game không có ảnh mặt thứ hai: nguồn ảnh không chứa chúng.
+- Hành vi hiển thị chưa được kiểm tự động: bộ kiểm tra chỉ phủ tầng dữ liệu và
+  hình dạng mã, không mở trang thật để xác nhận phân trang, việc đảo ảnh, hay
+  bộ lọc phạm vi chạy đúng trên trình duyệt.
 
 ## Pointers
 
@@ -291,7 +386,13 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
   `/* FM_DATA:END */`.
 - `tools/extract_cards.py` — công cụ sinh dữ liệu; `--inject` ghi vào trang.
 - `tools/check.py` — bộ kiểm tra các ràng buộc bất biến ở trên (`commands.test`).
+- `tools/build_art_images.py` — nén ảnh mặt thứ hai từ nguồn gốc sang
+  `images/art/`; cần Pillow và cần thư mục ảnh gốc có sẵn trên máy.
 - `data/cards.json` — bộ dữ liệu 722 lá; `scripts/fetch_yugipedia_cards.py` tải lại.
-- `images/cards/<slug>.png` — 722 ảnh mặt bài.
+- `data/CardFusionExplorer/Card-Fusion-Explorer-Assets/` — nguồn thứ tư;
+  `fusion_unique.json` (bảng Chính xác) và `cartas_runtime.json` (lá ngoài FM,
+  ánh xạ tên file ảnh) được lưu trong repo, thư mục ảnh gốc thì không.
+- `images/cards/<slug>.png` — ảnh mặt bài chụp trong game, 722 lá.
+- `images/art/<slug>.webp` — ảnh mặt thứ hai đã nén.
 - `docs/guide/*.md` — ba tài liệu hướng dẫn tiếng Việt.
-- Quyết định nền: `docs/history/fm-guide-site/CONTEXT.md` (D1–D7).
+- Quyết định nền: `docs/history/fm-guide-site/CONTEXT.md` (D1–D12).
