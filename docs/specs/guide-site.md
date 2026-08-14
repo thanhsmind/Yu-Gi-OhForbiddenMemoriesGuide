@@ -34,6 +34,18 @@ Bảng liệt kê mọi lá bài. Người dùng lọc bằng:
 
 Kết quả hiện theo trang, kèm số lượng khớp trên tổng số.
 
+Thứ tự kết quả do một ô chọn "Sắp xếp" duy nhất quyết định, dùng chung cho mọi
+chế độ xem, sáu mức: số tăng dần (mặc định), số giảm dần, ATK giảm dần, ATK tăng
+dần, DEF giảm dần, DEF tăng dần. Chiều nằm ngay trong ô chọn — không có nút đảo
+chiều thứ hai. Khi sắp theo ATK hoặc DEF, lá không có chỉ số (phép, bẫy, nghi
+lễ) luôn dồn xuống cuối bất kể chiều, vì chúng không so sánh được chứ không phải
+bằng 0; giữa nhóm đó thứ tự theo số. Hai lá bằng điểm thì lá số nhỏ hơn đứng
+trước, nên cùng một bộ lọc luôn cho cùng một thứ tự.
+
+Thứ tự đã sắp là thứ tự thật của danh sách: chia trang, số đếm và hai nút chuyển
+lá trong hộp thoại chi tiết đều đi theo nó. Đổi sắp xếp thì về trang đầu; bộ lọc
+và số lượng khớp không đổi.
+
 Cùng một kết quả xem được bằng hai chế độ, đổi qua lại bằng cụm hai nút
 "Bảng" / "Lưới" nằm ngay trong hàng bộ lọc; chế độ bảng là mặc định, chế độ
 đang chọn nhận biết được cả bằng mắt lẫn bằng công nghệ trợ năng:
@@ -148,8 +160,9 @@ dung là vi phạm: khi dữ liệu đổi mà con số không đổi thì trang
 
 Mọi trạng thái xem được đều có địa chỉ riêng nằm trong phần hash của URL: tab
 đang mở, và ở tab tra cứu bài là từ khóa, bộ lọc loại lá, bộ lọc Type, tùy chọn
-chỉ hiện lá có chỉ số, số trang, chế độ xem (bảng hay lưới), cỡ lưới đang chọn,
-lá đang mở chi tiết; ở tab Fusion là từ khóa tra cứu và bộ lọc hệ.
+chỉ hiện lá có chỉ số, kiểu sắp xếp, số trang, chế độ xem (bảng hay lưới), cỡ
+lưới đang chọn, lá đang mở chi tiết; ở tab Fusion là từ khóa tra cứu và bộ lọc
+hệ.
 
 Hệ quả bắt buộc:
 
