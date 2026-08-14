@@ -297,6 +297,19 @@
   .col-atk, .col-def { text-align: right; white-space: nowrap; }
   .col-star, .col-fusion { color: var(--text-dim); white-space: nowrap; }
 
+  /* Decorative Type icon next to the visible text label everywhere a Type
+     shows (table "Loại" column, detail popup Type row, section 2's type
+     chips) -- alt="" on the <img> itself, fixed 16x16 box so the presence
+     or absence of an icon never nudges row height (cell fm-guide-site-34). */
+  .type-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 0.3em;
+    vertical-align: -3px;
+    image-rendering: pixelated;
+  }
+
   /* Text label (not color alone) marking a card outside the 722-card FM
      spine (D10/D11, cell fm-guide-site-27) -- table row, grid tile, and
      detail popup title all reuse this one class. */
@@ -518,6 +531,15 @@
     font-size: 0.82rem;
     overflow-wrap: break-word;
     word-break: break-word;
+  }
+
+  /* Empty for a card with no combat stats (Spell/Trap/Ritual/Equip) --
+     atkDefLineHtml/hasCombatStats, cell fm-guide-site-34 -- so the element
+     is simply absent rather than rendering an empty line. */
+  .grid-tile-stat {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.72rem;
   }
 
   .pager {
@@ -1164,26 +1186,26 @@
         sau (nguồn không kèm mô tả biểu tượng bằng chữ — bản gốc dẫn người đọc "Xem Hình"):
       </p>
       <div class="type-grid">
-        <span class="type-chip">Aqua</span>
-        <span class="type-chip">Beast</span>
-        <span class="type-chip">Beast-Warrior</span>
-        <span class="type-chip">Dinosaur</span>
-        <span class="type-chip">Dragon</span>
-        <span class="type-chip">Fairy</span>
-        <span class="type-chip">Fiend</span>
-        <span class="type-chip">Fish</span>
-        <span class="type-chip">Insect</span>
-        <span class="type-chip">Machine</span>
-        <span class="type-chip">Plant</span>
-        <span class="type-chip">Pyro</span>
-        <span class="type-chip">Reptile</span>
-        <span class="type-chip">Rock</span>
-        <span class="type-chip">Sea Serpent (Sea Dragon)</span>
-        <span class="type-chip">Spellcaster</span>
-        <span class="type-chip">Thunder</span>
-        <span class="type-chip">Warrior</span>
-        <span class="type-chip">Winged Beast</span>
-        <span class="type-chip">Zombie</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Aqua.png" alt="" loading="lazy">Aqua</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Beast.png" alt="" loading="lazy">Beast</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Beast-Warrior.png" alt="" loading="lazy">Beast-Warrior</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Dinosaur.png" alt="" loading="lazy">Dinosaur</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Dragon.png" alt="" loading="lazy">Dragon</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Fairy.png" alt="" loading="lazy">Fairy</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Fiend.png" alt="" loading="lazy">Fiend</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Fish.png" alt="" loading="lazy">Fish</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Insect.png" alt="" loading="lazy">Insect</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Machine.png" alt="" loading="lazy">Machine</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Plant.png" alt="" loading="lazy">Plant</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Pyro.png" alt="" loading="lazy">Pyro</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Reptile.png" alt="" loading="lazy">Reptile</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Rock.png" alt="" loading="lazy">Rock</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Sea_Serpent.png" alt="" loading="lazy">Sea Serpent (Sea Dragon)</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Spellcaster.png" alt="" loading="lazy">Spellcaster</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Thunder.png" alt="" loading="lazy">Thunder</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Warrior.png" alt="" loading="lazy">Warrior</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Winged_Beast.png" alt="" loading="lazy">Winged Beast</span>
+        <span class="type-chip"><img class="type-icon" src="images/type_icons/Zombie.png" alt="" loading="lazy">Zombie</span>
       </div>
       <p>
         Tra Type của từng lá cụ thể ở tab "Tra cứu bài" (cột "Loại"), hoặc lọc theo Type bằng
@@ -84210,6 +84232,47 @@ window.FM_DATA = {
     });
   }
 
+  // Type icon files under images/type_icons/ (20 PNGs, 16x16, palette mode --
+  // the in-game Type icons, cell fm-guide-site-34). File stem == Type value,
+  // except the two multi-word Types below whose file uses an underscore
+  // where the data has a space. Seven other values also appear in
+  // card.type but are NOT monster Types and have no icon at all --
+  // "Field"/"Spell"/"spell"/"trap"/"equip"/"continuous"/"divine-beast" --
+  // they are deliberately absent from this map; typeIconHtml renders
+  // nothing for them rather than fabricate a substitute icon.
+  var TYPE_ICON_FILES = {
+    "Aqua": "Aqua.png",
+    "Beast": "Beast.png",
+    "Beast-Warrior": "Beast-Warrior.png",
+    "Dinosaur": "Dinosaur.png",
+    "Dragon": "Dragon.png",
+    "Fairy": "Fairy.png",
+    "Fiend": "Fiend.png",
+    "Fish": "Fish.png",
+    "Insect": "Insect.png",
+    "Machine": "Machine.png",
+    "Plant": "Plant.png",
+    "Pyro": "Pyro.png",
+    "Reptile": "Reptile.png",
+    "Rock": "Rock.png",
+    "Sea Serpent": "Sea_Serpent.png",
+    "Spellcaster": "Spellcaster.png",
+    "Thunder": "Thunder.png",
+    "Warrior": "Warrior.png",
+    "Winged Beast": "Winged_Beast.png",
+    "Zombie": "Zombie.png"
+  };
+
+  // Decorative Type icon markup next to a visible text label -- alt="" so a
+  // screen reader never announces the Type twice (once for the image, once
+  // for the text next to it). Empty string when `type` has no icon (not one
+  // of the 20 monster Types in TYPE_ICON_FILES above).
+  function typeIconHtml(type) {
+    var file = type ? TYPE_ICON_FILES[type] : undefined;
+    if (!file) return "";
+    return '<img class="type-icon" src="images/type_icons/' + file + '" alt="" loading="lazy">';
+  }
+
   function fmt(value) {
     return value === null || value === undefined ? "chưa có dữ liệu" : String(value);
   }
@@ -84252,6 +84315,22 @@ window.FM_DATA = {
     if (card.starChipCost === null || card.starChipCost === undefined) return "chưa có dữ liệu";
     if (card.starChipCost === 999999) return "không mua được";
     return String(card.starChipCost);
+  }
+
+  // A card with no combat stats (Spell/Trap/Ritual/Equip) leaves the compact
+  // ATK/DEF line empty, never "0" and never a dash; a genuine 0 ATK/DEF
+  // monster (e.g. Cocoon of Evolution, 0/2000) still renders "0" -- gated on
+  // atk/def being present (never null/undefined), never on truthiness, so a
+  // real 0 is never swallowed by an `if (card.atk)` check. atk and def are
+  // always both present or both null in the data (D4), so checking atk alone
+  // already speaks for def. Shared by gridTileHtml and recipeCardCellHtml
+  // (cell fm-guide-site-34) -- the page's one formatter for this invariant.
+  function hasCombatStats(card) {
+    return card.atk !== null && card.atk !== undefined;
+  }
+
+  function atkDefLineHtml(card) {
+    return hasCombatStats(card) ? card.atk + "/" + card.def : "";
   }
 
   // --- Fusion two-way lookup helpers (tab "Fusion", cell fm-guide-site-5) ---
@@ -84463,19 +84542,19 @@ window.FM_DATA = {
   // clickable through the same .card-link/data-cardname/wireCardLinks
   // mechanism as nameLinkHtml -- a click anywhere in the cell, image or
   // name, bubbles to whichever span the click landed in) plus a "★level ·
-  // ATK" line read from byNameLower via resolveCardByName. A name with no
-  // match in the lookup table draws no image at all -- just the plain-text
-  // fallback nameLinkHtml() already renders (D4: never fabricate an image
-  // for an unmatched name).
+  // ATK/DEF" line read from byNameLower via resolveCardByName, empty for a
+  // card with no combat stats (hasCombatStats/atkDefLineHtml above). A name
+  // with no match in the lookup table draws no image at all -- just the
+  // plain-text fallback nameLinkHtml() already renders (D4: never fabricate
+  // an image for an unmatched name).
   function recipeCardCellHtml(name) {
     var card = resolveCardByName(name);
     if (!card) {
       return '<span class="recipe-cell recipe-cell-text">' + nameLinkHtml(name) + "</span>";
     }
-    var statLine =
-      card.level !== null && card.level !== undefined
-        ? "★" + card.level + " · " + card.atk
-        : "";
+    var statLine = hasCombatStats(card)
+      ? "★" + card.level + " · " + atkDefLineHtml(card)
+      : "";
     return (
       '<span class="recipe-cell">' +
         '<span class="card-link" data-cardname="' + escapeHtml(name) + '">' +
@@ -84998,7 +85077,7 @@ window.FM_DATA = {
       '<tr data-number="' + escapeHtml(cardKey(card)) + '">' +
         '<td class="col-num">' + escapeHtml(fmtNumberBadge(card)) + "</td>" +
         '<td class="col-name">' + escapeHtml(card.name) + outsideFmBadgeHtml(card) + "</td>" +
-        '<td class="col-type">' + escapeHtml(typeLabel) + "</td>" +
+        '<td class="col-type">' + typeIconHtml(card.type) + escapeHtml(typeLabel) + "</td>" +
         '<td class="col-atk">' + fmt(card.atk) + "</td>" +
         '<td class="col-def">' + fmt(card.def) + "</td>" +
         '<td class="col-star">' + escapeHtml(fmtStars(card)) + "</td>" +
@@ -85009,12 +85088,14 @@ window.FM_DATA = {
   }
 
   function gridTileHtml(card) {
+    var statText = atkDefLineHtml(card);
     return (
       '<button type="button" class="grid-tile" data-number="' + escapeHtml(cardKey(card)) + '">' +
         imgCellHtml(card, "tile") +
         '<span class="grid-tile-info">' +
           '<span class="grid-tile-num">' + escapeHtml(fmtNumberBadge(card)) + "</span>" +
           '<span class="grid-tile-name">' + escapeHtml(card.name) + "</span>" +
+          (statText ? '<span class="grid-tile-stat">' + escapeHtml(statText) + "</span>" : "") +
           outsideFmBadgeHtml(card) +
         "</span>" +
       "</button>"
@@ -85586,7 +85667,7 @@ window.FM_DATA = {
             "<dl>" +
               "<dt>Số thứ tự</dt><dd>" + escapeHtml(fmtNumberBadge(card)) + "</dd>" +
               "<dt>Loại lá</dt><dd>" + filterLinkHtml("loai", card.cardType) + "</dd>" +
-              "<dt>Type</dt><dd>" + filterLinkHtml("type", card.type) + "</dd>" +
+              "<dt>Type</dt><dd>" + typeIconHtml(card.type) + filterLinkHtml("type", card.type) + "</dd>" +
               "<dt>Level</dt><dd>" + fmt(card.level) + "</dd>" +
               "<dt>ATK / DEF</dt><dd>" + fmt(card.atk) + " / " + fmt(card.def) + "</dd>" +
               "<dt>Guardian Star</dt><dd>" + fmtStarsHtml(card) + "</dd>" +

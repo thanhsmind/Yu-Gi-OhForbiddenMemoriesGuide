@@ -30,6 +30,7 @@ CARDS_JSON = REPO_ROOT / "data" / "cards.json"
 IMAGES_DIR = REPO_ROOT / "images" / "cards"
 ART_DIR = REPO_ROOT / "images" / "art"
 ART_BUDGET_BYTES = 40 * 1024 * 1024  # D12: images/art/ must stay under 40MB
+TYPE_ICONS_DIR = REPO_ROOT / "images" / "type_icons"
 
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 import extract_cards  # noqa: E402  (import after sys.path tweak, by design)
@@ -1509,6 +1510,83 @@ def main() -> int:
         "không lá nào có file images/art/<slug>.webp thật trên đĩa mà artImage vẫn là null",
         not ritual_without_art,
         f"{[c['name'] for c in ritual_without_art][:5]}",
+    )
+
+    # --- Type icon files, images/type_icons/ (cell fm-guide-site-34) ---
+    # File stem == Type value, except two multi-word Types whose file swaps
+    # the space for an underscore ("Sea Serpent" -> Sea_Serpent.png,
+    # "Winged Beast" -> Winged_Beast.png). Seven other values also appear in
+    # card.type but are NOT monster Types and must render no icon at all:
+    # Field/Spell/spell/trap/equip/continuous/divine-beast -- "divine-beast"
+    # in particular sits on a cardType=="Monster" card (Slifer the Sky
+    # Dragon) yet isn't a real Type, so it is excluded by name below rather
+    # than by a hardcoded list of the 20 real Types. Everything else here is
+    # đếm lại từ nguồn: the file list comes from a live glob of the
+    # directory, the eligible-Type list comes from `cards` (the extractor's
+    # own output), never a typed-out count.
+    NON_TYPE_SENTINELS = {"Field", "Spell", "spell", "trap", "equip", "continuous", "divine-beast"}
+
+    def type_icon_filename(t: str) -> str:
+        return t.replace(" ", "_") + ".png"
+
+    icon_files_on_disk = sorted(f.name for f in TYPE_ICONS_DIR.glob("*.png")) if TYPE_ICONS_DIR.is_dir() else []
+    monster_types = sorted({c["type"] for c in cards if c["cardType"] == "Monster" and c["type"]})
+    icon_eligible_types = sorted(t for t in monster_types if t not in NON_TYPE_SENTINELS)
+
+    missing_icon_files = [t for t in icon_eligible_types if type_icon_filename(t) not in icon_files_on_disk]
+    check(
+        "mọi Type quái vật icon-eligible (cardType=Monster trong `cards`, trừ sentinel 'divine-beast' "
+        "không phải Type thật) đều có file thật trong images/type_icons/ (đếm lại từ thư mục và từ "
+        "dữ liệu, không gõ cứng danh sách 20 Type)",
+        not missing_icon_files,
+        f"{len(missing_icon_files)} missing, e.g. {missing_icon_files[:5]}",
+    )
+
+    orphan_icon_files = sorted(
+        fname for fname in icon_files_on_disk
+        if fname[:-4].replace("_", " ") not in icon_eligible_types
+    )
+    check(
+        "không file images/type_icons/*.png nào mồ côi (mọi file trên đĩa map ngược lại đúng một Type "
+        "quái vật thật có trong dữ liệu)",
+        not orphan_icon_files,
+        f"{orphan_icon_files}",
+    )
+
+    check(
+        "images/type_icons/ có đúng số file khớp số Type quái vật icon-eligible, cả hai đếm lại từ "
+        "nguồn (thư mục + dữ liệu), không gõ cứng số 20",
+        len(icon_files_on_disk) == len(icon_eligible_types) > 0,
+        f"files={len(icon_files_on_disk)}, eligible types={len(icon_eligible_types)}",
+    )
+
+    # Cross-check the shipped page's own icon-eligible map (TYPE_ICON_FILES
+    # in index.html) against the same recount, so a drift between the JS
+    # table and the data/disk state fails loudly instead of silently
+    # rendering a missing or a fabricated icon.
+    js_map_match = re.search(r"var TYPE_ICON_FILES = \{(.*?)\n  \};", html_text, re.S)
+    js_type_files = dict(re.findall(r'"([^"]+)": "([^"]+)"', js_map_match.group(1))) if js_map_match else {}
+    check(
+        "index.html có var TYPE_ICON_FILES (bảng Type -> file icon) khớp đúng tập icon-eligible đếm lại "
+        "từ dữ liệu (không thiếu, không thừa, không sai tên file)",
+        js_map_match is not None
+        and js_type_files == {t: type_icon_filename(t) for t in icon_eligible_types},
+        f"js map has {len(js_type_files)} entries, expected {len(icon_eligible_types)}",
+    )
+
+    non_type_values_seen = sorted({c["type"] for c in cards if c["type"] and c["type"] not in monster_types})
+    check(
+        "7 giá trị card.type không phải Type quái vật thật -- 6 giá trị nằm ngoài `monster_types` "
+        "(Field/Spell/spell/trap/equip/continuous) khớp đúng tập đã biết; 'divine-beast' nằm trong "
+        "monster_types (cardType=Monster) nên đã bị trừ riêng ở icon_eligible_types phía trên",
+        set(non_type_values_seen) == (NON_TYPE_SENTINELS - {"divine-beast"}),
+        f"{non_type_values_seen}",
+    )
+    check(
+        "typeIconHtml(type) trong index.html chỉ trả markup cho type nằm trong TYPE_ICON_FILES, "
+        "không bịa icon cho 7 giá trị còn lại",
+        "function typeIconHtml(type) {" in html_text
+        and 'if (!file) return "";' in html_text,
     )
 
     print()
