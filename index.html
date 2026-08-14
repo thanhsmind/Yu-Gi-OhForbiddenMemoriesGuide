@@ -678,6 +678,25 @@
     color: var(--accent);
   }
 
+  /* "Xem thêm" (cell fm-guide-site-25): reuses the .pager button look --
+     a card can carry up to ~1,200 recipes (Nekogal #2, D9), so each group
+     page-loads 30 rows at a time instead of dumping the full total into
+     the DOM on open. */
+  .fusion-more-btn {
+    display: block;
+    margin: 0.4rem 0 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.8rem;
+  }
+
+  .fusion-more-btn:hover { border-color: var(--accent); color: var(--accent); }
+
   .recipe-row {
     display: flex;
     align-items: flex-start;
@@ -75737,45 +75756,55 @@ window.FM_DATA = {
   }
 
   // "Ghép ra lá này" -- every findProducedBy() match already pins the exact
-  // result stat/name, so it is exactly one row each.
+  // result stat/name, so it is exactly one row each. Returns the ITEMS, not
+  // built HTML -- fusionGroupHtml/fusionListShowMore below turn only the
+  // currently-shown PAGE of items into row HTML (producedRowHtml), so a
+  // card with hundreds of recipes (Nekogal #2: 1,200, D9) never builds more
+  // DOM than the page it actually shows (cell fm-guide-site-25).
   function producedByRows(card) {
-    return findProducedBy(card).map(function (item) {
-      if (item.kind === "basic-result" || item.kind === "basic-possible") {
-        var note = item.kind === "basic-possible" ? "có thể ra thêm — cần điều kiện riêng" : "";
-        return recipeRowHtml(
-          recipeSideCellHtml(item.entry.left),
-          recipeSideCellHtml(item.entry.right),
-          recipeCardCellHtml(item.stat.name),
-          "=",
-          note
-        );
-      }
-      if (item.kind === "exact") {
-        return recipeRowHtml(
-          recipeCardCellHtml(item.entry.a),
-          recipeCardCellHtml(item.entry.b),
-          recipeCardCellHtml(item.entry.result),
-          "=",
-          ""
-        );
-      }
-      // item.kind === "conflict"
+    return findProducedBy(card);
+  }
+
+  function producedRowHtml(item) {
+    if (item.kind === "basic-result" || item.kind === "basic-possible") {
+      var note = item.kind === "basic-possible" ? "có thể ra thêm — cần điều kiện riêng" : "";
       return recipeRowHtml(
-        recipeSideCellHtml(item.entry.overrideLeft),
-        recipeSideCellHtml(item.entry.overrideRight),
-        recipeCardCellHtml(item.entry.overrideResult),
-        "&lt;",
-        conflictNoteHtml(item.entry)
+        recipeSideCellHtml(item.entry.left),
+        recipeSideCellHtml(item.entry.right),
+        recipeCardCellHtml(item.stat.name),
+        "=",
+        note
       );
-    });
+    }
+    if (item.kind === "exact") {
+      return recipeRowHtml(
+        recipeCardCellHtml(item.entry.a),
+        recipeCardCellHtml(item.entry.b),
+        recipeCardCellHtml(item.entry.result),
+        "=",
+        ""
+      );
+    }
+    // item.kind === "conflict"
+    return recipeRowHtml(
+      recipeSideCellHtml(item.entry.overrideLeft),
+      recipeSideCellHtml(item.entry.overrideRight),
+      recipeCardCellHtml(item.entry.overrideResult),
+      "&lt;",
+      conflictNoteHtml(item.entry)
+    );
   }
 
   // "Lá này tham gia" -- a fusionBasic entry can carry more than one result
   // stat for the same left+right pair (up to 4 in the data); each result is
   // its own row (same operands, different result cell) so every row still
-  // reads as one complete three-cell formula. entry.possible lists as a
-  // text note on the entry's last row instead of becoming its own image
-  // cells (point 6 of the cell action).
+  // reads as one complete three-cell formula. Flattened to one descriptor
+  // per ROW up front (cheap object refs, no HTML built yet) so the
+  // pagination below slices ROWS, never findParticipatesIn() items, and a
+  // fusionBasic entry's trailing "possible" note always lands on the same
+  // row it always did. entry.possible lists as a text note on the entry's
+  // last row instead of becoming its own image cells (point 6 of the
+  // fm-guide-site-21 cell action).
   function participatesInRows(card) {
     var rows = [];
     findParticipatesIn(card).forEach(function (item) {
@@ -75786,67 +75815,145 @@ window.FM_DATA = {
             ? "có thể ra thêm: " + statListHtml(item.entry.possible)
             : "";
         results.forEach(function (stat, i) {
-          rows.push(
-            recipeRowHtml(
-              recipeSideCellHtml(item.entry.left),
-              recipeSideCellHtml(item.entry.right),
-              recipeCardCellHtml(stat.name),
-              "=",
-              i === results.length - 1 ? possibleNote : ""
-            )
-          );
+          rows.push({
+            kind: "basic",
+            entry: item.entry,
+            stat: stat,
+            note: i === results.length - 1 ? possibleNote : "",
+          });
         });
         return;
       }
-      if (item.kind === "exact") {
-        rows.push(
-          recipeRowHtml(
-            recipeCardCellHtml(item.entry.a),
-            recipeCardCellHtml(item.entry.b),
-            recipeCardCellHtml(item.entry.result),
-            "=",
-            ""
-          )
-        );
-        return;
-      }
-      // item.kind === "conflict"
-      rows.push(
-        recipeRowHtml(
-          recipeSideCellHtml(item.entry.overrideLeft),
-          recipeSideCellHtml(item.entry.overrideRight),
-          recipeCardCellHtml(item.entry.overrideResult),
-          "&lt;",
-          conflictNoteHtml(item.entry)
-        )
-      );
+      rows.push(item);
     });
     return rows;
   }
 
-  // The Fusion List panel: a "Fusion List · N công thức" heading (N = rows
-  // actually drawn, produced + participates) followed by the two existing
-  // groups -- or, with zero rows, exactly one guide-note sentence and no
-  // empty frame at all.
+  function participatesRowHtml(row) {
+    if (row.kind === "basic") {
+      return recipeRowHtml(
+        recipeSideCellHtml(row.entry.left),
+        recipeSideCellHtml(row.entry.right),
+        recipeCardCellHtml(row.stat.name),
+        "=",
+        row.note
+      );
+    }
+    if (row.kind === "exact") {
+      return recipeRowHtml(
+        recipeCardCellHtml(row.entry.a),
+        recipeCardCellHtml(row.entry.b),
+        recipeCardCellHtml(row.entry.result),
+        "=",
+        ""
+      );
+    }
+    // row.kind === "conflict"
+    return recipeRowHtml(
+      recipeSideCellHtml(row.entry.overrideLeft),
+      recipeSideCellHtml(row.entry.overrideRight),
+      recipeCardCellHtml(row.entry.overrideResult),
+      "&lt;",
+      conflictNoteHtml(row.entry)
+    );
+  }
+
+  // Fusion List pagination (cell fm-guide-site-25) -- "Ghép ra lá này" and
+  // "Lá này tham gia" page independently at FUSION_LIST_PAGE_SIZE.
+  // fusionListRows/fusionListShown hold the ONE currently-open card's two
+  // groups, reset every time fusionListHtml(card) runs (i.e. every
+  // showDetail) -- same one-state-per-concern shape as fusionExactState
+  // above, not a second parallel list over state.filtered (critical-patterns
+  // "Trang tra cứu bài chỉ có MỘT danh sách thật" is about THAT list; this is
+  // popup-local formula pagination, unrelated to it).
+  var FUSION_LIST_PAGE_SIZE = 30;
+  var fusionListRows = null; // { produced: [...items], participates: [...rows] }
+  var fusionListShown = { produced: 0, participates: 0 };
+  var FUSION_LIST_GROUP_DEFS = {
+    produced: { title: "Ghép ra lá này", rowHtml: producedRowHtml },
+    participates: { title: "Lá này tham gia", rowHtml: participatesRowHtml },
+  };
+
+  function fusionGroupTitleText(groupKey, shown, total) {
+    return FUSION_LIST_GROUP_DEFS[groupKey].title + " — đang hiện " + shown + " trên " + total;
+  }
+
+  // Builds the FIRST page only: rows beyond FUSION_LIST_PAGE_SIZE are never
+  // turned into HTML until "Xem thêm" asks for them.
+  function fusionGroupHtml(groupKey, rows) {
+    if (!rows.length) return "";
+    var shown = Math.min(FUSION_LIST_PAGE_SIZE, rows.length);
+    fusionListShown[groupKey] = shown;
+    var rowFn = FUSION_LIST_GROUP_DEFS[groupKey].rowHtml;
+    var moreHtml =
+      shown < rows.length
+        ? '<button type="button" class="fusion-more-btn" data-fusion-group="' + groupKey + '">Xem thêm (' +
+          Math.min(FUSION_LIST_PAGE_SIZE, rows.length - shown) + ")</button>"
+        : "";
+    return (
+      '<div class="fusion-group" data-fusion-group="' + groupKey + '">' +
+        '<h5 class="fusion-group-title">' + fusionGroupTitleText(groupKey, shown, rows.length) + "</h5>" +
+        '<div class="fusion-group-rows" data-fusion-rows="' + groupKey + '">' +
+          rows.slice(0, shown).map(rowFn).join("") +
+        "</div>" +
+        moreHtml +
+      "</div>"
+    );
+  }
+
+  // The Fusion List panel: a "Fusion List · N công thức" heading (N = the
+  // REAL total, produced + participates -- never the shown-page count)
+  // followed by the two groups, each paginated independently -- or, with
+  // zero rows, exactly one guide-note sentence and no empty frame at all.
   function fusionListHtml(card) {
     var producedRows = producedByRows(card);
     var participatesRows = participatesInRows(card);
     var total = producedRows.length + participatesRows.length;
     if (!total) {
+      fusionListRows = null;
       return '<p class="guide-note">Lá này chưa có công thức fusion nào được ghi nhận.</p>';
     }
+    fusionListRows = { produced: producedRows, participates: participatesRows };
     var html = '<h4 class="detail-fusion-title">Fusion List · ' + total + " công thức</h4>";
-    if (producedRows.length) {
-      html +=
-        '<div class="fusion-group"><h5 class="fusion-group-title">Ghép ra lá này</h5>' +
-        producedRows.join("") + "</div>";
-    }
-    if (participatesRows.length) {
-      html +=
-        '<div class="fusion-group"><h5 class="fusion-group-title">Lá này tham gia</h5>' +
-        participatesRows.join("") + "</div>";
-    }
+    html += fusionGroupHtml("produced", producedRows);
+    html += fusionGroupHtml("participates", participatesRows);
     return html;
+  }
+
+  // "Xem thêm" for one group: grows that group's shown count by one page and
+  // appends ONLY the newly revealed rows' HTML to the rows container already
+  // in the DOM -- rows already shown are never rebuilt or re-wired.
+  function fusionListShowMore(groupKey) {
+    if (!fusionListRows) return;
+    var rows = fusionListRows[groupKey];
+    if (!rows) return;
+    var prevShown = fusionListShown[groupKey];
+    var nextShown = Math.min(rows.length, prevShown + FUSION_LIST_PAGE_SIZE);
+    if (nextShown <= prevShown) return;
+    var rowFn = FUSION_LIST_GROUP_DEFS[groupKey].rowHtml;
+    var newRowsHtml = rows.slice(prevShown, nextShown).map(rowFn).join("");
+    fusionListShown[groupKey] = nextShown;
+
+    var groupEl = elDetail.querySelector('.fusion-group[data-fusion-group="' + groupKey + '"]');
+    if (!groupEl) return;
+    var rowsEl = groupEl.querySelector('.fusion-group-rows[data-fusion-rows="' + groupKey + '"]');
+    if (rowsEl) {
+      var frag = document.createElement("div");
+      frag.innerHTML = newRowsHtml;
+      while (frag.firstChild) rowsEl.appendChild(frag.firstChild);
+      wireCardLinks(rowsEl);
+      wireFilterLinks(rowsEl);
+    }
+    var titleEl = groupEl.querySelector(".fusion-group-title");
+    if (titleEl) titleEl.textContent = fusionGroupTitleText(groupKey, nextShown, rows.length);
+    var btnEl = groupEl.querySelector('.fusion-more-btn[data-fusion-group="' + groupKey + '"]');
+    if (btnEl) {
+      if (nextShown >= rows.length) {
+        btnEl.remove();
+      } else {
+        btnEl.textContent = "Xem thêm (" + Math.min(FUSION_LIST_PAGE_SIZE, rows.length - nextShown) + ")";
+      }
+    }
   }
 
   function imgCellHtml(card, size) {
@@ -76550,6 +76657,11 @@ window.FM_DATA = {
     var navNextBtn = elDetail.querySelector(".detail-nav-next");
     if (navPrevBtn) navPrevBtn.addEventListener("click", function () { navigateDetail(-1); });
     if (navNextBtn) navNextBtn.addEventListener("click", function () { navigateDetail(1); });
+    // "Xem thêm" buttons for the Fusion List's two independently-paginated
+    // groups (cell fm-guide-site-25).
+    Array.prototype.slice.call(elDetail.querySelectorAll(".fusion-more-btn")).forEach(function (btn) {
+      btn.addEventListener("click", function () { fusionListShowMore(btn.dataset.fusionGroup); });
+    });
     wireCardLinks(elDetail);
     wireFilterLinks(elDetail);
     // The modal is its own scroll container -- a re-open must not inherit the
