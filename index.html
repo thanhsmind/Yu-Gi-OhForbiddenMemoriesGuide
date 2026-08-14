@@ -328,7 +328,7 @@
     image-rendering: pixelated;
   }
 
-  .img-wrap.detail-img { width: min(100%, 420px); height: auto; aspect-ratio: 5 / 4; }
+  .img-wrap.detail-img { width: min(100%, 420px); height: auto; aspect-ratio: 5 / 4; position: relative; }
   .img-wrap.detail-img img {
     width: 100%;
     height: 100%;
@@ -337,6 +337,28 @@
     border: 1px solid var(--border);
     background: #000;
     image-rendering: pixelated;
+  }
+
+  /* Detail-panel art toggle (cell fm-guide-site-29, per D12): only cards with
+     a second image get the button role/cursor/indicator -- cards without one
+     render through the plain imgCellHtml() path above with no dead control. */
+  .img-wrap.detail-img.flippable { cursor: pointer; }
+  .img-wrap.detail-img.flippable:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .img-flip-indicator {
+    position: absolute;
+    left: 50%;
+    bottom: 0.4rem;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.68);
+    color: #fff;
+    font-size: 0.66rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    pointer-events: none;
   }
 
   /* Fusion List recipe cell image (cell fm-guide-site-21) -- sized to match
@@ -84687,6 +84709,78 @@ window.FM_DATA = {
     );
   }
 
+  // Detail-panel image cell (cell fm-guide-site-29, per D12): the in-game
+  // image is the default face; a card with a second image (art) gets a
+  // clickable/keyboard-operable wrap that flips between the two -- built as
+  // its own markup rather than a size branch of imgCellHtml() because it
+  // needs button role/aria/data-src attributes the other three sizes (thumb,
+  // tile, recipe) never use and must never gain. Cards with no second image
+  // (card.artImage === null, the 26 FM Ritual cards) fall straight through
+  // to the plain imgCellHtml(card, "detail") -- no toggle, no indicator, no
+  // dead button.
+  function detailImgCellHtml(card) {
+    if (!card.artImage) return imgCellHtml(card, "detail");
+    var ingamePath = "images/cards/" + card.slug + ".png";
+    return (
+      '<span class="img-wrap detail-img flippable" tabindex="0" role="button" ' +
+        'aria-pressed="false" aria-label="Ảnh in-game của ' + escapeHtml(card.name) +
+        ' — bấm để xem ảnh thứ hai">' +
+        '<img data-ingame-src="' + ingamePath + '" data-art-src="' + card.artImage + '" ' +
+          'src="' + ingamePath + '" alt="' + escapeHtml(card.name) + '" loading="lazy">' +
+        '<span class="img-placeholder">' +
+          '<span class="ph-label">chưa có ảnh — cần</span>' +
+          '<input class="ph-filename" type="text" readonly value="' + escapeHtml(ingamePath) + '" ' +
+            'onclick="this.select()" title="Bấm để chọn, Ctrl+C để copy">' +
+        "</span>" +
+        '<span class="img-flip-indicator" aria-hidden="true">Ảnh in-game · bấm để đảo</span>' +
+      "</span>"
+    );
+  }
+
+  // Wires the click/keyboard toggle for one detail-panel image wrap. State
+  // (which face is showing) lives only in this element's dataset -- showDetail()
+  // rebuilds elDetail.innerHTML from scratch on every open/re-open/navigate,
+  // so a fresh wrap with no dataset.showingArt always starts on the in-game
+  // face; there is nothing to reset by hand. The onerror handler is
+  // reassigned on every toggle (rather than the self-nulling inline
+  // `onerror="this.onerror=null;..."` pattern used elsewhere) because a
+  // broken in-game path (the 360 outside-FM cards, per D8/D11) must still
+  // fall back to the placeholder correctly if the user flips back to it a
+  // second time.
+  function wireDetailImgToggle(wrapEl) {
+    var img = wrapEl.querySelector("img");
+    var placeholder = wrapEl.querySelector(".img-placeholder");
+    var indicator = wrapEl.querySelector(".img-flip-indicator");
+    img.onerror = function () {
+      img.style.display = "none";
+      placeholder.style.display = "flex";
+    };
+    function toggle() {
+      var showingArt = wrapEl.dataset.showingArt === "1";
+      var nextSrc = showingArt ? img.dataset.ingameSrc : img.dataset.artSrc;
+      img.style.display = "";
+      placeholder.style.display = "none";
+      img.src = nextSrc;
+      var nowShowingArt = !showingArt;
+      wrapEl.dataset.showingArt = nowShowingArt ? "1" : "0";
+      wrapEl.setAttribute("aria-pressed", nowShowingArt ? "true" : "false");
+      wrapEl.setAttribute(
+        "aria-label",
+        (nowShowingArt ? "Ảnh thứ hai của " : "Ảnh in-game của ") + img.alt + " — bấm để đảo"
+      );
+      if (indicator) {
+        indicator.textContent = nowShowingArt ? "Ảnh thứ hai · bấm để đảo" : "Ảnh in-game · bấm để đảo";
+      }
+    }
+    wrapEl.addEventListener("click", toggle);
+    wrapEl.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter" || ev.key === " " || ev.key === "Spacebar") {
+        ev.preventDefault();
+        toggle();
+      }
+    });
+  }
+
   function populateDropdown(el, values, allLabel) {
     var frag = document.createDocumentFragment();
     var optAll = document.createElement("option");
@@ -85376,7 +85470,7 @@ window.FM_DATA = {
       '<button type="button" class="detail-close" aria-label="Đóng">×</button>' +
       '<div class="detail-body">' +
         '<div class="detail-main">' +
-          '<div class="detail-img-wrap">' + imgCellHtml(card, "detail") + "</div>" +
+          '<div class="detail-img-wrap">' + detailImgCellHtml(card) + "</div>" +
           '<div class="detail-info">' +
             "<h3><span class=\"detail-title-text\">" + escapeHtml(card.name) + "</span>" +
               outsideFmBadgeHtml(card) +
@@ -85403,6 +85497,8 @@ window.FM_DATA = {
       "</div>" +
       "</div>";
     elDetail.querySelector(".detail-close").addEventListener("click", closeDetail);
+    var detailImgWrap = elDetail.querySelector(".img-wrap.detail-img.flippable");
+    if (detailImgWrap) wireDetailImgToggle(detailImgWrap);
     var navPrevBtn = elDetail.querySelector(".detail-nav-prev");
     var navNextBtn = elDetail.querySelector(".detail-nav-next");
     if (navPrevBtn) navPrevBtn.addEventListener("click", function () { navigateDetail(-1); });
