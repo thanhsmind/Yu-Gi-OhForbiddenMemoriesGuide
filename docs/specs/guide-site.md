@@ -43,6 +43,14 @@ Cùng một kết quả xem được bằng hai chế độ, đổi qua lại b�
 - **Lưới** — mỗi lá một ô ảnh mặt bài kèm số thứ tự và tên, số cột tự co theo
   bề rộng màn hình (điện thoại tới màn hình rộng đều dùng được).
 
+Chế độ lưới còn cho tự chọn cỡ lưới bằng một cụm bốn nút chỉ hiện khi đang xem
+lưới: "Tự động" (mặc định, số cột tự co như trên) và ba mức cố định 4, 6, 8 cột.
+Ít cột thì ô rộng hơn nên ảnh mặt bài to hơn — đó là lý do tồn tại của lựa chọn
+này. Ràng buộc: số cột đã chọn là **trần**, không phải lệnh cứng — màn hình quá
+hẹp để chứa từng ấy ô ở cỡ đọc được thì lưới tự rớt xuống ít cột hơn, trong khi
+cụm nút vẫn hiện đúng mức người dùng đã chọn. Đổi cỡ lưới không đổi kết quả lọc,
+không đổi trang, không đóng lá đang mở.
+
 Hai chế độ dùng chung một bộ lọc, một số đếm và một cách chia trang: đổi chế độ
 không đổi kết quả, không đổi trang đang xem, và không đóng lá đang mở chi tiết.
 
@@ -140,8 +148,8 @@ dung là vi phạm: khi dữ liệu đổi mà con số không đổi thì trang
 
 Mọi trạng thái xem được đều có địa chỉ riêng nằm trong phần hash của URL: tab
 đang mở, và ở tab tra cứu bài là từ khóa, bộ lọc loại lá, bộ lọc Type, tùy chọn
-chỉ hiện lá có chỉ số, số trang, chế độ xem (bảng hay lưới), lá đang mở chi
-tiết; ở tab Fusion là từ khóa tra cứu và bộ lọc hệ.
+chỉ hiện lá có chỉ số, số trang, chế độ xem (bảng hay lưới), cỡ lưới đang chọn,
+lá đang mở chi tiết; ở tab Fusion là từ khóa tra cứu và bộ lọc hệ.
 
 Hệ quả bắt buộc:
 
@@ -153,6 +161,9 @@ Hệ quả bắt buộc:
 - Đổi chế độ xem là hành động dứt khoát nên nó tạo một mục lịch sử thật: Back
   trả lại chế độ trước. Chế độ mặc định (bảng) không để lại tham số nào trong
   địa chỉ.
+- Đổi cỡ lưới cũng là hành động dứt khoát: Back trả lại cỡ trước, và dán địa chỉ
+  vào tab mới mở ra đúng cỡ đó. Mức mặc định ("Tự động") và chế độ bảng không để
+  lại tham số cỡ lưới trong địa chỉ.
 - Chuyển sang lá trước/lá sau cũng là hành động dứt khoát: mỗi lần chuyển ghi
   một mục lịch sử, Back lùi lại đúng lá vừa xem.
 - Gõ một chuỗi ký tự vào ô tìm kiếm chỉ tạo **một** mục lịch sử, và Back từ đó
