@@ -140,7 +140,10 @@ def main() -> int:
         data["meta"]["equipNameMisses"] == [],
         f"misses: {data['meta']['equipNameMisses']}",
     )
-    check("có công thức từ cả ba mục fusion.md", bool(data["fusionBasic"]) and bool(data["fusionExact"]) and bool(data["fusionConflict"]))
+    check(
+        "có công thức từ fusionBasic (fusion.md), fusionPairs (fusion_unique.json, D9) và fusionConflict (fusion.md)",
+        bool(data["fusionBasic"]) and bool(data["fusionPairs"]) and bool(data["fusionConflict"]),
+    )
 
     # --- Vietnamese lore translation (cell fm-guide-site-13) ---
     # data/lore-vi/part-1.json .. part-4.json, read directly here (never
@@ -225,8 +228,9 @@ def main() -> int:
     required_meta_fields = (
         "totalCards", "cardsWithAtkDef", "cardsWithType", "cardsWithEquips",
         "cardsWithFusionSystems", "equipListsCount", "fusionBasicCount",
-        "fusionExactCount", "fusionConflictCount", "fusionConflictMemberNames",
-        "fusionGroupsWithMembers", "cardsWithLoreVi",
+        "fusionExactCount", "fusionExactAllFmCount", "fusionExactTypeRangeCount",
+        "fusionExactMultiResultPairs", "fusionSourceRows", "fusionConflictCount",
+        "fusionConflictMemberNames", "fusionGroupsWithMembers", "cardsWithLoreVi",
     )
     check(
         "FM_DATA.meta có đủ các trường số đếm phục vụ tab Độ phủ dữ liệu",
@@ -245,11 +249,9 @@ def main() -> int:
         f"got {data['meta']['cardsWithFusionSystems']}",
     )
     check(
-        "meta.fusionBasicCount/fusionExactCount khớp đúng số phần tử thật của hai bảng công thức (fusionConflictCount đếm lại từ nguồn ở dưới, không gõ cứng số ở đây)",
-        (data["meta"]["fusionBasicCount"], data["meta"]["fusionExactCount"])
-        == (len(data["fusionBasic"]), len(data["fusionExact"]))
-        == (141, 150),
-        f"got {(data['meta']['fusionBasicCount'], data['meta']['fusionExactCount'])}",
+        "meta.fusionBasicCount khớp đúng số phần tử thật của bảng fusionBasic (fusionConflictCount đếm lại từ nguồn ở dưới, không gõ cứng số ở đây)",
+        data["meta"]["fusionBasicCount"] == len(data["fusionBasic"]) == 141,
+        f"got {data['meta']['fusionBasicCount']}",
     )
     check(
         "meta.fusionGroupsWithMembers/fusionConflictMemberNames khớp đúng số nhóm hệ và số tên riêng biệt",
@@ -323,16 +325,92 @@ def main() -> int:
         f"extractor results+possible={extractor_basic_total} vs source stat occurrences={source_stat_occurrences}",
     )
 
-    # (4) "Dung hợp chính xác" recipe count == number of '=' lines in the
-    # section of the source.
-    exact_section = extract_cards.extract_fenced_after(
-        fusion_lines, "Dung hợp chính xác", until="Dung hợp xung đột"
-    )
-    source_exact_eq_lines = [l for l in exact_section if "=" in l]
+    # (4) D9 -- "Chính xác" fusion recipes now come from fusion_unique.json,
+    # not fusion.md's old "Dung hợp chính xác" section. Recount everything
+    # straight from the raw `especificas` rows (never a hardcoded literal,
+    # and never trusting extract_cards's own internal set-building twice).
+    fusion_unique_rows = extract_cards.load_fusion_unique_rows()
     check(
-        "'Dung hợp chính xác': số công thức == số dòng chứa '=' trong nguồn (đếm lại từ nguồn, không gõ cứng)",
-        len(data["fusionExact"]) == len(source_exact_eq_lines),
-        f"extractor {len(data['fusionExact'])} vs {len(source_exact_eq_lines)} '=' line(s) in source",
+        "fusionSourceRows khớp đúng số dòng thô trong especificas (fusion_unique.json)",
+        data["meta"]["fusionSourceRows"] == len(fusion_unique_rows) == 50937,
+        f"got {data['meta']['fusionSourceRows']}, source has {len(fusion_unique_rows)}",
+    )
+    source_exact_triples: set[tuple[str, str, str]] = set()
+    for row in fusion_unique_rows:
+        a, b, result = row["carta1"], row["carta2"], row["resultado"]
+        lo, hi = (a, b) if a <= b else (b, a)
+        source_exact_triples.add((lo, hi, result))
+    check(
+        "(a) số công thức 'Chính xác' chuẩn hoá == meta.fusionExactCount == len(fusionPairs)/6, đếm lại từ especificas (đếm lại từ nguồn, không gõ cứng)",
+        len(source_exact_triples) == data["meta"]["fusionExactCount"] == len(data["fusionPairs"]) // 6 == 25504,
+        f"source {len(source_exact_triples)}, meta {data['meta']['fusionExactCount']}, "
+        f"fusionPairs/6 {len(data['fusionPairs']) // 6}",
+    )
+    check(
+        "(b) gộp hai chiều không mất công thức nào: mọi hàng thô trong especificas, chuẩn hoá về (min, max, resultado), đều tìm thấy trong tập kết quả",
+        all(
+            (min(row["carta1"], row["carta2"]), max(row["carta1"], row["carta2"]), row["resultado"])
+            in source_exact_triples
+            for row in fusion_unique_rows
+        ),
+    )
+    fusion_name_index = {name: i for i, name in enumerate(data["fusionNames"])}
+    decoded_triples: set[tuple[str, str, str]] = set()
+    pairs_str = data["fusionPairs"]
+    alphabet_index = {c: i for i, c in enumerate(extract_cards.FUSION_PAIR_ALPHABET)}
+
+    def _decode2(chunk: str) -> int:
+        return alphabet_index[chunk[0]] * 64 + alphabet_index[chunk[1]]
+
+    decode_out_of_range = False
+    for i in range(0, len(pairs_str), 6):
+        chunk = pairs_str[i : i + 6]
+        lo_i, hi_i, res_i = _decode2(chunk[0:2]), _decode2(chunk[2:4]), _decode2(chunk[4:6])
+        if not (0 <= lo_i < len(data["fusionNames"]) and 0 <= hi_i < len(data["fusionNames"]) and 0 <= res_i < len(data["fusionNames"])):
+            decode_out_of_range = True
+            continue
+        decoded_triples.add((data["fusionNames"][lo_i], data["fusionNames"][hi_i], data["fusionNames"][res_i]))
+    check(
+        "(c) mọi chỉ số giải mã từ fusionPairs đều nằm trong fusionNames (không lệch mảng)",
+        not decode_out_of_range,
+    )
+    check(
+        "fusionPairs giải mã ra đúng tập 25.504 bộ ba khớp 1-1 với especificas chuẩn hoá (đếm lại từ nguồn, không gõ cứng)",
+        decoded_triples == source_exact_triples,
+        f"decoded {len(decoded_triples)} vs source {len(source_exact_triples)}, "
+        f"symmetric diff size {len(decoded_triples ^ source_exact_triples)}",
+    )
+    check(
+        "meta.fusionExactAllFmCount đếm lại đúng: số công thức mà cả 3 tên đều là lá FM thật trong spine",
+        data["meta"]["fusionExactAllFmCount"]
+        == sum(
+            1
+            for lo, hi, result in source_exact_triples
+            if lo.lower() in by_name_lower and hi.lower() in by_name_lower and result.lower() in by_name_lower
+        )
+        == 25168,
+        f"got {data['meta']['fusionExactAllFmCount']}",
+    )
+    check(
+        "meta.fusionExactTypeRangeCount đếm lại đúng: số công thức có một vế dạng hệ ('[...]...')",
+        data["meta"]["fusionExactTypeRangeCount"]
+        == sum(
+            1
+            for lo, hi, result in source_exact_triples
+            if any(n.startswith("[") and "]" in n for n in (lo, hi, result))
+        )
+        == 167,
+        f"got {data['meta']['fusionExactTypeRangeCount']}",
+    )
+    exact_pair_results: dict[tuple[str, str], set[str]] = {}
+    for lo, hi, result in source_exact_triples:
+        exact_pair_results.setdefault((lo, hi), set()).add(result)
+    check(
+        "meta.fusionExactMultiResultPairs đếm lại đúng: số cặp (min, max) cho nhiều hơn một resultado",
+        data["meta"]["fusionExactMultiResultPairs"]
+        == sum(1 for results in exact_pair_results.values() if len(results) > 1)
+        == 6,
+        f"got {data['meta']['fusionExactMultiResultPairs']}",
     )
 
     # The docs/guide equip roster spells 15 names differently than
@@ -436,15 +514,15 @@ def main() -> int:
         and all(c["def"] is None or isinstance(c["def"], int) for c in cards),
     )
 
-    # Exact-name fusion recipes pointing at names with no spine card must be
-    # kept as name-only references, never invented a ghost row for.
-    exact_missing_numbers = [
-        r["result"] for r in data["fusionExact"] if r["result"].lower() not in by_name_lower
-    ]
+    # D9: fusionNames entries with no matching spine card (a fusion-system
+    # badge like "[Machine]0-2000", or one of the 360 non-FM cards not yet
+    # joined onto `cards` -- Slice 2) must stay plain name-only strings,
+    # never crash the extractor and never get an invented spine entry.
+    fusion_names_missing_spine = [n for n in data["fusionNames"] if n.lower() not in by_name_lower]
     check(
-        "công thức 'Dung hợp chính xác' trỏ tới tên không có trong spine vẫn giữ dạng chỉ-có-tên, không crash",
-        isinstance(exact_missing_numbers, list),
-        f"{len(exact_missing_numbers)} name-only result(s), e.g. {exact_missing_numbers[:3]}",
+        "fusionNames trỏ tới tên không có trong spine vẫn giữ dạng chỉ-có-tên, không crash",
+        isinstance(fusion_names_missing_spine, list),
+        f"{len(fusion_names_missing_spine)} name(s) not in spine, e.g. {fusion_names_missing_spine[:3]}",
     )
 
     # --- The cell's must_have worked example: Blue-eyes White Dragon ---
@@ -1240,7 +1318,7 @@ def main() -> int:
     print(f"  fusion groups with a member list:    {len(data['meta']['fusionGroupsWithMembers'])}")
     print(f"  equip lists (monster headers):       {len(data['equipLists'])}")
     print(f"  fusionBasic blocks:                  {len(data['fusionBasic'])}")
-    print(f"  fusionExact recipes:                 {len(data['fusionExact'])}")
+    print(f"  fusionExact recipes (D9, fusion_unique.json): {data['meta']['fusionExactCount']}")
     print(f"  fusionConflict stanzas:               {len(data['fusionConflict'])}")
 
     if failures:

@@ -22,12 +22,23 @@ Sources (read-only, never edited by this script):
       name (case-insensitive, via EQUIP_NAME_ALIASES for the handful of
       spellings docs/guide and Yugipedia disagree on).
   - "Game Yu-Gi-Oh! Forbidden Memories fusion.md"
-      three fenced sections: "Dung hợp cơ bản" ([Type]+[Type] = Name
-      (ATK/DEF Star/Star)), "Dung hợp chính xác" (Name + Name = Name), and
-      "Dung hợp xung đột" (per-card fusion-system membership) -- carried
-      through unchanged; only the fusion-system tags are joined onto the
-      spine (by name, matches Yugipedia's spelling directly, no alias
-      needed -- audited: 0 mismatches).
+      two fenced sections still read here: "Dung hợp cơ bản" ([Type]+[Type]
+      = Name (ATK/DEF Star/Star)) and "Dung hợp xung đột" (per-card
+      fusion-system membership) -- carried through unchanged; only the
+      fusion-system tags are joined onto the spine (by name, matches
+      Yugipedia's spelling directly, no alias needed -- audited: 0
+      mismatches). The old "Dung hợp chính xác" section (150 lines, Name +
+      Name = Name) is no longer read at all -- D9 replaces it wholesale
+      with fusion_unique.json below.
+  - "data/CardFusionExplorer/Card-Fusion-Explorer-Assets/fusion_unique.json"
+      (D8/D9) -- `especificas` key, 50,937 raw {carta1, carta2, resultado}
+      rows, each recipe stored in both directions. Folded down to 25,504
+      order-independent (low, high, result) triples and encoded as
+      `fusionNames` (1,106 distinct names, sorted) + `fusionPairs` (one
+      string, 6 base-64-ish chars per recipe indexing into fusionNames) --
+      see build_fusion_exact_pairs(). Supersedes fusion.md's old "Dung hợp
+      chính xác" table (150 lines) entirely; the sibling `por_tipo` key in
+      the same file is empty and never read.
   - "data/lore-vi/part-1.json" .. "part-4.json" -- machine-translated
       Vietnamese lore keyed by card number (string), joined onto the spine
       as `loreVi` alongside the untouched English `lore`. A card with no
@@ -36,7 +47,8 @@ Sources (read-only, never edited by this script):
 
 D4 (docs/history/fm-guide-site/CONTEXT.md): a field with no source is
 `None` (-> JSON null). Never 0, never guessed. D7 keeps this rule, only
-swaps the card table's source.
+swaps the card table's source; D9 keeps it too, only swaps the "Chính xác"
+fusion table's source.
 
 Usage:
     python3 tools/extract_cards.py                  # print JS to stdout
@@ -55,10 +67,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 GUIDE_DIR = REPO_ROOT / "docs" / "guide"
 CARDS_JSON = REPO_ROOT / "data" / "cards.json"
 LORE_VI_DIR = REPO_ROOT / "data" / "lore-vi"
+CARD_FUSION_EXPLORER_DIR = REPO_ROOT / "data" / "CardFusionExplorer" / "Card-Fusion-Explorer-Assets"
 
 EQUIP_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories Quân Bài Phụ trợ.md"
 FUSION_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories fusion.md"
 LORE_VI_FILES = [LORE_VI_DIR / f"part-{i}.json" for i in range(1, 5)]
+FUSION_UNIQUE_JSON = CARD_FUSION_EXPLORER_DIR / "fusion_unique.json"
 
 # docs/guide's equip roster spells 15 names (13 monster headers, 2 equip
 # items) differently than Yugipedia (data/cards.json). Fixed table, never
@@ -332,24 +346,65 @@ def parse_fusion_basic(lines: list[str]):
 
 
 # ---------------------------------------------------------------------------
-# "Dung hợp chính xác" — Name + Name = Name (no stats)
+# "Chính xác" recipes -- D9: sourced from
+# data/CardFusionExplorer/Card-Fusion-Explorer-Assets/fusion_unique.json,
+# NOT fusion.md's "Dung hợp chính xác" section (that 150-line table and its
+# parser are gone; the 50,937-row `especificas` key supersedes it entirely).
 # ---------------------------------------------------------------------------
 
-EXACT_LINE_RE = re.compile(r"^(.*?)\+\s*(.*?)=\s*(.*)$")
+# 64 symbols -- digits, then upper, then lower, then '-' and '_' -- enough to
+# index up to 4,096 names (fusionNames tops out at 1,106) in exactly 2 chars.
+FUSION_PAIR_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
 
 
-def parse_fusion_exact(lines: list[str]) -> list[dict]:
-    content = extract_fenced_after(lines, "Dung hợp chính xác", until="Dung hợp xung đột")
-    out = []
-    for line in content:
-        if not line.strip():
-            continue
-        m = EXACT_LINE_RE.match(line)
-        if not m:
-            continue
-        a, b, result = (g.strip() for g in m.groups())
-        out.append({"a": a, "b": b, "result": result})
-    return out
+def load_fusion_unique_rows() -> list[dict]:
+    """Read fusion_unique.json's `especificas` key, untouched: 50,937 raw
+    {carta1, carta2, resultado} rows. The sibling `por_tipo` key is empty in
+    the source (confirmed in CONTEXT.md's D8 asset audit) and is never read."""
+    raw = json.loads(FUSION_UNIQUE_JSON.read_text(encoding="utf-8"))
+    return raw["especificas"]
+
+
+def build_fusion_exact_pairs(rows: list[dict]) -> tuple[list[str], str]:
+    """D9: fold `especificas`'s 50,937 raw rows -- each recipe stored in
+    BOTH directions (A+B and B+A) -- down to 25,504 order-independent
+    (low, high, result) triples, then encode as (fusionNames, fusionPairs):
+
+      - fusionNames: every distinct name seen on either side or as a result,
+        sorted (Python's default codepoint order) -- 1,106 names. A handful
+        are fusion-system badges instead of a specific card name (e.g.
+        "[Machine]0-2000"); rendering those as badges is index.html's job,
+        not this script's -- here they are just names like any other.
+      - fusionPairs: one string, exactly 6 chars per recipe -- 3 indices
+        into fusionNames, each 2 chars from FUSION_PAIR_ALPHABET (base-64,
+        big-endian: hi = i // 64, lo = i % 64). Recipes are emitted in
+        `sorted(triples)` order, so the same source always yields the same
+        string byte-for-byte (extract_cards.py's idempotence guarantee,
+        checked by tools/check.py running the extractor twice).
+    """
+    triples: set[tuple[str, str, str]] = set()
+    for row in rows:
+        a, b, result = row["carta1"], row["carta2"], row["resultado"]
+        lo, hi = (a, b) if a <= b else (b, a)
+        triples.add((lo, hi, result))
+
+    names: set[str] = set()
+    for lo, hi, result in triples:
+        names.add(lo)
+        names.add(hi)
+        names.add(result)
+    fusion_names = sorted(names)
+    name_index = {name: i for i, name in enumerate(fusion_names)}
+
+    def encode_index(i: int) -> str:
+        hi_digit, lo_digit = divmod(i, 64)
+        return FUSION_PAIR_ALPHABET[hi_digit] + FUSION_PAIR_ALPHABET[lo_digit]
+
+    chunks = [
+        encode_index(name_index[lo]) + encode_index(name_index[hi]) + encode_index(name_index[result])
+        for lo, hi, result in sorted(triples)
+    ]
+    return fusion_names, "".join(chunks)
 
 
 # ---------------------------------------------------------------------------
@@ -498,13 +553,22 @@ def extract_all() -> dict:
     numbered_names, equip_lists = parse_equip_file(read_lines(EQUIP_FILE))
 
     fusion_lines = read_lines(FUSION_FILE)
-    # fusion_basic/fusion_exact/fusion_conflict/groups are carried through
-    # unchanged (same column-splitting parse as before D7). atk_def_by_name
-    # is no longer joined onto the card spine -- data/cards.json already
-    # carries ATK/DEF for every monster -- so it is computed and dropped.
+    # fusion_basic/fusion_conflict/groups are carried through unchanged (same
+    # column-splitting parse as before D7). atk_def_by_name is no longer
+    # joined onto the card spine -- data/cards.json already carries ATK/DEF
+    # for every monster -- so it is computed and dropped. The old
+    # "Dung hợp chính xác" fusion.md section is no longer read at all (D9):
+    # fusion_exact_rows below comes from fusion_unique.json instead.
     fusion_basic, _atk_def_by_name = parse_fusion_basic(fusion_lines)
-    fusion_exact = parse_fusion_exact(fusion_lines)
     fusion_conflict, groups, member_names = parse_fusion_conflict(fusion_lines)
+
+    fusion_exact_rows = load_fusion_unique_rows()
+    fusion_names, fusion_pairs = build_fusion_exact_pairs(fusion_exact_rows)
+    fusion_exact_triples: set[tuple[str, str, str]] = set()
+    for row in fusion_exact_rows:
+        a, b, result = row["carta1"], row["carta2"], row["resultado"]
+        lo, hi = (a, b) if a <= b else (b, a)
+        fusion_exact_triples.add((lo, hi, result))
 
     cards = load_spine_cards()
     cards_by_lower = {c["name"].lower(): c for c in cards}
@@ -547,6 +611,26 @@ def extract_all() -> dict:
     for card in cards:
         card["loreVi"] = lore_vi.get(str(card["number"])) or None
 
+    # D9 sub-counts, all recounted from fusion_exact_triples (the same
+    # deduped set fusionPairs is encoded from) -- never hardcoded, so a
+    # source change moves these numbers automatically instead of silently
+    # going stale.
+    def _is_type_badge(name: str) -> bool:
+        return name.startswith("[") and "]" in name
+
+    fusion_exact_all_fm_count = sum(
+        1
+        for lo, hi, result in fusion_exact_triples
+        if lo.lower() in cards_by_lower and hi.lower() in cards_by_lower and result.lower() in cards_by_lower
+    )
+    fusion_exact_type_range_count = sum(
+        1 for lo, hi, result in fusion_exact_triples if _is_type_badge(lo) or _is_type_badge(hi) or _is_type_badge(result)
+    )
+    pair_results: dict[tuple[str, str], set[str]] = {}
+    for lo, hi, result in fusion_exact_triples:
+        pair_results.setdefault((lo, hi), set()).add(result)
+    fusion_exact_multi_result_pairs = sum(1 for results in pair_results.values() if len(results) > 1)
+
     meta = {
         "totalCards": len(cards),
         "cardsWithAtkDef": sum(1 for c in cards if c["atk"] is not None),
@@ -560,7 +644,14 @@ def extract_all() -> dict:
         # the tab reads these directly from meta instead of hardcoding the
         # numbers into index.html.
         "fusionBasicCount": len(fusion_basic),
-        "fusionExactCount": len(fusion_exact),
+        # D9: fusionExactCount is now the deduped, order-independent recipe
+        # count from fusion_unique.json (25,504), not fusion.md's old
+        # 150-line "Dung hợp chính xác" table.
+        "fusionExactCount": len(fusion_exact_triples),
+        "fusionExactAllFmCount": fusion_exact_all_fm_count,
+        "fusionExactTypeRangeCount": fusion_exact_type_range_count,
+        "fusionExactMultiResultPairs": fusion_exact_multi_result_pairs,
+        "fusionSourceRows": len(fusion_exact_rows),
         "fusionConflictCount": len(fusion_conflict),
         "fusionConflictMemberNames": sorted(member_names),
         "fusionGroupsWithMembers": sorted(tag for tag, names in groups.items() if names),
@@ -570,7 +661,8 @@ def extract_all() -> dict:
         "cards": cards,
         "equipLists": equip_lists,
         "fusionBasic": fusion_basic,
-        "fusionExact": fusion_exact,
+        "fusionNames": fusion_names,
+        "fusionPairs": fusion_pairs,
         "fusionConflict": fusion_conflict,
         "fusionGroups": {tag: sorted(names) for tag, names in sorted(groups.items())},
         # Emitted for index.html's nameLinkHtml (cell fm-guide-site-5 rework):
