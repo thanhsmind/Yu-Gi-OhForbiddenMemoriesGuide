@@ -964,6 +964,73 @@ def main() -> int:
             and inject_copy_1.read_bytes() == inject_copy_2.read_bytes(),
         )
 
+    # --- Chế độ xem lưới ảnh cho tab tra cứu bài (cell fm-guide-site-17) ---
+    view_mode_buttons = {
+        "view-mode-table": "Bảng",
+        "view-mode-grid": "Lưới",
+    }
+    for btn_id, label in view_mode_buttons.items():
+        btn_match = re.search(
+            r'<button[^>]*id="' + re.escape(btn_id) + r'"[^>]*>' + re.escape(label),
+            html_text,
+        )
+        check(
+            f"index.html có nút chuyển chế độ xem #{btn_id} là <button type=\"button\"> thật, "
+            f"nhãn '{label}', kèm aria-pressed",
+            btn_match is not None
+            and 'type="button"' in btn_match.group(0)
+            and "aria-pressed=" in btn_match.group(0),
+            "không tìm thấy nút hoặc thiếu type/nhãn/aria-pressed" if not btn_match else btn_match.group(0),
+        )
+    check(
+        "index.html có khối #card-grid (chế độ xem lưới), đặt cạnh #table-wrap và ẩn mặc định",
+        '<div id="card-grid" class="card-grid" hidden></div>' in html_text
+        and 'id="table-wrap"' in html_text,
+    )
+    check(
+        "ô lưới dựng đường ảnh từ card.slug qua imgCellHtml (dùng lại, không tự ráp đường ảnh thứ hai) "
+        "và mỗi ô là <button> mang data-number để mở popup chi tiết",
+        "function gridTileHtml(card)" in html_text
+        and 'imgCellHtml(card, "tile")' in html_text
+        and html_text.count("function imgCellHtml(") == 1
+        and '<button type="button" class="grid-tile" data-number="' in html_text,
+    )
+    check(
+        "lưới và bảng dùng chung state.filtered/PAGE_SIZE/renderPager trong render() -- không có bộ lọc "
+        "hay phân trang thứ hai cho lưới",
+        html_text.count("function render() {") == 1
+        and re.search(
+            r"function render\(\) \{.*?state\.filtered\.length.*?PAGE_SIZE.*?renderPager\(pageCount\);\s*\n\s*\}",
+            html_text,
+            re.S,
+        )
+        is not None,
+    )
+    check(
+        "#card-grid có delegate click riêng gọi showDetail(card) như tbody, không nhân bản logic mở popup "
+        "(chỉ đúng một định nghĩa showDetail)",
+        html_text.count("function showDetail(card)") == 1
+        and re.search(
+            r'elCardGrid\.addEventListener\("click", function \(ev\) \{.*?showDetail\(card\);.*?\}\);',
+            html_text,
+            re.S,
+        )
+        is not None,
+    )
+    check(
+        "tham số hash 'xem' được ĐỌC (readStateFromHash) và GHI (currentHash) cho chế độ xem, "
+        "và applyState dựng lại chế độ trước khi lọc/render",
+        '["xem", viewMode === "luoi" ? "luoi" : ""]' in html_text
+        and 'xem: params.xem === "luoi" ? "luoi" : "bang"' in html_text
+        and "setViewMode(st.xem);" in html_text,
+    )
+    check(
+        "đổi chế độ xem đi qua scheduleHashWrite(true) (đường ghi hash sẵn có, giống lúc đổi dropdown) "
+        "nên Back trả lại chế độ trước, không tạo đường lịch sử thứ hai",
+        html_text.count('elViewModeTableBtn.addEventListener("click"') == 1
+        and html_text.count('elViewModeGridBtn.addEventListener("click"') == 1,
+    )
+
     print()
     print("Summary:")
     print(f"  cards (spine, data/cards.json):      {len(cards)}")
