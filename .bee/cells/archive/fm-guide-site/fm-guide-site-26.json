@@ -1,0 +1,79 @@
+{
+  "id": "fm-guide-site-26",
+  "feature": "fm-guide-site",
+  "title": "Ghép 360 lá ngoài FM vào bộ dữ liệu, tách mốc 722 thành 722 lá FM",
+  "lane": "standard",
+  "deps": [
+    "fm-guide-site-25"
+  ],
+  "files": [
+    "tools/extract_cards.py",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "docs/history/fm-guide-site/plan.md",
+    "tools/extract_cards.py",
+    "tools/check.py"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Theo D10 và D11 trong CONTEXT.md, mục 'Slice 2' của plan.md. Trong extract_cards.py: đọc data/CardFusionExplorer/Card-Fusion-Explorer-Assets/cartas_runtime.json (1.056 lá), lấy 360 lá KHÔNG khớp lá nào trong data/cards.json (khớp theo tên đã chuẩn hoá lowercase + bỏ ký tự ngoài a-z0-9, có xét bảng nameAliases sẵn có), nối vào cuối mảng cards. Mỗi lá ngoài FM mang: name, slug (đúng quy tắc D3), cardType (từ 'Card type'), type (từ 'Type'), level, atk, def (số; rỗng thì null), lore (từ 'Description'), loreVi (từ 'Descricao-VI'), outsideFm: true, và number: null, guardianStars: null, password: null, starChipCost: null, obtainedBy: null, equips: null, fusionSystems: null — ô thiếu để null thật, KHÔNG bịa số, KHÔNG đánh số 723 trở đi (D11). Lá FM giữ nguyên và KHÔNG mang trường outsideFm (hoặc mang false — chọn một, nhất quán). Trong meta: totalCards đổi thành tổng số lá; thêm fmCards (722) và outsideFmCards (360); mọi mốc đang tính trên 722 (cardsWithAtkDef, cardsWithType, cardsWithEquips, cardsWithFusionSystems, cardsWithLoreVi) đếm lại và nói rõ mẫu số là lá FM hay tổng. Trong check.py: mốc 722 gõ cứng ở check.py:104 và check.py:933 tách thành 'đúng 722 lá FM' + 'tổng số lá khớp giữa data và khối nhúng'; check 'mọi lá đều có ảnh trong images/cards/' chỉ áp cho lá FM (lá ngoài FM chưa có ảnh cho tới slice 3); check khoá ảnh duy nhất áp cho TOÀN BỘ lá — hai lá bất kỳ không được trùng slug. Check giữ nguyên tên lá trong bản dịch cũng chạy cho lá ngoài FM: lá nào vi phạm thì đặt loreVi = null cho lá đó và báo số lượng trong meta thay vì bỏ check.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "extract_cards.py chạy hai lần liên tiếp cho kết quả giống hệt đến từng byte",
+      "Đúng 722 lá FM và đúng 360 lá ngoài FM, đếm lại từ nguồn chứ không gõ cứng",
+      "Không lá ngoài FM nào có number hay guardianStars khác null",
+      "Không hai lá nào trùng slug"
+    ],
+    "artifacts": [
+      {
+        "path": "tools/extract_cards.py",
+        "substantive": "Hàm ghép lá ngoài FM từ cartas_runtime.json + meta tách fmCards/outsideFmCards"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "Mốc 722 tách thành 722 lá FM + tổng số lá; check ảnh chỉ áp cho lá FM"
+      }
+    ],
+    "key_links": [
+      "docs/history/fm-guide-site/CONTEXT.md D10, D11",
+      "docs/history/fm-guide-site/plan.md mục Slice 2"
+    ],
+    "prohibitions": [
+      "Không bịa số thứ tự cho lá ngoài FM",
+      "Không bịa Guardian Star cho lá ngoài FM",
+      "Không bỏ check nào để cho xanh — retarget chứ không xoá",
+      "Không sửa index.html trong cell này (cell sau)",
+      "Không đụng dữ liệu fusion của slice 1"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "cards-merge",
+    "outcome": "Merged 360 outside-FM cards into the card table (D10/D11), splitting FM-only vs total counts in meta and check.py",
+    "files_changed": [
+      "tools/extract_cards.py",
+      "tools/check.py",
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T07:52:56.924Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T07:30:25.847Z",
+    "warnings": [
+      "advisory: this cap's commit changes 7982 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T07:52:52.239Z"
+  },
+  "tier": "generation"
+}

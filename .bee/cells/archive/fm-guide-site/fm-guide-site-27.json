@@ -1,0 +1,70 @@
+{
+  "id": "fm-guide-site-27",
+  "feature": "fm-guide-site",
+  "title": "Bảng tra cứu nhận lá ngoài FM: nhãn riêng, khoá theo slug, xếp cuối khi sắp theo số",
+  "lane": "standard",
+  "deps": [
+    "fm-guide-site-26"
+  ],
+  "files": [
+    "index.html"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "docs/history/fm-guide-site/plan.md",
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Theo D10, D11. Trong phần JS + markup của index.html. (a) byNumber[c.number] hiện gom mọi lá thiếu số vào một khoá 'undefined' — đổi bảng tra cứu nội bộ sang khoá theo slug, và mọi chỗ đang tra theo số (mở popup, nút trước/sau, khôi phục từ hash) đi qua khoá mới; địa chỉ ?la= chấp nhận CẢ số (lá FM, giữ nguyên link cũ chạy được) lẫn slug (lá ngoài FM). (b) Dòng bảng và popup của lá ngoài FM mang nhãn phân biệt rõ (chữ, không chỉ màu); ô số thứ tự và ô Guardian Star hiện 'chưa có dữ liệu' đúng quy ước sẵn có, không hiện 0 hay chuỗi rỗng. (c) Sắp xếp theo D11: ở hai chế độ 'số tăng dần' và 'số giảm dần', lá không có số xuống CUỐI danh sách và sắp theo tên A-Z, lá FM giữ trật tự 1-722 ở đầu; các chế độ ATK/DEF giữ nguyên quy ước đẩy lá thiếu chỉ số xuống cuối đã có. (d) Thêm một tuỳ chọn lọc cho phép chỉ xem lá FM, chỉ xem lá ngoài FM, hoặc cả hai (mặc định cả hai, theo D10); ô lọc theo đúng kiểu các ô lọc sẵn có, và trạng thái của nó khôi phục được từ địa chỉ như các ô khác. (e) Khu 'Độ phủ dữ liệu' đọc meta mới: hiện rõ số lá FM, số lá ngoài FM, và tổng — số đọc từ dữ liệu lúc hiển thị, không gõ cứng.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "Mở popup một lá ngoài FM ra đúng lá đó, không ra lá khác",
+      "Link ?la=<số> cũ của lá FM vẫn mở đúng lá",
+      "Sắp theo số tăng dần: 722 lá FM ở đầu theo số, 360 lá ngoài FM ở cuối theo tên A-Z",
+      "Ô số và ô Guardian Star của lá ngoài FM hiện 'chưa có dữ liệu', không hiện 0",
+      "Bộ lọc FM / ngoài FM khôi phục được từ địa chỉ, nút xoá nhanh hiện đúng lúc"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "Khoá tra cứu theo slug, nhãn ngoài FM, quy tắc sắp xếp D11, bộ lọc FM/ngoài FM"
+      }
+    ],
+    "key_links": [
+      "docs/history/fm-guide-site/CONTEXT.md D10, D11"
+    ],
+    "prohibitions": [
+      "Không đọc lại khối dữ liệu JSON nhúng — chỉ sửa markup và phần JS",
+      "Không bịa số hay Guardian Star ở lớp hiển thị",
+      "Không làm hỏng link ?la=<số> đang có",
+      "Không sửa tools/*.py trong cell này"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "cards-ui",
+    "outcome": "Slug-keyed card lookup, FM/outside-FM labels, D11 sort, and scope filter added to the card lookup tab",
+    "files_changed": [
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T08:08:16.844Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T07:53:58.204Z",
+    "warnings": [
+      "advisory: this cap's commit changes 208 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T08:08:14.524Z"
+  },
+  "tier": "generation"
+}

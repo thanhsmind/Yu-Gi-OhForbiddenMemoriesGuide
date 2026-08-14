@@ -1,0 +1,86 @@
+{
+  "id": "fm-guide-site-28",
+  "feature": "fm-guide-site",
+  "title": "Dựng bộ ảnh thứ hai dạng WebP và gắn khoá ảnh vào dữ liệu lá",
+  "lane": "standard",
+  "deps": [
+    "fm-guide-site-27"
+  ],
+  "files": [
+    "tools/build_art_images.py",
+    "tools/extract_cards.py",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "docs/history/fm-guide-site/plan.md",
+    "tools/extract_cards.py",
+    "tools/check.py"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Theo D12 trong CONTEXT.md và mục 'Slice 3' của plan.md. (a) Viết tools/build_art_images.py: đọc thư mục ảnh gốc của nguồn CardFusionExplorer (đường dẫn cho trong prompt), map tên file dạng 'blue-eyes_white_dragon.png' sang slug của lá trong FM_DATA qua trường IMG-CARD của cartas_runtime.json, nén sang WebP bề rộng tối đa 400px giữ tỉ lệ, ghi ra images/art/<slug>.webp. In ra: số ảnh đã dựng, số lá không có ảnh, tổng dung lượng thư mục. Nếu thư mục ảnh gốc không có trên máy thì báo rõ và dừng bằng mã lỗi, KHÔNG tự tải gì từ mạng. Công cụ dùng Pillow — phụ thuộc của người phát triển, không phải của người đọc trang (D6); tools/check.py TUYỆT ĐỐI không được import Pillow. (b) Chạy công cụ, commit thư mục images/art/ kết quả; tổng dung lượng phải dưới 40MB — nếu vượt thì hạ chất lượng WebP cho tới khi đạt, và ghi tham số đã dùng vào docstring của công cụ. (c) Trong extract_cards.py: mỗi lá có file images/art/<slug>.webp thì mang thêm trường artImage (đường dẫn tương đối); lá không có thì trường đó để null — không bịa đường dẫn. meta thêm cardsWithArtImage. (d) Trong check.py: thêm ba check — mọi lá khai artImage thì file phải tồn tại thật; không lá nào khai artImage trỏ tới file thiếu; tổng dung lượng images/art/ dưới 40MB. Đếm lại từ đĩa, không gõ cứng.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "extract_cards.py chạy hai lần liên tiếp cho kết quả giống hệt đến từng byte",
+      "Tổng dung lượng images/art/ dưới 40MB, đo lại bằng lệnh chứ không ước lượng",
+      "Mọi lá khai artImage đều có file thật; 26 lá Ritual không có ảnh thì artImage = null",
+      "tools/check.py không import Pillow"
+    ],
+    "artifacts": [
+      {
+        "path": "tools/build_art_images.py",
+        "substantive": "Công cụ nén PNG nguồn sang WebP 400px vào images/art/"
+      },
+      {
+        "path": "tools/extract_cards.py",
+        "substantive": "Trường artImage per-card + meta.cardsWithArtImage"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "Ba check ảnh thứ hai, đếm lại từ đĩa"
+      }
+    ],
+    "key_links": [
+      "docs/history/fm-guide-site/CONTEXT.md D12",
+      "docs/history/fm-guide-site/plan.md mục Slice 3"
+    ],
+    "prohibitions": [
+      "Không commit ảnh PNG gốc 350MB",
+      "Không để check.py phụ thuộc Pillow",
+      "Không bịa đường dẫn ảnh cho lá không có ảnh",
+      "Không tải gì từ mạng",
+      "Không sửa JS trong index.html (cell sau)"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "art-build",
+    "outcome": "Built the second WebP art set (1056/1082 cards, 22.12MB) and joined artImage onto FM_DATA",
+    "files_changed": [
+      "tools/build_art_images.py",
+      "tools/extract_cards.py",
+      "tools/check.py",
+      "index.html",
+      "images/art"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T08:18:14.267Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T08:09:56.904Z",
+    "warnings": [
+      "advisory: this cap's commit changes 3512 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T08:18:11.536Z"
+  },
+  "tier": "generation"
+}

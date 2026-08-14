@@ -1,0 +1,68 @@
+{
+  "id": "fm-guide-site-25",
+  "feature": "fm-guide-site",
+  "title": "Fusion List trong popup chi tiết phân trang theo dữ liệu công thức mới",
+  "lane": "standard",
+  "deps": [
+    "fm-guide-site-24"
+  ],
+  "files": [
+    "index.html"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/plan.md",
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Panel Fusion List dạng ảnh trong popup chi tiết (fusionListHtml ~75398, producedByRows ~75308, participatesInRows ~75346) giờ nhận tới 1.200 dòng cho một lá (Nekogal #2) — thêm phân trang 30 dòng một lần với nút 'xem thêm' cho từng nhóm, hai nhóm 'Ghép ra lá này' và 'Lá này ghép với gì' đếm và phân trang độc lập. Tiêu đề panel vẫn ghi TỔNG SỐ THẬT ('Fusion List · N công thức'), không phải số dòng đang hiện; mỗi nhóm ghi rõ 'đang hiện X trên N'. Giữ nguyên cách vẽ ô ảnh (recipeCardCellHtml ~75237) và ô badge (recipeSideCellHtml ~75263) đã chốt ngày 2026-08-14, kể cả cỡ ô của cell fm-guide-site-22. Mở popup lá có nhiều công thức phải mượt — chỉ dựng HTML cho trang đang hiện.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "Mở popup Nekogal #2 (1.200 công thức) không treo trang",
+      "Tiêu đề panel ghi tổng số thật, không phải số dòng đang hiện",
+      "Hai nhóm phân trang độc lập, mỗi nhóm ghi rõ đang hiện bao nhiêu trên tổng bao nhiêu",
+      "Lá không có công thức nào vẫn hiện guide-note như cũ, không hiện khung rỗng"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "fusionListHtml phân trang 30 dòng mỗi nhóm, có nút xem thêm"
+      }
+    ],
+    "key_links": [
+      "docs/history/fm-guide-site/plan.md mục Slice 1",
+      "Quyết định Fusion List dạng ảnh 2026-08-14"
+    ],
+    "prohibitions": [
+      "Không đổi cỡ ô ảnh hay markup ô badge đã chốt",
+      "Không cắt cụt danh sách mà không cho người dùng xem tiếp",
+      "Không đọc lại khối dữ liệu JSON nhúng"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "fusion-list",
+    "outcome": "Paginated the detail popup's Fusion List 30 rows per group with independent Xem thêm buttons; header keeps the real total",
+    "files_changed": [
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T07:24:29.666Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T07:18:27.351Z",
+    "warnings": [
+      "advisory: this cap's commit changes 262 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T07:24:27.129Z"
+  },
+  "tier": "generation"
+}

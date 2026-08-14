@@ -1,0 +1,86 @@
+{
+  "id": "fm-guide-site-23",
+  "feature": "fm-guide-site",
+  "title": "Sinh 25.504 công thức Fusion từ CardFusionExplorer thay bảng Chính xác cũ",
+  "lane": "standard",
+  "deps": [],
+  "files": [
+    "tools/extract_cards.py",
+    "tools/check.py",
+    ".gitignore",
+    "data/CardFusionExplorer/Card-Fusion-Explorer-Assets/fusion_unique.json",
+    "data/CardFusionExplorer/Card-Fusion-Explorer-Assets/cartas_runtime.json"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/plan.md",
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "tools/extract_cards.py",
+    "tools/check.py"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Theo D9 trong CONTEXT.md và mục 'Slice 1' + 'Mã hoá dữ liệu công thức' của plan.md. Trong extract_cards.py thêm hàm đọc data/CardFusionExplorer/Card-Fusion-Explorer-Assets/fusion_unique.json (khóa especificas, 50.937 dòng): chuẩn hoá mỗi dòng về bộ ba (min(carta1,carta2), max(carta1,carta2), resultado), khử trùng để còn 25.504 công thức, sắp xếp ổn định. Sinh hai trường mới vào FM_DATA: fusionNames (mảng tên riêng biệt đã sắp xếp, 1.106 tên) và fusionPairs (một chuỗi, mỗi công thức đúng 6 ký tự = 3 chỉ số x 2 ký tự base-64 bảng '0-9A-Za-z-_'). fusionExact cũ (150 dòng đọc từ fusion.md) bị thay hoàn toàn bởi hai trường này — xoá cả hàm parse mục 'Dung hợp chính xác' khỏi fusion.md nếu nó không còn ai dùng. fusionBasic, fusionConflict, fusionGroups, nameAliases, equipLists, cards giữ nguyên. meta: fusionExactCount = 25.504, thêm fusionExactAllFmCount (25.168), fusionExactTypeRangeCount (167), fusionExactMultiResultPairs (6), fusionSourceRows (50.937). Trong check.py: xoá phép so cứng (141,150) và phép đếm lại dòng '=' của mục 'Dung hợp chính xác' trong fusion.md; thay bằng ba check đếm lại từ chính fusion_unique.json — (a) số công thức chuẩn hoá bằng len fusionPairs/6, (b) gộp hai chiều không mất công thức nào (mọi bộ ba trong nguồn đều tìm thấy dạng chuẩn của nó trong kết quả), (c) mọi chỉ số giải mã từ fusionPairs đều nằm trong fusionNames. Sửa nhãn check.py:143 cho đúng nguồn mới. Thêm hai file JSON nguồn vào git; .gitignore phần còn lại của data/CardFusionExplorer (thư mục images/, music/, và cả Card-Fusion-Explorer-Data/). Chưa động tới index.html trong cell này — chỉ chạy extract_cards.py --inject để khối dữ liệu nhúng khớp, phần JS đọc dạng mới là cell sau.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "extract_cards.py chạy hai lần liên tiếp cho kết quả giống hệt đến từng byte",
+      "meta.fusionExactCount đúng bằng 25.504, đếm lại từ nguồn chứ không gõ cứng số",
+      "fusionPairs giải mã ra đúng 25.504 bộ ba, mọi chỉ số nằm trong fusionNames",
+      "Không công thức nào trong nguồn bị mất khi gộp hai chiều"
+    ],
+    "artifacts": [
+      {
+        "path": "tools/extract_cards.py",
+        "substantive": "Hàm đọc fusion_unique.json + mã hoá fusionNames/fusionPairs"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "Ba check mới đếm lại từ fusion_unique.json, hai check cũ theo fusion.md đã gỡ"
+      },
+      {
+        "path": ".gitignore",
+        "substantive": "Bỏ qua images/, music/, Card-Fusion-Explorer-Data/ của nguồn mới"
+      }
+    ],
+    "key_links": [
+      "docs/history/fm-guide-site/CONTEXT.md D9",
+      "docs/history/fm-guide-site/plan.md"
+    ],
+    "prohibitions": [
+      "Không commit thư mục ảnh 350MB hay file .db/.csv/.xlsx của nguồn",
+      "Không gõ cứng 25504 làm điều kiện check — phải đếm lại từ fusion_unique.json",
+      "Không đụng fusionBasic, fusionConflict, fusionGroups, cards",
+      "Không sửa JS trong index.html (cell sau)"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "fusion-data",
+    "outcome": "Thay bảng Fusion Chính xác 150 dòng bằng 25.504 công thức từ fusion_unique.json, mã hoá thành fusionNames/fusionPairs, check.py đếm lại từ nguồn",
+    "files_changed": [
+      "tools/extract_cards.py",
+      "tools/check.py",
+      ".gitignore",
+      "data/CardFusionExplorer/Card-Fusion-Explorer-Assets/fusion_unique.json",
+      "data/CardFusionExplorer/Card-Fusion-Explorer-Assets/cartas_runtime.json",
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T07:07:00.199Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T06:54:51.721Z",
+    "warnings": [
+      "advisory: this cap's commit changes 282324 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T07:06:58.071Z"
+  },
+  "tier": "generation"
+}

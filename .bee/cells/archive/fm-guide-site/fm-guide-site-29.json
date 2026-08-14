@@ -1,0 +1,68 @@
+{
+  "id": "fm-guide-site-29",
+  "feature": "fm-guide-site",
+  "title": "Bấm ảnh trong popup chi tiết để đảo giữa ảnh in-game và ảnh thứ hai",
+  "lane": "standard",
+  "deps": [
+    "fm-guide-site-28"
+  ],
+  "files": [
+    "index.html"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Theo D12. Trong popup chi tiết, ô ảnh ở panel trái: ảnh in-game (images/cards/<slug>.png) là mặt MẶC ĐỊNH. Bấm thẳng vào ảnh thì đảo sang ảnh thứ hai (card.artImage), bấm lần nữa đảo về. Có chỉ báo nhỏ cho người dùng biết ảnh bấm được và đang xem mặt nào. Lá không có artImage thì ảnh KHÔNG bấm được và KHÔNG hiện chỉ báo — không hiện nút chết. Trạng thái đảo là của riêng popup đang mở: đóng popup rồi mở lại, hoặc bấm sang lá khác, thì quay về mặt in-game. Bàn phím dùng được: ô ảnh bấm được phải có vai trò nút và nhận Enter/Space, có nhãn đọc được cho trình đọc màn hình. 360 lá ngoài FM không có ảnh in-game nên ô ảnh của chúng hiện placeholder như hiện tại rồi đảo sang artImage bình thường. Chỉ đụng ô ảnh trong popup chi tiết — ô ảnh trong bảng, trong lưới, và trong Fusion List giữ nguyên ảnh in-game, không đảo.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "Bấm ảnh trong popup đảo qua lại được, mặc định là ảnh in-game",
+      "Lá không có artImage thì ảnh không bấm được và không hiện chỉ báo",
+      "Mở popup lá khác thì mặt ảnh quay về mặc định",
+      "Ô ảnh trong bảng, lưới và Fusion List không đổi hành vi",
+      "Ô ảnh bấm được nhận Enter/Space và có nhãn cho trình đọc màn hình"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "Ô ảnh popup đảo hai mặt, có chỉ báo và hỗ trợ bàn phím"
+      }
+    ],
+    "key_links": [
+      "docs/history/fm-guide-site/CONTEXT.md D12"
+    ],
+    "prohibitions": [
+      "Không đọc lại khối dữ liệu JSON nhúng",
+      "Không đổi ảnh mặc định sang ảnh thứ hai",
+      "Không hiện nút đảo cho lá không có ảnh thứ hai",
+      "Không đụng ô ảnh ngoài popup chi tiết",
+      "Không sửa tools/*.py trong cell này"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "art-toggle",
+    "outcome": "Detail popup image now flips between the in-game image and second art on click/Enter/Space, with an indicator only for cards that have a second image",
+    "files_changed": [
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T08:23:57.584Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T08:19:08.562Z",
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T08:23:54.959Z"
+  },
+  "tier": "generation"
+}

@@ -1,0 +1,68 @@
+{
+  "id": "fm-guide-site-24",
+  "feature": "fm-guide-site",
+  "title": "Tab Fusion đọc bảng công thức mới, bảng Chính xác có phân trang và ô tìm",
+  "lane": "standard",
+  "deps": [
+    "fm-guide-site-23"
+  ],
+  "files": [
+    "index.html"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/plan.md",
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Trong phần JS của index.html (bắt đầu dòng ~74933 — KHÔNG đọc khối dữ liệu JSON phía trên). Thêm hàm giải mã fusionPairs + fusionNames thành mảng công thức {a, b, result} chạy một lần lúc nạp trang. findProducedBy (~75139) và findParticipatesIn (~75159) đọc mảng mới thay cho DATA.fusionExact; hai hàm này phải chịu được kết quả hàng nghìn dòng nên trả về mảng đầy đủ, việc cắt trang do lớp render lo. renderFusionExactTable (~75746) đổi sang phân trang: mặc định 50 dòng một trang, có ô tìm theo tên (kèm nút xoá nhanh chỉ hiện khi ô có chữ, đúng quy ước các ô nhập khác của trang), hiện 'khớp X trên tổng Y' với Y là số thật 25.504. Vế công thức dạng '[Hệ]minATK-maxATK' (ví dụ '[Machine]0-2000') tách thành {kind:'type', value:'Machine', atkMin:0, atkMax:2000} và đi qua đường badge sẵn có của recipeSideCellHtml (~75263) — hiện tên hệ kèm khoảng ATK, KHÔNG dựng ảnh cho vế đó. Bảng Cơ bản và Xung đột giữ nguyên. Coverage tab (~75802) hiện số mới vì nó đọc thẳng meta.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "Mở trang bằng file:// không treo — bảng Chính xác không đổ 25.504 dòng vào DOM một lúc",
+      "Gõ một tên lá vào ô tra cứu Fusion vẫn trả về hai chiều đúng",
+      "Số công thức hiện trên trang khớp số đếm lại từ dữ liệu, không gõ cứng",
+      "Vế dạng hệ kèm khoảng ATK hiện thành badge, không hiện thành ảnh lá"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "Hàm giải mã fusionPairs + renderFusionExactTable phân trang có ô tìm"
+      }
+    ],
+    "key_links": [
+      "docs/history/fm-guide-site/plan.md mục Slice 1"
+    ],
+    "prohibitions": [
+      "Không đọc lại khối dữ liệu JSON nhúng (dòng 1583-74930) — chỉ sửa phần JS",
+      "Không gọi mạng, không thêm thư viện ngoài",
+      "Không đụng bảng Cơ bản và Xung đột",
+      "Không sửa tools/*.py trong cell này"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "fusion-ui",
+    "outcome": "Fusion tab decodes fusionPairs/fusionNames into FUSION_EXACT once at load; the Chính xác table now paginates 50 rows at a time with a name search box and an honest match count, and type+ATK-range operands render as badges instead of raw bracket text.",
+    "files_changed": [
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T07:17:50.292Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T07:07:36.961Z",
+    "warnings": [
+      "advisory: this cap's commit changes 177 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T07:17:48.147Z"
+  },
+  "tier": "generation"
+}
