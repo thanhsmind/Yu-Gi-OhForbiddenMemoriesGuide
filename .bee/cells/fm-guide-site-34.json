@@ -1,0 +1,65 @@
+{
+  "id": "fm-guide-site-34",
+  "feature": "fm-guide-site",
+  "title": "Icon Type cạnh tên Type, ATK/DEF trong ô lưới và ô công thức",
+  "lane": "small",
+  "deps": [],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Xem prompt dispatch.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "typeIconHtml + ATK/DEF o luoi va o cong thuc"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "Bat bien moi icon Type duoc ve deu co file that"
+      }
+    ],
+    "key_links": [
+      "Quyet dinh icon Type 2026-08-14"
+    ],
+    "prohibitions": [
+      "Khong doc lai khoi du lieu JSON nhung",
+      "Khong bia icon cho loai bai khong phai Type quai vat"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "type-icons",
+    "outcome": "Type icons wired at the table/detail/section-2 spots plus ATK/DEF added to the grid tile and Fusion List recipe cell, both gated on stats presence not truthiness",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T09:56:17.772Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T09:46:03.802Z",
+    "warnings": [
+      "advisory: this cap's commit changes 219 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T09:56:14.932Z"
+  }
+}

@@ -76,8 +76,8 @@ Cùng một kết quả xem được bằng hai chế độ, đổi qua lại b�
 
 - **Bảng** — mỗi lá một dòng, đủ cột số, tên, loại, ATK, DEF, Guardian Star,
   hệ fusion và ảnh nhỏ.
-- **Lưới** — mỗi lá một ô ảnh mặt bài kèm số thứ tự và tên, số cột tự co theo
-  bề rộng màn hình (điện thoại tới màn hình rộng đều dùng được).
+- **Lưới** — mỗi lá một ô ảnh mặt bài kèm số thứ tự, tên và cặp ATK/DEF, số cột
+  tự co theo bề rộng màn hình (điện thoại tới màn hình rộng đều dùng được).
 
 Chế độ lưới còn cho tự chọn cỡ lưới bằng một cụm bốn nút chỉ hiện khi đang xem
 lưới: "Tự động" (mặc định, số cột tự co như trên) và ba mức cố định 4, 6, 8 cột.
@@ -89,6 +89,18 @@ không đổi trang, không đóng lá đang mở.
 
 Hai chế độ dùng chung một bộ lọc, một số đếm và một cách chia trang: đổi chế độ
 không đổi kết quả, không đổi trang đang xem, và không đóng lá đang mở chi tiết.
+
+### Icon Type
+
+Type quái vật luôn hiện kèm **icon** của nó, ở mọi chỗ Type xuất hiện: cột loại
+trong bảng, dòng Type trong hộp thoại chi tiết, và dãy Type ở mục hướng dẫn.
+Icon là hình trang trí đi cạnh chữ đã có, nên trình đọc màn hình không đọc nó
+lần thứ hai; ô icon có bề rộng cố định để dòng không giật giữa lá có Type và lá
+không có.
+
+Chỉ **Type quái vật** mới có icon. Những giá trị mô tả loại bài — phép, bẫy,
+trang bị, môi trường — không phải Type quái vật nên không có icon, và trang
+không mượn tạm một icon nào khác cho chúng.
 
 Chọn một dòng — hoặc một ô trong lưới — thì mở
 bảng chi tiết của lá đó dưới dạng hộp thoại nổi: ảnh mặt bài, số thứ tự, tên,
@@ -150,8 +162,10 @@ Fusion List mở đầu bằng số công thức đếm được, rồi hai nhó
 tra cứu hai chiều: "Ghép ra lá này" và "Lá này tham gia". Mỗi công thức là một
 hàng ba ô cùng cỡ — nguyên liệu, nguyên liệu, kết quả — ngăn bằng `+` và `=`
 (công thức xung đột dùng `<` như bảng fusion). Mỗi ô là ảnh mặt bài, dưới ảnh
-là tên lá và một dòng phụ ghi cấp độ với ATK; lá không có cấp độ/ATK (phép,
-bẫy, nghi lễ) để trống dòng phụ chứ không hiện `0`. Bấm ảnh hoặc tên lá mở
+là tên lá và một dòng phụ ghi cấp độ với ATK/DEF; lá không có chỉ số (phép,
+bẫy, nghi lễ) để trống dòng phụ chứ không hiện `0`. Có đúng **một** cách trong
+trang trả lời câu hỏi "lá này có chỉ số không", dùng chung cho ô lưới và ô công
+thức — hai chỗ không được tự phán đoán riêng. Bấm ảnh hoặc tên lá mở
 chi tiết lá đó.
 
 Vế nào của công thức là một **hệ** ([Hệ]) chứ không phải một lá cụ thể thì
@@ -422,5 +436,7 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
 - `images/cards/<slug>.png` — ảnh chụp trong game, 722 lá; nay là mặt thứ hai.
 - `images/art/<slug>.webp` — bản vẽ minh hoạ đã nén; đây là ảnh mặc định của trang.
 - `images/guide/guardian-star-wheel.png` — sơ đồ hai vòng khắc hệ Guardian Star.
+- `images/type_icons/<Type>.png` — 20 icon Type quái vật 16x16; hai file dùng
+  gạch dưới thay dấu cách (`Sea_Serpent`, `Winged_Beast`).
 - `docs/guide/*.md` — ba tài liệu hướng dẫn tiếng Việt.
 - Quyết định nền: `docs/history/fm-guide-site/CONTEXT.md` (D1–D13) và nhật ký quyết định.
