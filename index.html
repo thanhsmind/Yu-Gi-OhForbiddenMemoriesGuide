@@ -319,7 +319,9 @@
     justify-content: center;
   }
 
-  .img-wrap.thumb { width: 60px; height: 48px; }
+  /* Portrait to match the art image (256x374, ~2/3) now that it is the
+     default face everywhere (cell fm-guide-site-31) -- was 60x48 (5/4). */
+  .img-wrap.thumb { width: 44px; height: 64px; }
   .img-wrap.thumb img {
     width: 100%;
     height: 100%;
@@ -328,7 +330,12 @@
     image-rendering: pixelated;
   }
 
-  .img-wrap.detail-img { width: min(100%, 420px); height: auto; aspect-ratio: 5 / 4; position: relative; }
+  /* Portrait to match the art image (256x374, ~2/3), the default face
+     everywhere per cell fm-guide-site-31 -- was 5/4 (in-game shape). Width
+     cap dropped from 420 to 300 (near the art's own 256px) so the popup
+     image does not grow tall enough to need scrolling on a normal screen;
+     max-height keeps it in check on short viewports too. */
+  .img-wrap.detail-img { width: min(100%, 300px); height: auto; max-height: 60vh; aspect-ratio: 256 / 374; position: relative; }
   .img-wrap.detail-img img {
     width: 100%;
     height: 100%;
@@ -364,7 +371,11 @@
   /* Fusion List recipe cell image (cell fm-guide-site-21) -- sized to match
      .recipe-badge below so an ingredient/result image cell and a Type/names
      badge cell line up in the same formula row. */
-  .img-wrap.recipe { width: 100%; height: auto; aspect-ratio: 5 / 4; flex-shrink: 0; }
+  /* Portrait to match the art image (256x374, ~2/3), the default face
+     everywhere per cell fm-guide-site-31 -- was 5/4. .recipe-badge below
+     (the Type/name-list stand-in for this same slot) matches so an
+     image cell and a badge cell still line up in one formula row. */
+  .img-wrap.recipe { width: 100%; height: auto; aspect-ratio: 256 / 374; flex-shrink: 0; }
   .img-wrap.recipe img {
     width: 100%;
     height: 100%;
@@ -477,7 +488,9 @@
     outline-offset: 1px;
   }
 
-  .img-wrap.tile { width: 100%; aspect-ratio: 5 / 4; }
+  /* Portrait to match the art image (256x374, ~2/3), the default face
+     everywhere per cell fm-guide-site-31 -- was 5/4 (in-game shape). */
+  .img-wrap.tile { width: 100%; aspect-ratio: 256 / 374; }
   .img-wrap.tile img {
     width: 100%;
     height: 100%;
@@ -783,7 +796,10 @@
      word boundaries and shrink instead. */
   .recipe-badge {
     width: 100%;
-    aspect-ratio: 5 / 4;
+    /* Matches .img-wrap.recipe's portrait ratio (cell fm-guide-site-31,
+       was 5/4) so this stand-in badge lines up with an image cell in the
+       same formula row. */
+    aspect-ratio: 256 / 374;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -84689,8 +84705,16 @@ window.FM_DATA = {
     }
   }
 
+  // Art (Rush Duel) is the default face everywhere per cell fm-guide-site-31
+  // (supersedes the in-game-only imgCellHtml of D3): card.artImage already
+  // holds the right relative path for the 1056 cards that have one. The 26
+  // FM Ritual cards (card.artImage === null) fall back to the in-game path --
+  // every one of them is a core-722 card so that file exists. A card with
+  // neither (should not occur given the two sets above) still gets a single
+  // <img src> pointing at whichever path was chosen, so the onerror
+  // placeholder names the file that ought to exist rather than a guess.
   function imgCellHtml(card, size) {
-    var path = "images/cards/" + card.slug + ".png";
+    var path = card.artImage || ("images/cards/" + card.slug + ".png");
     var wrapClass =
       size === "detail" ? "detail-img" :
       size === "tile" ? "tile" :
