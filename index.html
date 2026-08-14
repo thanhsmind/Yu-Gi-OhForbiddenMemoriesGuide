@@ -1053,8 +1053,8 @@
       <select id="fusion-filter"></select>
       <select id="star-filter"></select>
       <select id="fm-scope-filter" aria-label="Phạm vi lá bài">
-        <option value="">FM &amp; ngoài FM</option>
-        <option value="fm">Chỉ lá FM</option>
+        <option value="">Chỉ lá FM</option>
+        <option value="tat-ca">FM &amp; ngoài FM</option>
         <option value="ngoai-fm">Chỉ lá ngoài FM</option>
       </select>
       <select id="sort-order" aria-label="Sắp xếp">
@@ -84861,10 +84861,13 @@ window.FM_DATA = {
       if (typeQ && c.type !== typeQ) return false;
       if (fusionQ && (!c.fusionSystems || c.fusionSystems.indexOf(fusionQ) === -1)) return false;
       if (starQ && (!c.guardianStars || c.guardianStars.indexOf(starQ) === -1)) return false;
-      // D10/D11 scope filter: "fm" keeps only the 722 real FM cards,
-      // "ngoai-fm" keeps only the 360 cards outside the FM spine, "" (default)
-      // keeps both.
-      if (fmScopeQ === "fm" && c.outsideFm) return false;
+      // D10/D11 scope filter. "" is the DEFAULT and keeps only the 722 real
+      // FM cards -- this is a Forbidden Memories guide, so the 360 outside-FM
+      // cards stay out of the way until asked for. "tat-ca" keeps both,
+      // "ngoai-fm" keeps only the outside-FM group. The default carries the
+      // empty value on purpose: the hash writer drops empty params, so a
+      // default-scope address stays clean.
+      if (fmScopeQ === "" && c.outsideFm) return false;
       if (fmScopeQ === "ngoai-fm" && !c.outsideFm) return false;
       return true;
     });
@@ -85928,7 +85931,7 @@ window.FM_DATA = {
         he: params.he || "",
         sao: params.sao || "",
         // D10/D11 scope filter (cell fm-guide-site-27).
-        phamVi: params["pham-vi"] === "fm" || params["pham-vi"] === "ngoai-fm" ? params["pham-vi"] : "",
+        phamVi: params["pham-vi"] === "tat-ca" || params["pham-vi"] === "ngoai-fm" ? params["pham-vi"] : "",
         sap: ["so-giam", "atk-giam", "atk-tang", "def-giam", "def-tang"].indexOf(params.sap) !== -1
           ? params.sap
           : "",

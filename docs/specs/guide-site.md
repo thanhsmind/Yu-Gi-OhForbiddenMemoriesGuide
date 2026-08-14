@@ -31,8 +31,8 @@ Bảng liệt kê mọi lá bài. Người dùng lọc bằng:
 - chọn loại lá (quái vật, phép, bẫy, trang bị, nghi lễ),
 - chọn Type quái vật,
 - bật tùy chọn chỉ hiện lá có chỉ số,
-- chọn phạm vi: chỉ lá Forbidden Memories, chỉ lá ngoài game, hoặc cả hai
-  (mặc định cả hai).
+- chọn phạm vi: chỉ lá Forbidden Memories (**mặc định**), cả hai nhóm, hoặc
+  chỉ lá ngoài game.
 
 Kết quả hiện theo trang, kèm số lượng khớp trên tổng số.
 
@@ -42,6 +42,12 @@ Bảng chứa hai nhóm lá. Nhóm lõi là 722 lá có thật trong game. Nhóm
 lá của nguồn công thức nhưng không thuộc game — chúng có mặt để công thức nhắc
 tới chúng vẫn tra được, và mang **nhãn chữ** phân biệt trên cả dòng bảng lẫn
 hộp thoại chi tiết; nhãn là chữ chứ không chỉ là màu.
+
+Mở trang ra, bảng chỉ hiện 722 lá game: đây là guide Forbidden Memories, nên
+nhóm ngoài game nằm ngoài tầm mắt cho tới khi người dùng hỏi tới nó bằng ô lọc
+phạm vi. Lựa chọn đó giữ nguyên cho tới khi người dùng đổi tiếp. Phạm vi mặc
+định **không để lại tham số nào trong địa chỉ** — chỉ khi người dùng rời khỏi
+mặc định thì địa chỉ mới mang nó.
 
 Lá ngoài game **không có số thứ tự và không có Guardian Star** — hai ô đó hiện
 "chưa có dữ liệu" đúng như mọi ô thiếu nguồn khác, không hiện `0` và không được
