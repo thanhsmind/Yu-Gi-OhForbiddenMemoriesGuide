@@ -1519,13 +1519,25 @@
     </div>
 
     <h3>Dung hợp chính xác (tên + tên)</h3>
-    <p class="guide-note">Không kèm ATK/DEF — nguồn chỉ ghi tên lá bài cho mục này.</p>
+    <p class="guide-note">
+      25.504 công thức đo trực tiếp từ Card Fusion Explorer, không phân biệt thứ tự hai lá nguyên
+      liệu. Không kèm ATK/DEF cho lá cụ thể — một số ít công thức có một vế là hệ kèm khoảng ATK
+      thay vì tên lá, hiện dưới dạng badge.
+    </p>
+    <div class="controls">
+      <span class="search-field" id="fusion-exact-search-field">
+        <input id="fusion-exact-search" type="text" placeholder="Tìm theo tên lá bài" autocomplete="off">
+        <button type="button" id="fusion-exact-search-clear" class="clear-btn" aria-label="Xoá ô tìm công thức chính xác" hidden>×</button>
+      </span>
+      <span id="fusion-exact-count" class="result-count"></span>
+    </div>
     <div class="table-wrap">
       <table class="guide-table">
         <thead><tr><th>Lá 1</th><th>Lá 2</th><th>Ra lá</th></tr></thead>
         <tbody id="fusion-exact-body"></tbody>
       </table>
     </div>
+    <div id="fusion-exact-pager" class="pager"></div>
 
     <h3>Dung hợp xung đột</h3>
     <p class="guide-note">
@@ -75348,7 +75360,11 @@ window.FM_DATA = {
   var elFusionBasicFilter = document.getElementById("fusion-basic-filter");
   var elFusionBasicCount = document.getElementById("fusion-basic-count");
   var elFusionBasicBody = document.getElementById("fusion-basic-body");
+  var elFusionExactSearch = document.getElementById("fusion-exact-search");
+  var elFusionExactSearchClear = document.getElementById("fusion-exact-search-clear");
+  var elFusionExactCount = document.getElementById("fusion-exact-count");
   var elFusionExactBody = document.getElementById("fusion-exact-body");
+  var elFusionExactPager = document.getElementById("fusion-exact-pager");
   var elFusionConflictBody = document.getElementById("fusion-conflict-body");
   var elCoverageBody = document.getElementById("coverage-body");
 
@@ -75496,6 +75512,54 @@ window.FM_DATA = {
     return !!name && name.toLowerCase() === card.name.toLowerCase();
   }
 
+  // --- Fusion "Chính xác" decode (D9, cell fm-guide-site-24) --------------
+  // DATA.fusionPairs packs every "Chính xác" recipe as 3 indices into
+  // DATA.fusionNames, 2 base-64-ish chars each -- must mirror
+  // tools/extract_cards.py's build_fusion_exact_pairs() byte-for-byte
+  // (same alphabet, same big-endian hi*64+lo index math). Decoded once at
+  // load into FUSION_EXACT: an {a, b, result} array shaped exactly like the
+  // old DATA.fusionExact it replaces, so every reader below only changes
+  // which array it reads, never how it reads it.
+  var FUSION_PAIR_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
+  var FUSION_PAIR_INDEX_OF = {};
+  for (var fpAlphaI = 0; fpAlphaI < FUSION_PAIR_ALPHABET.length; fpAlphaI++) {
+    FUSION_PAIR_INDEX_OF[FUSION_PAIR_ALPHABET[fpAlphaI]] = fpAlphaI;
+  }
+  function decodeFusionPairIndex(packed, at) {
+    return FUSION_PAIR_INDEX_OF[packed[at]] * 64 + FUSION_PAIR_INDEX_OF[packed[at + 1]];
+  }
+  function decodeFusionExact() {
+    var names = DATA.fusionNames || [];
+    var packed = DATA.fusionPairs || "";
+    var out = [];
+    for (var i = 0; i + 6 <= packed.length; i += 6) {
+      out.push({
+        a: names[decodeFusionPairIndex(packed, i)],
+        b: names[decodeFusionPairIndex(packed, i + 2)],
+        result: names[decodeFusionPairIndex(packed, i + 4)],
+      });
+    }
+    return out;
+  }
+  var FUSION_EXACT = decodeFusionExact();
+
+  // A "Chính xác" operand or result is almost always a specific card name,
+  // but 167 of the 25,504 recipes (D9) pin a fusion-system type + ATK range
+  // instead (e.g. "[Machine]0-2000"), never in the result position (audited
+  // in tools/extract_cards.py's source). Parsed on demand, not at decode
+  // time, so FUSION_EXACT stays the same plain {a,b,result} string shape.
+  var FUSION_EXACT_TYPE_RANGE_RE = /^\[([^\]]+)\](?:(\d+)-(\d+))?$/;
+  function parseFusionExactSide(name) {
+    var m = FUSION_EXACT_TYPE_RANGE_RE.exec(name);
+    if (!m) return null;
+    return {
+      kind: "type",
+      value: m[1],
+      atkMin: m[2] !== undefined ? Number(m[2]) : null,
+      atkMax: m[3] !== undefined ? Number(m[3]) : null,
+    };
+  }
+
   // "Ghép ra lá này bằng gì" — every recipe whose OUTPUT is `card`.
   function findProducedBy(card) {
     var out = [];
@@ -75507,7 +75571,7 @@ window.FM_DATA = {
         if (nameMatchesCard(stat.name, card)) out.push({ kind: "basic-possible", entry: entry, stat: stat });
       });
     });
-    (DATA.fusionExact || []).forEach(function (entry) {
+    FUSION_EXACT.forEach(function (entry) {
       if (nameMatchesCard(entry.result, card)) out.push({ kind: "exact", entry: entry });
     });
     (DATA.fusionConflict || []).forEach(function (entry) {
@@ -75524,7 +75588,7 @@ window.FM_DATA = {
         out.push({ kind: "basic", entry: entry });
       }
     });
-    (DATA.fusionExact || []).forEach(function (entry) {
+    FUSION_EXACT.forEach(function (entry) {
       if (nameMatchesCard(entry.a, card) || nameMatchesCard(entry.b, card)) {
         out.push({ kind: "exact", entry: entry });
       }
@@ -75624,10 +75688,18 @@ window.FM_DATA = {
   function recipeSideCellHtml(side) {
     if (!side) return '<span class="recipe-cell"><span class="recipe-badge">?</span></span>';
     if (side.kind === "type") {
+      // A "Chính xác" (D9) type side also carries an ATK range instead of a
+      // single card (e.g. "[Machine]0-2000") -- shown after the hệ name,
+      // never as an image. fusionBasic/fusionConflict sides never set
+      // atkMin, so they render exactly as before.
+      var atkRangeHtml =
+        side.atkMin !== null && side.atkMin !== undefined
+          ? escapeHtml(" " + side.atkMin + "-" + side.atkMax + " ATK")
+          : "";
       return (
         '<span class="recipe-cell"><span class="recipe-badge">[' +
           filterLinkHtml("he", side.value) +
-        "]</span></span>"
+        "]" + atkRangeHtml + "</span></span>"
       );
     }
     if (side.kind === "name") return recipeCardCellHtml(side.value);
@@ -76104,16 +76176,98 @@ window.FM_DATA = {
     wireCardLinks(elFusionBasicBody);
   }
 
+  // "Chính xác" table state (D9, cell fm-guide-site-24): a name search plus
+  // its own page number, separate from `state`/PAGE_SIZE's card-lookup tab
+  // (a different tab, a different underlying array -- not a second
+  // pagination path over the SAME filtered list the critical-patterns.md
+  // note warns about). Reuses PAGE_SIZE (50) -- the site's one page-size
+  // convention -- rather than a second magic number.
+  var fusionExactState = { page: 1, query: "" };
+
+  // A cell is a badge (via recipeSideCellHtml, no image) when the raw name
+  // is a fusion-system type + ATK range instead of a real card name (D9's
+  // 167 recipes); otherwise it stays the plain nameLinkHtml text link this
+  // table has always used.
+  function fusionExactCellHtml(name) {
+    var typeSide = parseFusionExactSide(name);
+    return typeSide ? recipeSideCellHtml(typeSide) : nameLinkHtml(name);
+  }
+
+  function filteredFusionExact() {
+    var q = fusionExactState.query;
+    if (!q) return FUSION_EXACT;
+    return FUSION_EXACT.filter(function (e) {
+      return (
+        e.a.toLowerCase().indexOf(q) !== -1 ||
+        e.b.toLowerCase().indexOf(q) !== -1 ||
+        e.result.toLowerCase().indexOf(q) !== -1
+      );
+    });
+  }
+
+  function renderFusionExactPager(pageCount) {
+    elFusionExactPager.innerHTML = "";
+    if (pageCount <= 1) return;
+    var mkBtn = function (label, page, disabled) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.disabled = !!disabled;
+      b.addEventListener("click", function () {
+        fusionExactState.page = page;
+        renderFusionExactTable();
+      });
+      return b;
+    };
+    elFusionExactPager.appendChild(
+      mkBtn("« Trước", fusionExactState.page - 1, fusionExactState.page <= 1)
+    );
+    var info = document.createElement("span");
+    info.className = "pager-info";
+    info.textContent = "Trang " + fusionExactState.page + " / " + pageCount;
+    elFusionExactPager.appendChild(info);
+    elFusionExactPager.appendChild(
+      mkBtn("Sau »", fusionExactState.page + 1, fusionExactState.page >= pageCount)
+    );
+  }
+
+  // 25,504 recipes would hang a file:// page rendered in one shot -- paged
+  // at PAGE_SIZE (50) rows, with a name search across all three columns and
+  // an honest "khớp X trên tổng Y" count (Y = FUSION_EXACT.length, the real
+  // decoded total, never hardcoded).
   function renderFusionExactTable() {
-    elFusionExactBody.innerHTML = (DATA.fusionExact || [])
+    var rows = filteredFusionExact();
+    var pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    if (fusionExactState.page > pageCount) fusionExactState.page = pageCount;
+    var start = (fusionExactState.page - 1) * PAGE_SIZE;
+    var pageItems = rows.slice(start, start + PAGE_SIZE);
+
+    elFusionExactCount.textContent =
+      "khớp " + rows.length + " trên tổng " + FUSION_EXACT.length + " công thức";
+    elFusionExactBody.innerHTML = pageItems
       .map(function (e) {
         return (
-          "<tr><td>" + nameLinkHtml(e.a) + "</td><td>" + nameLinkHtml(e.b) + "</td><td>" +
-          nameLinkHtml(e.result) + "</td></tr>"
+          "<tr><td>" + fusionExactCellHtml(e.a) + "</td><td>" + fusionExactCellHtml(e.b) + "</td><td>" +
+          fusionExactCellHtml(e.result) + "</td></tr>"
         );
       })
       .join("");
     wireCardLinks(elFusionExactBody);
+    renderFusionExactPager(pageCount);
+  }
+
+  // Same clear-button-only-when-typed convention as #search-name/#fusion-search
+  // (cell fm-guide-site-16): instant per-keystroke clear-button feedback plus
+  // a debounced re-filter so fast typing doesn't re-render on every key.
+  var fusionExactDebounceTimer = null;
+  function onFusionExactSearchInput() {
+    elFusionExactSearchClear.hidden = elFusionExactSearch.value.length === 0;
+    if (fusionExactDebounceTimer) clearTimeout(fusionExactDebounceTimer);
+    fusionExactDebounceTimer = setTimeout(function () {
+      fusionExactState.query = elFusionExactSearch.value.trim().toLowerCase();
+      fusionExactState.page = 1;
+      renderFusionExactTable();
+    }, 120);
   }
 
   function renderFusionConflictTable() {
@@ -76153,6 +76307,15 @@ window.FM_DATA = {
     });
     elFusionBasicFilter.addEventListener("change", renderFusionBasicTable);
     elFusionBasicFilter.addEventListener("change", function () { scheduleHashWrite(true); });
+    elFusionExactSearch.addEventListener("input", onFusionExactSearchInput);
+    elFusionExactSearchClear.addEventListener("click", function () {
+      elFusionExactSearch.value = "";
+      elFusionExactSearch.focus();
+      elFusionExactSearchClear.hidden = true;
+      fusionExactState.query = "";
+      fusionExactState.page = 1;
+      renderFusionExactTable();
+    });
     renderFusionBasicTable();
     renderFusionExactTable();
     renderFusionConflictTable();
