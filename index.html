@@ -84721,18 +84721,25 @@ window.FM_DATA = {
   function detailImgCellHtml(card) {
     if (!card.artImage) return imgCellHtml(card, "detail");
     var ingamePath = "images/cards/" + card.slug + ".png";
+    // The art face opens first (supersedes D12's in-game default): it is the
+    // sharper picture, and the 360 outside-FM cards have no in-game file at
+    // all, so opening on the in-game face showed them a placeholder. The
+    // placeholder still names the IN-GAME path, because that is the face that
+    // can be missing -- every card reaching this branch has its art file.
+    // data-showing-art starts at "1" so the first click flips BACK to in-game.
     return (
       '<span class="img-wrap detail-img flippable" tabindex="0" role="button" ' +
-        'aria-pressed="false" aria-label="Ảnh in-game của ' + escapeHtml(card.name) +
-        ' — bấm để xem ảnh thứ hai">' +
+        'data-showing-art="1" ' +
+        'aria-pressed="true" aria-label="Ảnh thứ hai của ' + escapeHtml(card.name) +
+        ' — bấm để xem ảnh in-game">' +
         '<img data-ingame-src="' + ingamePath + '" data-art-src="' + card.artImage + '" ' +
-          'src="' + ingamePath + '" alt="' + escapeHtml(card.name) + '" loading="lazy">' +
+          'src="' + card.artImage + '" alt="' + escapeHtml(card.name) + '" loading="lazy">' +
         '<span class="img-placeholder">' +
           '<span class="ph-label">chưa có ảnh — cần</span>' +
           '<input class="ph-filename" type="text" readonly value="' + escapeHtml(ingamePath) + '" ' +
             'onclick="this.select()" title="Bấm để chọn, Ctrl+C để copy">' +
         "</span>" +
-        '<span class="img-flip-indicator" aria-hidden="true">Ảnh in-game · bấm để đảo</span>' +
+        '<span class="img-flip-indicator" aria-hidden="true">Ảnh thứ hai · bấm để đảo</span>' +
       "</span>"
     );
   }
@@ -84740,8 +84747,9 @@ window.FM_DATA = {
   // Wires the click/keyboard toggle for one detail-panel image wrap. State
   // (which face is showing) lives only in this element's dataset -- showDetail()
   // rebuilds elDetail.innerHTML from scratch on every open/re-open/navigate,
-  // so a fresh wrap with no dataset.showingArt always starts on the in-game
-  // face; there is nothing to reset by hand. The onerror handler is
+  // so a fresh wrap always carries the data-showing-art="1" written by
+  // detailImgCellHtml and starts on the art face; there is nothing to reset by
+  // hand. The onerror handler is
   // reassigned on every toggle (rather than the self-nulling inline
   // `onerror="this.onerror=null;..."` pattern used elsewhere) because a
   // broken in-game path (the 360 outside-FM cards, per D8/D11) must still

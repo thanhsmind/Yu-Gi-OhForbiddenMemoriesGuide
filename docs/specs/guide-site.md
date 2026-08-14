@@ -97,17 +97,20 @@ nhỏ hơn, màu nhạt hơn — bản dịch là sản phẩm phái sinh, khôn
 thế hay che nguyên văn. Lá chưa có bản dịch chỉ hiện nguyên văn tiếng Anh,
 không có ô trống.
 
-Ảnh trong hộp thoại chi tiết có **hai mặt**. Mặt mặc định là ảnh chụp trong
-game — đó là hình người chơi thật sự thấy khi chơi, nên nó phải là thứ mở ra
-đầu tiên. Bấm thẳng vào ảnh thì đảo sang mặt thứ hai (bản vẽ minh hoạ hiện đại
-của cùng lá đó), bấm lần nữa đảo về. Một chỉ báo nhỏ cho biết ảnh bấm được và
-đang xem mặt nào.
+Ảnh trong hộp thoại chi tiết có **hai mặt**. Mặt mặc định là bản vẽ minh hoạ
+hiện đại — nó nét hơn hẳn ảnh chụp màn hình game, và nhóm lá ngoài game không
+có ảnh in-game nào cả, nên mở bằng mặt kia sẽ cho cả nhóm đó một ô giữ chỗ.
+Bấm thẳng vào ảnh thì đảo về ảnh chụp trong game, bấm lần nữa quay lại. Một
+chỉ báo nhỏ cho biết ảnh bấm được và đang xem mặt nào.
 
-Lá không có mặt thứ hai thì ảnh **không bấm được và không có chỉ báo** — không
-bày nút chết. Trạng thái đảo thuộc về riêng lá đang mở: đóng hộp thoại rồi mở
-lại, hoặc chuyển sang lá khác, đều quay về mặt in-game. Chỉ ảnh trong hộp thoại
-chi tiết mới đảo được; ảnh trong bảng, trong lưới và trong Fusion List luôn là
-mặt in-game.
+Ô giữ chỗ khi thiếu ảnh vẫn ghi đường dẫn của **ảnh in-game**, vì đó mới là
+mặt có thể thiếu — mọi lá có mặt vẽ minh hoạ thì file của nó chắc chắn có.
+
+Lá không có bản vẽ minh hoạ thì ảnh **không bấm được và không có chỉ báo** —
+không bày nút chết; lá đó mở thẳng bằng ảnh in-game. Trạng thái đảo thuộc về
+riêng lá đang mở: đóng hộp thoại rồi mở lại, hoặc chuyển sang lá khác, đều
+quay về mặt mặc định. Chỉ ảnh trong hộp thoại chi tiết mới đảo được; ảnh trong
+bảng, trong lưới và trong Fusion List luôn là mặt in-game.
 
 Ô ảnh đảo được là một nút thật với người dùng bàn phím và trình đọc màn hình:
 nhận Enter và Space, có nhãn đọc được, và nói rõ đang ở mặt nào.
