@@ -36,3 +36,12 @@
 # Python
 __pycache__/
 *.pyc
+
+# data/CardFusionExplorer/ (D8): only the two JSON sources
+# (fusion_unique.json, cartas_runtime.json) are the actual data these tools
+# read -- the rest is either too large (images/, 350MB) or unused so far
+# (music/, Card-Fusion-Explorer-Data/*.db|*.csv|*.xlsx -- CONTEXT.md notes
+# these duplicate the two JSON files' content).
+data/CardFusionExplorer/Card-Fusion-Explorer-Assets/images/
+data/CardFusionExplorer/Card-Fusion-Explorer-Assets/music/
+data/CardFusionExplorer/Card-Fusion-Explorer-Data/

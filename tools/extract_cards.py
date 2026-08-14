@@ -22,21 +22,40 @@ Sources (read-only, never edited by this script):
       name (case-insensitive, via EQUIP_NAME_ALIASES for the handful of
       spellings docs/guide and Yugipedia disagree on).
   - "Game Yu-Gi-Oh! Forbidden Memories fusion.md"
-      three fenced sections: "Dung hợp cơ bản" ([Type]+[Type] = Name
-      (ATK/DEF Star/Star)), "Dung hợp chính xác" (Name + Name = Name), and
-      "Dung hợp xung đột" (per-card fusion-system membership) -- carried
-      through unchanged; only the fusion-system tags are joined onto the
-      spine (by name, matches Yugipedia's spelling directly, no alias
-      needed -- audited: 0 mismatches).
+      two fenced sections still read here: "Dung hợp cơ bản" ([Type]+[Type]
+      = Name (ATK/DEF Star/Star)) and "Dung hợp xung đột" (per-card
+      fusion-system membership) -- carried through unchanged; only the
+      fusion-system tags are joined onto the spine (by name, matches
+      Yugipedia's spelling directly, no alias needed -- audited: 0
+      mismatches). The old "Dung hợp chính xác" section (150 lines, Name +
+      Name = Name) is no longer read at all -- D9 replaces it wholesale
+      with fusion_unique.json below.
+  - "data/CardFusionExplorer/Card-Fusion-Explorer-Assets/fusion_unique.json"
+      (D8/D9) -- `especificas` key, 50,937 raw {carta1, carta2, resultado}
+      rows, each recipe stored in both directions. Folded down to 25,504
+      order-independent (low, high, result) triples and encoded as
+      `fusionNames` (1,106 distinct names, sorted) + `fusionPairs` (one
+      string, 6 base-64-ish chars per recipe indexing into fusionNames) --
+      see build_fusion_exact_pairs(). Supersedes fusion.md's old "Dung hợp
+      chính xác" table (150 lines) entirely; the sibling `por_tipo` key in
+      the same file is empty and never read.
   - "data/lore-vi/part-1.json" .. "part-4.json" -- machine-translated
       Vietnamese lore keyed by card number (string), joined onto the spine
       as `loreVi` alongside the untouched English `lore`. A card with no
       translation gets `loreVi: null`, never an empty string. This text is
       a machine translation, not sourced from any Vietnamese original.
+  - "images/art/<slug>.webp" (D12) -- the second, Rush Duel-style art set
+      tools/build_art_images.py pre-builds from the (uncommitted)
+      CardFusionExplorer PNG source. This script only checks which of
+      those files exist on disk; it never builds them. A card with a file
+      gets `artImage: "images/art/<slug>.webp"`; a card without one
+      (measured: 1,056/1,082 have a file -- the other 26 are Ritual cards
+      absent from that source) gets `artImage: null`, never a guessed path.
 
 D4 (docs/history/fm-guide-site/CONTEXT.md): a field with no source is
 `None` (-> JSON null). Never 0, never guessed. D7 keeps this rule, only
-swaps the card table's source.
+swaps the card table's source; D9 keeps it too, only swaps the "Chính xác"
+fusion table's source.
 
 Usage:
     python3 tools/extract_cards.py                  # print JS to stdout
@@ -55,10 +74,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 GUIDE_DIR = REPO_ROOT / "docs" / "guide"
 CARDS_JSON = REPO_ROOT / "data" / "cards.json"
 LORE_VI_DIR = REPO_ROOT / "data" / "lore-vi"
+CARD_FUSION_EXPLORER_DIR = REPO_ROOT / "data" / "CardFusionExplorer" / "Card-Fusion-Explorer-Assets"
+ART_DIR = REPO_ROOT / "images" / "art"
 
 EQUIP_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories Quân Bài Phụ trợ.md"
 FUSION_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories fusion.md"
 LORE_VI_FILES = [LORE_VI_DIR / f"part-{i}.json" for i in range(1, 5)]
+FUSION_UNIQUE_JSON = CARD_FUSION_EXPLORER_DIR / "fusion_unique.json"
+CARTAS_RUNTIME_JSON = CARD_FUSION_EXPLORER_DIR / "cartas_runtime.json"
 
 # docs/guide's equip roster spells 15 names (13 monster headers, 2 equip
 # items) differently than Yugipedia (data/cards.json). Fixed table, never
@@ -332,24 +355,65 @@ def parse_fusion_basic(lines: list[str]):
 
 
 # ---------------------------------------------------------------------------
-# "Dung hợp chính xác" — Name + Name = Name (no stats)
+# "Chính xác" recipes -- D9: sourced from
+# data/CardFusionExplorer/Card-Fusion-Explorer-Assets/fusion_unique.json,
+# NOT fusion.md's "Dung hợp chính xác" section (that 150-line table and its
+# parser are gone; the 50,937-row `especificas` key supersedes it entirely).
 # ---------------------------------------------------------------------------
 
-EXACT_LINE_RE = re.compile(r"^(.*?)\+\s*(.*?)=\s*(.*)$")
+# 64 symbols -- digits, then upper, then lower, then '-' and '_' -- enough to
+# index up to 4,096 names (fusionNames tops out at 1,106) in exactly 2 chars.
+FUSION_PAIR_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_"
 
 
-def parse_fusion_exact(lines: list[str]) -> list[dict]:
-    content = extract_fenced_after(lines, "Dung hợp chính xác", until="Dung hợp xung đột")
-    out = []
-    for line in content:
-        if not line.strip():
-            continue
-        m = EXACT_LINE_RE.match(line)
-        if not m:
-            continue
-        a, b, result = (g.strip() for g in m.groups())
-        out.append({"a": a, "b": b, "result": result})
-    return out
+def load_fusion_unique_rows() -> list[dict]:
+    """Read fusion_unique.json's `especificas` key, untouched: 50,937 raw
+    {carta1, carta2, resultado} rows. The sibling `por_tipo` key is empty in
+    the source (confirmed in CONTEXT.md's D8 asset audit) and is never read."""
+    raw = json.loads(FUSION_UNIQUE_JSON.read_text(encoding="utf-8"))
+    return raw["especificas"]
+
+
+def build_fusion_exact_pairs(rows: list[dict]) -> tuple[list[str], str]:
+    """D9: fold `especificas`'s 50,937 raw rows -- each recipe stored in
+    BOTH directions (A+B and B+A) -- down to 25,504 order-independent
+    (low, high, result) triples, then encode as (fusionNames, fusionPairs):
+
+      - fusionNames: every distinct name seen on either side or as a result,
+        sorted (Python's default codepoint order) -- 1,106 names. A handful
+        are fusion-system badges instead of a specific card name (e.g.
+        "[Machine]0-2000"); rendering those as badges is index.html's job,
+        not this script's -- here they are just names like any other.
+      - fusionPairs: one string, exactly 6 chars per recipe -- 3 indices
+        into fusionNames, each 2 chars from FUSION_PAIR_ALPHABET (base-64,
+        big-endian: hi = i // 64, lo = i % 64). Recipes are emitted in
+        `sorted(triples)` order, so the same source always yields the same
+        string byte-for-byte (extract_cards.py's idempotence guarantee,
+        checked by tools/check.py running the extractor twice).
+    """
+    triples: set[tuple[str, str, str]] = set()
+    for row in rows:
+        a, b, result = row["carta1"], row["carta2"], row["resultado"]
+        lo, hi = (a, b) if a <= b else (b, a)
+        triples.add((lo, hi, result))
+
+    names: set[str] = set()
+    for lo, hi, result in triples:
+        names.add(lo)
+        names.add(hi)
+        names.add(result)
+    fusion_names = sorted(names)
+    name_index = {name: i for i, name in enumerate(fusion_names)}
+
+    def encode_index(i: int) -> str:
+        hi_digit, lo_digit = divmod(i, 64)
+        return FUSION_PAIR_ALPHABET[hi_digit] + FUSION_PAIR_ALPHABET[lo_digit]
+
+    chunks = [
+        encode_index(name_index[lo]) + encode_index(name_index[hi]) + encode_index(name_index[result])
+        for lo, hi, result in sorted(triples)
+    ]
+    return fusion_names, "".join(chunks)
 
 
 # ---------------------------------------------------------------------------
@@ -494,20 +558,178 @@ def load_lore_vi() -> dict[str, str]:
     return merged
 
 
+# ---------------------------------------------------------------------------
+# D10/D11 -- the 360 cartas_runtime.json cards outside Forbidden Memories
+# ---------------------------------------------------------------------------
+
+
+def normalize_match_name(name: str) -> str:
+    """The join key used to match a cartas_runtime.json `Card` name against
+    a data/cards.json spine `name`: lowercase, every character outside
+    a-z0-9 dropped (not collapsed to '-' -- this is a match key, not a
+    slug). Coarser than slugify() on purpose so punctuation/spacing
+    differences ("Twin Long Rods #2" vs "Twin Long Rods 2") still collide."""
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def slugify(name: str) -> str:
+    """D3, applied to the 360 outside-FM cards, which arrive with no slug
+    of their own: lowercase, every run of characters outside a-z0-9
+    collapses to one '-', leading/trailing '-' stripped. Audited against
+    all 722 data/cards.json `slug` values with this exact rule: 0
+    mismatches, so the same rule is reused verbatim here rather than
+    re-derived."""
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def art_image_path(slug: str) -> str | None:
+    """D12: the second, Rush Duel-style art path for a card, or None if
+    tools/build_art_images.py never produced one for this slug (checked
+    against the real file on disk, never guessed from the source
+    cartas_runtime.json list -- a card whose file build_art_images.py
+    happened to skip must fall back to None here too)."""
+    return f"images/art/{slug}.webp" if (ART_DIR / f"{slug}.webp").is_file() else None
+
+
+def _parse_stat_int(value: str | None) -> int | None:
+    """cartas_runtime.json stores ATK/DEF/Level as strings: "" for "this
+    card has no such stat" (traps, spells, equips) and the literal "????"
+    for "stat unknown" on 9 monsters (Copycat, Slifer the Sky Dragon, The
+    Wicked Avatar, ...). Neither is a real number and D4 forbids inventing
+    one, so both fold to None exactly like a genuinely missing field."""
+    if value is None:
+        return None
+    value = value.strip()
+    if not value or not value.isdigit():
+        return None
+    return int(value)
+
+
+# Fields kept on the 360 outside-FM cards. Deliberately mirrors SPINE_FIELDS'
+# vocabulary (same key names as the 722-card spine) so index.html's rendering
+# code can treat every entry in `cards` uniformly; every field this source
+# has no data for is `None` (D4), never invented -- see D11 for `number`/
+# `guardianStars` specifically (no card outside FM has either).
+OUTSIDE_FM_FIELDS_ALWAYS_NULL = (
+    "guardianStars", "password", "starChipCost", "japaneseName",
+    "romajiName", "obtainedBy", "equips", "fusionSystems",
+)
+
+
+def _normalize_outside_fm_lore_vi_terms(text: str) -> str:
+    """cartas_runtime.json's Descricao-VI translation predates cell
+    fm-guide-site-15's site-wide "quái vật" glossary decision and uses the
+    synonym "quái thú" throughout instead (measured, all three casings that
+    occur: "quái thú" x305, "Quái thú" x35, "QUÁI THÚ" x4, 0 other
+    casings) -- a straight synonym substitution to the term the rest of the
+    page already committed to, never a translation change or invented
+    text."""
+    return (
+        text.replace("QUÁI THÚ", "QUÁI VẬT")
+        .replace("Quái thú", "Quái vật")
+        .replace("quái thú", "quái vật")
+    )
+
+
+def load_outside_fm_cards(fm_cards: list[dict]) -> list[dict]:
+    """D8/D10/D11: the cartas_runtime.json entries with no match among the
+    722-card data/cards.json spine (measured: 696 match, 360 do not) --
+    appended to the end of `cards` with a reduced field set. Matched by
+    normalize_match_name() (case/punctuation only), consulting
+    EQUIP_NAME_ALIASES first exactly like the equip join in extract_all()
+    does -- audited: none of that table's 13 differing spellings ever
+    occurs as a cartas_runtime.json `Card` value (the match count is
+    identical with or without it), but it is applied anyway so a future
+    edit to either source can't silently reintroduce a drift the alias
+    table already fixed once for the equip join.
+
+    A card with `number: None` (every card here, D11) never carries an
+    `outsideFm` key set to anything but True; FM cards from load_spine_cards()
+    never carry the key at all -- callers use `card.get("outsideFm")` to
+    tell the two groups apart."""
+    raw = json.loads(CARTAS_RUNTIME_JSON.read_text(encoding="utf-8"))
+    spine_norms = {normalize_match_name(c["name"]) for c in fm_cards}
+
+    outside: list[dict] = []
+    for entry in raw:
+        name = entry["Card"]
+        lookup_name = EQUIP_NAME_ALIASES.get(name.strip().lower(), name)
+        if normalize_match_name(lookup_name) in spine_norms:
+            continue  # one of the 696 that already has a real spine card
+
+        card = {
+            "number": None,
+            "name": name,
+            "slug": slugify(name),
+            "cardType": entry.get("Card type") or None,
+            "type": entry.get("Type") or None,
+            "level": _parse_stat_int(entry.get("Level")),
+            "atk": _parse_stat_int(entry.get("ATK")),
+            "def": _parse_stat_int(entry.get("DEF")),
+            "lore": entry.get("Description") or None,
+            "loreVi": (
+                _normalize_outside_fm_lore_vi_terms(entry["Descricao-VI"])
+                if entry.get("Descricao-VI")
+                else None
+            ),
+            "outsideFm": True,
+        }
+        for field in OUTSIDE_FM_FIELDS_ALWAYS_NULL:
+            card[field] = None
+        outside.append(card)
+    return outside
+
+
+def apply_outside_fm_lore_vi_name_guard(outside_cards: list[dict], name_pool: list[str]) -> int:
+    """D5 ("card names are never translated") extended to the outside-FM
+    cards' `loreVi` (Descricao-VI -- a different, less-audited machine
+    translation than data/lore-vi/'s). Rather than fail the whole build the
+    first time a multiword card name gets swallowed by this translation
+    (measured: 1/360, "Machine King" inside Robotic Knight's lore), null
+    out just that card's loreVi -- D4 treats an untrustworthy value the
+    same as a missing one -- and return how many were nulled so meta can
+    report the count instead of the check being silently dropped."""
+    nulled = 0
+    for card in outside_cards:
+        lore_en, lore_vi = card["lore"], card["loreVi"]
+        if not lore_en or not lore_vi:
+            continue
+        if any(name in lore_en and name not in lore_vi for name in name_pool):
+            card["loreVi"] = None
+            nulled += 1
+    return nulled
+
+
 def extract_all() -> dict:
     numbered_names, equip_lists = parse_equip_file(read_lines(EQUIP_FILE))
 
     fusion_lines = read_lines(FUSION_FILE)
-    # fusion_basic/fusion_exact/fusion_conflict/groups are carried through
-    # unchanged (same column-splitting parse as before D7). atk_def_by_name
-    # is no longer joined onto the card spine -- data/cards.json already
-    # carries ATK/DEF for every monster -- so it is computed and dropped.
+    # fusion_basic/fusion_conflict/groups are carried through unchanged (same
+    # column-splitting parse as before D7). atk_def_by_name is no longer
+    # joined onto the card spine -- data/cards.json already carries ATK/DEF
+    # for every monster -- so it is computed and dropped. The old
+    # "Dung hợp chính xác" fusion.md section is no longer read at all (D9):
+    # fusion_exact_rows below comes from fusion_unique.json instead.
     fusion_basic, _atk_def_by_name = parse_fusion_basic(fusion_lines)
-    fusion_exact = parse_fusion_exact(fusion_lines)
     fusion_conflict, groups, member_names = parse_fusion_conflict(fusion_lines)
 
-    cards = load_spine_cards()
-    cards_by_lower = {c["name"].lower(): c for c in cards}
+    fusion_exact_rows = load_fusion_unique_rows()
+    fusion_names, fusion_pairs = build_fusion_exact_pairs(fusion_exact_rows)
+    fusion_exact_triples: set[tuple[str, str, str]] = set()
+    for row in fusion_exact_rows:
+        a, b, result = row["carta1"], row["carta2"], row["resultado"]
+        lo, hi = (a, b) if a <= b else (b, a)
+        fusion_exact_triples.add((lo, hi, result))
+
+    # D10 renames this to `fm_cards`: every join below (equips, fusion
+    # systems, data/lore-vi) is FM-only, and must stay that way -- the 360
+    # outside-FM cards (below) never had a docs/guide equip header, a
+    # fusion.md system membership, or a data/lore-vi/ number to join. All of
+    # `cards_by_lower`, `fusion_exact_all_fm_count` and friends further down
+    # deliberately keep meaning "one of the 722 FM cards", unaffected by the
+    # 360 outside-FM cards appended at the very end of this function.
+    fm_cards = load_spine_cards()
+    cards_by_lower = {c["name"].lower(): c for c in fm_cards}
 
     # Equip lists (621 monster headers mined from docs/guide) join onto the
     # spine by name, case-insensitive, resolving the 15 spots docs/guide
@@ -516,7 +738,7 @@ def extract_all() -> dict:
     # ghost row -- surfaced in meta.equipNameMisses instead of silently
     # dropped or invented.
     equip_name_misses: list[str] = []
-    for card in cards:
+    for card in fm_cards:
         card["equips"] = None
     for block in equip_lists:
         header_key = block["name"].strip().lower()
@@ -534,7 +756,7 @@ def extract_all() -> dict:
     for tag, names in groups.items():
         for nm in names:
             name_to_tags.setdefault(nm.lower(), set()).add(tag)
-    for card in cards:
+    for card in fm_cards:
         tags = name_to_tags.get(card["name"].lower())
         card["fusionSystems"] = sorted(tags) if tags else None
 
@@ -544,23 +766,100 @@ def extract_all() -> dict:
     # `None`, never an empty string (same D4 "missing is null" rule as
     # every other field here).
     lore_vi = load_lore_vi()
-    for card in cards:
+    for card in fm_cards:
         card["loreVi"] = lore_vi.get(str(card["number"])) or None
 
+    # D10/D11: the 360 cartas_runtime.json cards outside Forbidden Memories,
+    # appended only after every FM-only join above so they can never pick up
+    # an FM-only field by accident (load_outside_fm_cards() already sets
+    # equips/fusionSystems/etc. to None itself -- this ordering is just
+    # belt-and-suspenders). Their loreVi (Descricao-VI) gets the same D5
+    # name-preservation guard as the FM cards, checked against every card
+    # name (FM + outside FM) that appears in more than one word.
+    outside_cards = load_outside_fm_cards(fm_cards)
+    lore_guard_name_pool = [
+        c["name"] for c in (fm_cards + outside_cards) if " " in c["name"]
+    ]
+    outside_fm_lore_vi_nulled = apply_outside_fm_lore_vi_name_guard(
+        outside_cards, lore_guard_name_pool
+    )
+
+    # D10: 722 FM cards first (keeps their 1..722 order, D11), then the 360
+    # outside-FM cards. `cards` from here on is the full 1,082-card table
+    # index.html renders; `fm_cards` above stays the 722-card FM-only view
+    # every meta count below that says "FM" is computed from.
+    cards = fm_cards + outside_cards
+
+    # D12: the second (Rush Duel-style) art image, checked against the
+    # real images/art/<slug>.webp files tools/build_art_images.py already
+    # built -- applied to the full 1,082-card table (both FM and
+    # outside-FM cards get this field; the source that produces the files,
+    # cartas_runtime.json, covers both groups, unlike the FM-only sources
+    # every other join in this function pulls from).
+    for card in cards:
+        card["artImage"] = art_image_path(card["slug"])
+
+    # D9 sub-counts, all recounted from fusion_exact_triples (the same
+    # deduped set fusionPairs is encoded from) -- never hardcoded, so a
+    # source change moves these numbers automatically instead of silently
+    # going stale. `cards_by_lower` above is FM-only (D10 does not touch
+    # this: fusionExactAllFmCount keeps meaning "all 3 names are one of the
+    # 722 FM cards", not one of the 1,082).
+    def _is_type_badge(name: str) -> bool:
+        return name.startswith("[") and "]" in name
+
+    fusion_exact_all_fm_count = sum(
+        1
+        for lo, hi, result in fusion_exact_triples
+        if lo.lower() in cards_by_lower and hi.lower() in cards_by_lower and result.lower() in cards_by_lower
+    )
+    fusion_exact_type_range_count = sum(
+        1 for lo, hi, result in fusion_exact_triples if _is_type_badge(lo) or _is_type_badge(hi) or _is_type_badge(result)
+    )
+    pair_results: dict[tuple[str, str], set[str]] = {}
+    for lo, hi, result in fusion_exact_triples:
+        pair_results.setdefault((lo, hi), set()).add(result)
+    fusion_exact_multi_result_pairs = sum(1 for results in pair_results.values() if len(results) > 1)
+
     meta = {
+        # D10: totalCards is now the full FM + outside-FM count; fmCards/
+        # outsideFmCards split it back out. Every "cardsWith*" count below
+        # keeps its pre-D10 meaning -- denominator is the 722 FM cards
+        # (fm_cards), never the 1,082-card total -- because equips,
+        # fusionSystems and data/lore-vi/'s loreVi are FM-only sources.
         "totalCards": len(cards),
-        "cardsWithAtkDef": sum(1 for c in cards if c["atk"] is not None),
-        "cardsWithType": sum(1 for c in cards if c["type"] is not None),
-        "cardsWithEquips": sum(1 for c in cards if c["equips"]),
-        "cardsWithFusionSystems": sum(1 for c in cards if c["fusionSystems"]),
-        "cardsWithLoreVi": sum(1 for c in cards if c["loreVi"]),
+        "fmCards": len(fm_cards),
+        "outsideFmCards": len(outside_cards),
+        # D12: unlike the "FM-only source" counts below, artImage's source
+        # (cartas_runtime.json's IMG-CARD field, via
+        # tools/build_art_images.py) covers both FM and outside-FM cards --
+        # so this denominator is deliberately the full 1,082-card `cards`,
+        # not the 722-card `fm_cards` every other cardsWith* count here uses.
+        "cardsWithArtImage": sum(1 for c in cards if c["artImage"]),
+        "cardsWithAtkDef": sum(1 for c in fm_cards if c["atk"] is not None),
+        "cardsWithType": sum(1 for c in fm_cards if c["type"] is not None),
+        "cardsWithEquips": sum(1 for c in fm_cards if c["equips"]),
+        "cardsWithFusionSystems": sum(1 for c in fm_cards if c["fusionSystems"]),
+        "cardsWithLoreVi": sum(1 for c in fm_cards if c["loreVi"]),
+        # D5/D10: how many of the 360 outside-FM cards' loreVi got nulled by
+        # apply_outside_fm_lore_vi_name_guard() above for dissolving a
+        # multiword card name -- reported, never hidden by skipping the
+        # guard or the check that verifies it ran.
+        "outsideFmLoreViNulled": outside_fm_lore_vi_nulled,
         "equipListsCount": len(equip_lists),
         "equipNameMisses": equip_name_misses,
         # Per-section recipe counts (tab "Độ phủ dữ liệu", cell fm-guide-site-5):
         # the tab reads these directly from meta instead of hardcoding the
         # numbers into index.html.
         "fusionBasicCount": len(fusion_basic),
-        "fusionExactCount": len(fusion_exact),
+        # D9: fusionExactCount is now the deduped, order-independent recipe
+        # count from fusion_unique.json (25,504), not fusion.md's old
+        # 150-line "Dung hợp chính xác" table.
+        "fusionExactCount": len(fusion_exact_triples),
+        "fusionExactAllFmCount": fusion_exact_all_fm_count,
+        "fusionExactTypeRangeCount": fusion_exact_type_range_count,
+        "fusionExactMultiResultPairs": fusion_exact_multi_result_pairs,
+        "fusionSourceRows": len(fusion_exact_rows),
         "fusionConflictCount": len(fusion_conflict),
         "fusionConflictMemberNames": sorted(member_names),
         "fusionGroupsWithMembers": sorted(tag for tag, names in groups.items() if names),
@@ -570,7 +869,8 @@ def extract_all() -> dict:
         "cards": cards,
         "equipLists": equip_lists,
         "fusionBasic": fusion_basic,
-        "fusionExact": fusion_exact,
+        "fusionNames": fusion_names,
+        "fusionPairs": fusion_pairs,
         "fusionConflict": fusion_conflict,
         "fusionGroups": {tag: sorted(names) for tag, names in sorted(groups.items())},
         # Emitted for index.html's nameLinkHtml (cell fm-guide-site-5 rework):
