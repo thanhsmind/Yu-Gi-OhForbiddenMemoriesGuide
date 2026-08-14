@@ -1,0 +1,77 @@
+{
+  "id": "fm-guide-site-20",
+  "feature": "fm-guide-site",
+  "title": "Ô chọn sắp xếp theo số/ATK/DEF, dùng chung hai chế độ xem",
+  "lane": "small",
+  "deps": [],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "main (feature close) — the worker never runs this",
+  "action": "Thêm sắp xếp cho tab tra cứu bài. (1) Ô CHỌN: một <select id=\"sort-order\"> đặt trong hàng bộ lọc, cạnh các select lọc sẵn có (#star-filter / cụm nút chế độ xem), có nhãn trợ năng tiếng Việt (aria-label 'Sắp xếp'), sáu mục theo đúng thứ tự này: 'Số tăng dần' (value rỗng — mặc định, đúng thứ tự hiện nay), 'Số giảm dần', 'ATK giảm dần', 'ATK tăng dần', 'DEF giảm dần', 'DEF tăng dần'. Value dùng chuỗi ổn định kiểu 'so-giam' | 'atk-giam' | 'atk-tang' | 'def-giam' | 'def-tang', mục mặc định để value rỗng. KHÔNG thêm nút đảo chiều riêng — chiều nằm ngay trong dropdown. Ô này dùng chung cho cả bảng lẫn lưới, không phụ thuộc chế độ xem, luôn hiện. (2) SẮP XẾP: làm ngay trong applyFilters() sẵn có, sau bước lọc và TRƯỚC state.page = 1 / render(), để state.filtered chính là danh sách đã xếp — nhờ vậy phân trang, số đếm và hai nút chuyển lá trong popup (đọc state.filtered, cell fm-guide-site-18) tự đi theo, không phải sửa thêm chỗ nào. Không tạo mảng danh sách thứ hai song song với state.filtered. Quy tắc: mặc định giữ nguyên thứ tự theo số tăng dần như hiện nay; khi xếp theo atk hoặc def thì lá có c.atk === null (phép, bẫy, nghi lễ... — cùng điều kiện mà bộ lọc 'Chỉ hiện lá có ATK/DEF' đang dùng) LUÔN dồn xuống cuối bất kể chiều tăng hay giảm, và giữ nguyên thứ tự theo số giữa nhóm đó; hai lá bằng điểm thì xếp theo số tăng dần cho ổn định (so sánh phải toàn phần, không dựa vào tính ổn định của Array.prototype.sort). Xếp theo def thì đọc c.def và dồn cuối theo chính c.def === null. (3) HASH: thêm tham số 'sap' vào đúng hai chỗ sẵn có — currentHash() ghi [\"sap\", <giá trị select>] trong nhánh #tra-cuu (mặc định để rỗng, không làm bẩn link); readStateFromHash() đọc params.sap và CHỈ nhận năm giá trị hợp lệ, mọi giá trị khác về mặc định; applyState() gán lại elSortOrder.value trước khi gọi applyFilters() sẵn có, đúng cách các select lọc khác đang được khôi phục. Đổi ô sắp xếp gọi applyFilters() rồi scheduleHashWrite(true) — giống hệt các select lọc sẵn có (elStarFilter...), không tạo đường ghi hash thứ hai. (4) Thêm khẳng định vào tools/check.py, đặt cạnh khối khẳng định của cell fm-guide-site-19: #sort-order là <select> thật có aria-label và đủ sáu mục; sắp xếp nằm trong applyFilters trước render(); có nhánh dồn lá atk/def null xuống cuối; tham số 'sap' xuất hiện ở cả currentHash và readStateFromHash; đổi sắp xếp đi qua scheduleHashWrite(true).",
+  "must_haves": {
+    "truths": [
+      "Ô Sắp xếp hiện ở cả chế độ bảng lẫn chế độ lưới, đổi ở chế độ nào cũng ăn sang chế độ kia",
+      "Chọn 'ATK giảm dần' thì lá mạnh nhất đứng đầu trang 1, lá phép/bẫy nằm cuối danh sách",
+      "Chọn 'Số tăng dần' cho ra đúng thứ tự như trước khi có cell này",
+      "Đổi sắp xếp thì về trang 1, số đếm không đổi, bộ lọc không đổi",
+      "Nút 'lá sau' trong popup đi theo thứ tự đang sắp xếp, không phải thứ tự theo số",
+      "Đổi sắp xếp thì URL đổi theo và Back lùi lại kiểu xếp trước",
+      "Dán lại URL có sap=atk-giam thì mở ra đúng danh sách đã xếp",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "select #sort-order sáu mục, bước sắp xếp trong applyFilters với nhánh null dồn cuối, tham số hash sap ở cả hai chiều"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định select sắp xếp, vị trí bước sắp xếp, quy tắc null dồn cuối, tham số sap đọc và ghi"
+      }
+    ],
+    "key_links": [
+      "Sắp xếp nằm trong applyFilters() sẵn có, ghi thẳng vào state.filtered",
+      "Ghi hash đi qua currentHash/readStateFromHash/scheduleHashWrite sẵn có",
+      "Popup chuyển lá và phân trang tự theo vì cùng đọc state.filtered"
+    ],
+    "prohibitions": [
+      "Không thêm nút đảo chiều riêng ngoài dropdown",
+      "Không tạo danh sách đã xếp thứ hai song song với state.filtered",
+      "Không coi lá không có ATK/DEF như 0",
+      "Không sắp xếp lại bên trong render() hay bên trong từng chế độ xem",
+      "Không tạo bộ lọc, phân trang hay đường ghi hash thứ hai",
+      "Không thêm URL http/https, script src, fetch (D1/D2)",
+      "Không sửa tay bên trong khối FM_DATA"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "sorter",
+    "outcome": "Add a sort-order picker (number/ATK/DEF) sharing table and grid views, sorting state.filtered in-place inside applyFilters() with a new 'sap' hash param",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T04:52:28.146Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "691b0238-6bc5-4cdb-bbc6-ca39527f3f82",
+    "claimed_at": "2026-08-14T04:45:38.892Z",
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T04:52:27.291Z"
+  },
+  "tier": "generation"
+}
