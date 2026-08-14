@@ -220,6 +220,40 @@
     outline-offset: 1px;
   }
 
+  /* Grid-size picker: same look as .view-mode-toggle/.view-mode-btn above,
+     shown only while the grid view is active (setViewMode() toggles [hidden],
+     cell fm-guide-site-19). */
+  .grid-size-toggle {
+    display: inline-flex;
+    gap: 0.3rem;
+  }
+
+  .grid-size-toggle[hidden] { display: none; }
+
+  .grid-size-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 0.45rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+  }
+
+  .grid-size-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  .grid-size-btn[aria-pressed="true"] {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--panel-alt);
+  }
+
+  .grid-size-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
   .table-wrap {
     overflow-x: auto;
     border: 1px solid var(--border);
@@ -335,6 +369,35 @@
   }
 
   .card-grid[hidden] { display: none; }
+
+  /* Fixed grid-size levels (cell fm-guide-site-19): #card-grid gets a
+     data-cot="4|6|8" attribute from setGridSize(). Each rule clamps the
+     *minimum* tile width to the ideal width of N columns at the current
+     container width -- on a wide viewport that ideal width is above the
+     110px floor, so auto-fill lands on exactly N columns; on a narrow
+     viewport the 110px floor wins and auto-fill drops to fewer columns on
+     its own. No resize listener, no JS width measurement, no breakpoint
+     list -- this is the same auto-fill/minmax mechanism as the default
+     "Tự động" level above, just with a per-level minimum. 0.75rem below
+     must stay in sync with the gap set above. */
+  .card-grid[data-cot="4"] {
+    grid-template-columns: repeat(auto-fill, minmax(max(110px, calc((100% - 3 * 0.75rem) / 4)), 1fr));
+  }
+
+  .card-grid[data-cot="6"] {
+    grid-template-columns: repeat(auto-fill, minmax(max(110px, calc((100% - 5 * 0.75rem) / 6)), 1fr));
+  }
+
+  .card-grid[data-cot="8"] {
+    grid-template-columns: repeat(auto-fill, minmax(max(110px, calc((100% - 7 * 0.75rem) / 8)), 1fr));
+  }
+
+  /* At 4 columns the tiles are noticeably bigger than the default auto-fill
+     level, so the name/number text (sized for the smaller default tiles)
+     reads too small next to the image -- bump it up a notch for this level
+     only; 6 and 8 columns stay at the existing size. */
+  .card-grid[data-cot="4"] .grid-tile-name { font-size: 0.95rem; }
+  .card-grid[data-cot="4"] .grid-tile-num { font-size: 0.8rem; }
 
   .grid-tile {
     display: flex;
@@ -794,6 +857,12 @@
       <span class="view-mode-toggle" role="group" aria-label="Chế độ xem tra cứu bài">
         <button type="button" id="view-mode-table" class="view-mode-btn" aria-pressed="true">Bảng</button>
         <button type="button" id="view-mode-grid" class="view-mode-btn" aria-pressed="false">Lưới</button>
+      </span>
+      <span id="grid-size-toggle" class="grid-size-toggle" role="group" aria-label="Cỡ lưới" hidden>
+        <button type="button" id="grid-size-auto" class="grid-size-btn" aria-pressed="true">Tự động</button>
+        <button type="button" id="grid-size-4" class="grid-size-btn" aria-pressed="false" aria-label="Lưới 4 cột">4</button>
+        <button type="button" id="grid-size-6" class="grid-size-btn" aria-pressed="false" aria-label="Lưới 6 cột">6</button>
+        <button type="button" id="grid-size-8" class="grid-size-btn" aria-pressed="false" aria-label="Lưới 8 cột">8</button>
       </span>
       <span id="result-count" class="result-count"></span>
     </div>
@@ -74769,6 +74838,11 @@ window.FM_DATA = {
   var elCardGrid = document.getElementById("card-grid");
   var elViewModeTableBtn = document.getElementById("view-mode-table");
   var elViewModeGridBtn = document.getElementById("view-mode-grid");
+  var elGridSizeToggle = document.getElementById("grid-size-toggle");
+  var elGridSizeAutoBtn = document.getElementById("grid-size-auto");
+  var elGridSize4Btn = document.getElementById("grid-size-4");
+  var elGridSize6Btn = document.getElementById("grid-size-6");
+  var elGridSize8Btn = document.getElementById("grid-size-8");
   var elResultCount = document.getElementById("result-count");
   var elPager = document.getElementById("pager");
   var elDetail = document.getElementById("card-detail");
@@ -74808,6 +74882,12 @@ window.FM_DATA = {
   // grid) -- a view concern like openCardNumber below, not a filter/page
   // concern, so it lives outside `state` too (cell fm-guide-site-17).
   var viewMode = "bang";
+
+  // Grid-size level for the image grid: "tu-dong" (default, existing
+  // auto-fill/minmax behaviour) or a fixed column count "4"/"6"/"8" -- a
+  // display concern like viewMode above, not filter/page, so it also lives
+  // outside `state` (cell fm-guide-site-19).
+  var gridSize = "tu-dong";
 
   // --- Router state (cell fm-guide-site-7) ---
   // Which card's detail panel is open (tab "tra-cuu"), and which guide
@@ -75155,6 +75235,7 @@ window.FM_DATA = {
     elViewModeGridBtn.setAttribute("aria-pressed", viewMode === "luoi" ? "true" : "false");
     elTableWrap.hidden = viewMode !== "bang";
     elCardGrid.hidden = viewMode !== "luoi";
+    elGridSizeToggle.hidden = viewMode !== "luoi";
   }
 
   elViewModeTableBtn.addEventListener("click", function () {
@@ -75167,6 +75248,45 @@ window.FM_DATA = {
     if (viewMode === "luoi") return;
     setViewMode("luoi");
     render();
+    scheduleHashWrite(true);
+  });
+
+  // Sets which fixed grid-size level (or "tu-dong" for the default
+  // auto-fill/minmax behaviour) is active by writing a data-cot attribute
+  // read by the CSS rules above, and keeps the four toggle buttons'
+  // aria-pressed in sync. Does not re-render -- the grid is pure CSS reflow
+  // here, no markup changes with grid size (cell fm-guide-site-19).
+  function setGridSize(size) {
+    gridSize = size === "4" || size === "6" || size === "8" ? size : "tu-dong";
+    if (gridSize === "tu-dong") {
+      delete elCardGrid.dataset.cot;
+    } else {
+      elCardGrid.dataset.cot = gridSize;
+    }
+    elGridSizeAutoBtn.setAttribute("aria-pressed", gridSize === "tu-dong" ? "true" : "false");
+    elGridSize4Btn.setAttribute("aria-pressed", gridSize === "4" ? "true" : "false");
+    elGridSize6Btn.setAttribute("aria-pressed", gridSize === "6" ? "true" : "false");
+    elGridSize8Btn.setAttribute("aria-pressed", gridSize === "8" ? "true" : "false");
+  }
+
+  elGridSizeAutoBtn.addEventListener("click", function () {
+    if (gridSize === "tu-dong") return;
+    setGridSize("tu-dong");
+    scheduleHashWrite(true);
+  });
+  elGridSize4Btn.addEventListener("click", function () {
+    if (gridSize === "4") return;
+    setGridSize("4");
+    scheduleHashWrite(true);
+  });
+  elGridSize6Btn.addEventListener("click", function () {
+    if (gridSize === "6") return;
+    setGridSize("6");
+    scheduleHashWrite(true);
+  });
+  elGridSize8Btn.addEventListener("click", function () {
+    if (gridSize === "8") return;
+    setGridSize("8");
     scheduleHashWrite(true);
   });
 
@@ -75775,7 +75895,7 @@ window.FM_DATA = {
   // page's hash-shape for it. Single source of truth is the DOM itself
   // (never a second copy of the same values) -- see also the shapes
   // documented on cell fm-guide-site-7:
-  //   #tra-cuu?q=..&so=..&loai=..&type=..&he=..&sao=..&chiso=1&trang=..&xem=luoi&la=..
+  //   #tra-cuu?q=..&so=..&loai=..&type=..&he=..&sao=..&chiso=1&trang=..&xem=luoi&cot=4&la=..
   //   #fusion?q=..&he=..
   //   #huong-dan  or  #sec-N (bare TOC anchors keep working, see D-note below)
   //   #do-phu
@@ -75805,6 +75925,7 @@ window.FM_DATA = {
       ["chiso", elOnlyAtkDef.checked ? "1" : ""],
       ["trang", state.page > 1 ? String(state.page) : ""],
       ["xem", viewMode === "luoi" ? "luoi" : ""],
+      ["cot", viewMode === "luoi" && gridSize !== "tu-dong" ? gridSize : ""],
       ["la", openCardNumber !== null && openCardNumber !== undefined ? String(openCardNumber) : ""],
     ]);
   }
@@ -75920,6 +76041,7 @@ window.FM_DATA = {
         chiso: params.chiso === "1",
         trang: params.trang ? parseInt(params.trang, 10) || 1 : 1,
         xem: params.xem === "luoi" ? "luoi" : "bang",
+        cot: params.cot === "4" || params.cot === "6" || params.cot === "8" ? params.cot : "tu-dong",
         la: params.la || null,
       };
     }
@@ -75945,6 +76067,7 @@ window.FM_DATA = {
       // The fusion branch below gets this free via onFusionSearchInput().
       updateSearchClearButtons();
       setViewMode(st.xem);
+      setGridSize(st.cot);
       applyFilters();
       var pageCount = Math.max(1, Math.ceil(state.filtered.length / PAGE_SIZE));
       state.page = Math.min(Math.max(1, st.trang || 1), pageCount);

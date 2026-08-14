@@ -1031,6 +1031,65 @@ def main() -> int:
         and html_text.count('elViewModeGridBtn.addEventListener("click"') == 1,
     )
 
+    # --- Bộ chọn cỡ lưới cho chế độ xem lưới: Tự động + 4/6/8 cột (cell fm-guide-site-19) ---
+    grid_size_buttons = {
+        "grid-size-auto": "Tự động",
+        "grid-size-4": "4",
+        "grid-size-6": "6",
+        "grid-size-8": "8",
+    }
+    for btn_id, label in grid_size_buttons.items():
+        btn_match = re.search(
+            r'<button[^>]*id="' + re.escape(btn_id) + r'"[^>]*>' + re.escape(label),
+            html_text,
+        )
+        check(
+            f"index.html có nút cỡ lưới #{btn_id} là <button type=\"button\"> thật, "
+            f"nhãn '{label}', kèm aria-pressed",
+            btn_match is not None
+            and 'type="button"' in btn_match.group(0)
+            and "aria-pressed=" in btn_match.group(0),
+            "không tìm thấy nút hoặc thiếu type/nhãn/aria-pressed" if not btn_match else btn_match.group(0),
+        )
+    check(
+        "nhóm nút cỡ lưới #grid-size-toggle có role=\"group\" và aria-label tiếng Việt, "
+        "ẩn mặc định (chỉ hiện ở chế độ lưới qua setViewMode)",
+        re.search(
+            r'<span id="grid-size-toggle"[^>]*role="group"[^>]*aria-label="[^"]+"[^>]*hidden',
+            html_text,
+        )
+        is not None,
+    )
+    check(
+        "ba quy tắc CSS cỡ lưới cố định dùng công thức kẹp trần max(110px, calc(...)) cho N = 4, 6, 8, "
+        "với 0.75rem khớp gap sẵn có của .card-grid",
+        'minmax(max(110px, calc((100% - 3 * 0.75rem) / 4)), 1fr)' in html_text
+        and 'minmax(max(110px, calc((100% - 5 * 0.75rem) / 6)), 1fr)' in html_text
+        and 'minmax(max(110px, calc((100% - 7 * 0.75rem) / 8)), 1fr)' in html_text,
+    )
+    check(
+        "setGridSize(size) đặt data-cot trên #card-grid và đồng bộ aria-pressed bốn nút, "
+        "không tự render lại (giống setViewMode)",
+        "function setGridSize(size)" in html_text
+        and "elCardGrid.dataset.cot = gridSize;" in html_text,
+    )
+    check(
+        "tham số hash 'cot' được GHI (currentHash, chỉ khi đang ở lưới và khác 'tu-dong') và "
+        "ĐỌC (readStateFromHash, chỉ nhận '4'/'6'/'8') cho cỡ lưới, applyState gọi setGridSize(st.cot) "
+        "ngay cạnh setViewMode(st.xem)",
+        '["cot", viewMode === "luoi" && gridSize !== "tu-dong" ? gridSize : ""]' in html_text
+        and 'cot: params.cot === "4" || params.cot === "6" || params.cot === "8" ? params.cot : "tu-dong"'
+        in html_text
+        and "setViewMode(st.xem);\n      setGridSize(st.cot);" in html_text,
+    )
+    check(
+        "đổi cỡ lưới đi qua scheduleHashWrite(true) (đường ghi hash sẵn có) nên Back lùi lại từng cỡ đã chọn",
+        html_text.count('elGridSizeAutoBtn.addEventListener("click"') == 1
+        and html_text.count('elGridSize4Btn.addEventListener("click"') == 1
+        and html_text.count('elGridSize6Btn.addEventListener("click"') == 1
+        and html_text.count('elGridSize8Btn.addEventListener("click"') == 1,
+    )
+
     # --- Popup chi tiết: bố cục hai cột + nút chuyển lá trước/lá sau (cell fm-guide-site-18) ---
     detail_info_css = re.search(r"\.detail-info \{(.*?)\}", html_text, re.S)
     check(
