@@ -1031,6 +1031,70 @@ def main() -> int:
         and html_text.count('elViewModeGridBtn.addEventListener("click"') == 1,
     )
 
+    # --- Popup chi tiết: bố cục hai cột + nút chuyển lá trước/lá sau (cell fm-guide-site-18) ---
+    detail_info_css = re.search(r"\.detail-info \{(.*?)\}", html_text, re.S)
+    check(
+        ".detail-info có bề rộng cơ sở flex (flex: 1 1 320px) và min-width: 0, để trên panel rộng "
+        "ảnh và khối thông tin nằm cùng hàng thay vì .detail-info bị đẩy xuống dòng dưới",
+        detail_info_css is not None
+        and "flex: 1 1 320px;" in detail_info_css.group(1)
+        and "min-width: 0;" in detail_info_css.group(1),
+        detail_info_css.group(0) if detail_info_css else "không tìm thấy khối CSS .detail-info {}",
+    )
+    detail_nav_fn = re.search(r"function detailNavHtml\(card\) \{.*?\n  \}\n", html_text, re.S)
+    check(
+        "index.html có hàm detailNavHtml dựng hai nút mũi tên '‹'/'›' là <button type=\"button\"> thật "
+        "kèm aria-label tiếng Việt ('Lá trước' / 'Lá sau'), không phải chỉ làm mờ bằng CSS",
+        detail_nav_fn is not None
+        and 'class="detail-nav-btn detail-nav-prev" aria-label="Lá trước"' in detail_nav_fn.group(0)
+        and 'class="detail-nav-btn detail-nav-next" aria-label="Lá sau"' in detail_nav_fn.group(0)
+        and detail_nav_fn.group(0).count('type="button"') == 2
+        and "disabled" in detail_nav_fn.group(0),
+        detail_nav_fn.group(0) if detail_nav_fn else "không tìm thấy hàm detailNavHtml",
+    )
+    navigate_detail_fn = re.search(r"function navigateDetail\(delta\) \{.*?\n  \}\n", html_text, re.S)
+    check(
+        "navigateDetail() dùng lại showDetail() và scheduleHashWrite(true) sẵn có để chuyển lá -- "
+        "không dựng logic mở popup hay đường ghi lịch sử thứ hai -- và đọc state.filtered, "
+        "không đọc thẳng CARDS",
+        navigate_detail_fn is not None
+        and "showDetail(targetCard);" in navigate_detail_fn.group(0)
+        and "scheduleHashWrite(true);" in navigate_detail_fn.group(0)
+        and "state.filtered" in navigate_detail_fn.group(0)
+        and "CARDS" not in navigate_detail_fn.group(0)
+        and html_text.count("function showDetail(card)") == 1,
+        navigate_detail_fn.group(0) if navigate_detail_fn else "không tìm thấy hàm navigateDetail",
+    )
+    check(
+        "getFilteredIndex() (nền tảng của cả nút bấm lẫn phím mũi tên) tìm vị trí trong state.filtered, "
+        "không đọc thẳng mảng CARDS toàn cục",
+        "function getFilteredIndex(card) {" in html_text
+        and "state.filtered[i].number === card.number" in html_text,
+    )
+    check(
+        "nút mũi tên gọi lại navigateDetail() qua addEventListener trên .detail-nav-prev/.detail-nav-next "
+        "trong showDetail(), không nhân bản logic dựng popup",
+        'navPrevBtn.addEventListener("click", function () { navigateDetail(-1); });' in html_text
+        and 'navNextBtn.addEventListener("click", function () { navigateDetail(1); });' in html_text,
+    )
+    check(
+        "phím mũi tên trái/phải chuyển lá khi popup mở, bỏ qua khi con trỏ đang trong ô nhập/textarea/select "
+        "hay vùng contenteditable, và Escape vẫn đóng popup như cũ",
+        'if (ev.key === "Escape") { closeDetail(); return; }' in html_text
+        and 'if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;' in html_text
+        and 'if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;'
+        in html_text
+        and "navigateDetail(ev.key === \"ArrowLeft\" ? -1 : 1);" in html_text,
+    )
+    check(
+        "applyFilters() gọi updateDetailNavButtons() sau render() -- đổi bộ lọc trong lúc popup đang mở "
+        "phải cập nhật lại trạng thái disabled của hai nút, không để chúng trỏ ra ngoài state.filtered mới",
+        re.search(r"function applyFilters\(\) \{.*?\n  \}\n", html_text, re.S) is not None
+        and "updateDetailNavButtons();" in re.search(
+            r"function applyFilters\(\) \{.*?\n  \}\n", html_text, re.S
+        ).group(0),
+    )
+
     print()
     print("Summary:")
     print(f"  cards (spine, data/cards.json):      {len(cards)}")
