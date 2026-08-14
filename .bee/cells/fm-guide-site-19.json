@@ -1,0 +1,79 @@
+{
+  "id": "fm-guide-site-19",
+  "feature": "fm-guide-site",
+  "title": "Bộ chọn cỡ lưới: Tự động + 4/6/8 cột, ghi vào hash",
+  "lane": "small",
+  "deps": [],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "main (feature close) — the worker never runs this",
+  "action": "Thêm bộ chọn cỡ lưới cho chế độ xem lưới ở tab tra cứu bài. (1) NÚT: một nhóm nút thật (<button type=\"button\">) đặt ngay cạnh nhóm #view-mode-table/#view-mode-grid sẵn có, bốn mức: 'Tự động' (mặc định), '4', '6', '8'; nhóm có role=\"group\" và aria-label tiếng Việt ('Cỡ lưới'), mỗi nút có aria-pressed đúng mức đang chọn và aria-label rõ nghĩa cho ba nút số (ví dụ 'Lưới 4 cột'), bấm được bằng bàn phím, focus thấy được. Cả nhóm CHỈ hiện khi đang ở chế độ lưới — setViewMode() sẵn có bật/tắt thuộc tính hidden của nhóm, giống cách nó bật/tắt #table-wrap và #card-grid; ở chế độ bảng nhóm ẩn hẳn. (2) CỠ LƯỚI: giữ nguyên .card-grid mặc định (auto-fill minmax(120px, 1fr)) cho mức 'Tự động'. Ba mức cố định gắn qua thuộc tính data trên #card-grid (ví dụ data-cot=\"4\"), mỗi mức một quy tắc CSS grid-template-columns: repeat(auto-fill, minmax(max(110px, calc((100% - (N - 1) * 0.75rem) / N)), 1fr)) với N là 4, 6, 8 và 0.75rem là đúng gap sẵn có của .card-grid. Công thức này chính là cách kẹp trần: màn rộng thì bề rộng lý tưởng của N cột lớn hơn 110px nên ra đúng N cột; màn hẹp thì 110px thắng và auto-fill tự rớt xuống ít cột hơn. KHÔNG nghe sự kiện resize, KHÔNG đo bề rộng bằng JS, KHÔNG thêm danh sách breakpoint. Ô to lên thì ảnh to theo — .img-wrap.tile đã là width 100% + aspect-ratio nên không cần sửa; chỉ chỉnh cỡ chữ tên/số trong ô nếu ở mức 4 cột chữ trông quá nhỏ so với ảnh. (3) TRẠNG THÁI: một biến cỡ lưới nằm NGOÀI state (giống viewMode sẵn có, vì đây là mối bận tâm hiển thị chứ không phải lọc/phân trang), giá trị 'tu-dong' | '4' | '6' | '8'; một hàm setGridSize(size) đặt data trên #card-grid và đồng bộ aria-pressed, không tự render lại (giống setViewMode). Đổi cỡ KHÔNG đụng state.page, state.filtered, popup chi tiết. (4) HASH: thêm tham số 'cot' vào đúng hai chỗ sẵn có — currentHash() ghi [\"cot\", ...] trong nhánh #tra-cuu, chỉ ghi khi đang ở lưới và cỡ khác 'Tự động' (mức tự động và chế độ bảng để rỗng, không làm bẩn link); readStateFromHash() đọc params.cot, chỉ nhận '4' | '6' | '8', mọi giá trị khác về 'tu-dong'; applyState() gọi setGridSize(st.cot) ngay cạnh setViewMode(st.xem) sẵn có. Bấm nút cỡ lưới đi qua scheduleHashWrite(true) sẵn có — không tạo đường ghi hash thứ hai — nên Back lùi lại từng cỡ đã chọn. (5) Thêm khẳng định vào tools/check.py, đặt cạnh khối khẳng định của cell fm-guide-site-17: bốn nút cỡ lưới là <button type=\"button\"> thật có aria-pressed; nhóm nút có aria-label; ba quy tắc CSS chứa công thức max(110px, calc(...)) cho N = 4, 6, 8; tham số 'cot' xuất hiện ở cả currentHash và readStateFromHash; applyState gọi setGridSize; đổi cỡ đi qua scheduleHashWrite(true).",
+  "must_haves": {
+    "truths": [
+      "Ở chế độ lưới có nhóm nút Tự động/4/6/8; ở chế độ bảng nhóm ẩn hẳn",
+      "Mức Tự động cho ra đúng hành vi co giãn như trước khi có cell này",
+      "Trên màn hình rộng, chọn 4 thì đúng 4 ô mỗi hàng và ảnh to nhất; chọn 8 thì ô nhỏ nhất",
+      "Trên màn hình hẹp, chọn 8 thì lưới tự rớt xuống ít cột hơn thay vì ép 8 ô tí xíu, nút vẫn hiện 8 là mức đang chọn",
+      "Đổi cỡ lưới thì URL đổi theo và Back lùi lại cỡ trước đó",
+      "Dán lại URL có cot=4 thì mở ra đúng lưới 4 cột",
+      "Đổi cỡ lưới không nhảy trang, không mất bộ lọc, không đóng popup đang mở",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "nhóm nút cỡ lưới, ba quy tắc CSS kẹp trần bằng max()/calc(), setGridSize, tham số hash cot ở cả hai chiều"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định nút cỡ lưới, công thức CSS kẹp trần, tham số cot đọc và ghi, đường scheduleHashWrite"
+      }
+    ],
+    "key_links": [
+      "Ẩn/hiện nhóm nút đi qua setViewMode() sẵn có",
+      "Ghi hash đi qua currentHash/readStateFromHash/scheduleHashWrite sẵn có",
+      "Lưới vẫn dùng chung state.filtered, PAGE_SIZE và renderPager với bảng"
+    ],
+    "prohibitions": [
+      "Không nghe sự kiện resize hay đo bề rộng bằng JS để tính số cột",
+      "Không thêm danh sách breakpoint @media cho từng mức cỡ lưới",
+      "Không tạo bộ lọc, phân trang hay đường ghi hash thứ hai",
+      "Không đổi hành vi mức Tự động so với hiện tại",
+      "Không thêm URL http/https, script src, fetch (D1/D2)",
+      "Không sửa tay bên trong khối FM_DATA",
+      "Không phá khối @media (pointer: coarse) và cỡ chữ 16px"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "gridder",
+    "outcome": "Added the Auto/4/6/8 grid-size picker with CSS clamp columns and hash param cot",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T04:21:40.109Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "691b0238-6bc5-4cdb-bbc6-ca39527f3f82",
+    "claimed_at": "2026-08-14T04:09:45.413Z",
+    "warnings": [
+      "advisory: this cap's commit changes 184 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T04:21:39.258Z"
+  },
+  "tier": "generation"
+}
