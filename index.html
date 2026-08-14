@@ -297,6 +297,22 @@
   .col-atk, .col-def { text-align: right; white-space: nowrap; }
   .col-star, .col-fusion { color: var(--text-dim); white-space: nowrap; }
 
+  /* Text label (not color alone) marking a card outside the 722-card FM
+     spine (D10/D11, cell fm-guide-site-27) -- table row, grid tile, and
+     detail popup title all reuse this one class. */
+  .badge-outside-fm {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 600;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
   .img-wrap {
     display: inline-flex;
     align-items: center;
@@ -997,6 +1013,11 @@
       <select id="type-filter"></select>
       <select id="fusion-filter"></select>
       <select id="star-filter"></select>
+      <select id="fm-scope-filter" aria-label="Phạm vi lá bài">
+        <option value="">FM &amp; ngoài FM</option>
+        <option value="fm">Chỉ lá FM</option>
+        <option value="ngoai-fm">Chỉ lá ngoài FM</option>
+      </select>
       <select id="sort-order" aria-label="Sắp xếp">
         <option value="">Số tăng dần</option>
         <option value="so-giam">Số giảm dần</option>
@@ -82893,8 +82914,35 @@ window.FM_DATA = {
   var CARDS = DATA.cards || [];
   var PAGE_SIZE = 50;
 
+  // The universal, collision-free lookup key (cell fm-guide-site-27): every
+  // one of the 1082 cards (722 FM + 360 outside-FM) has a unique slug, while
+  // `number` is null for all 360 outside-FM cards -- keying on number alone
+  // used to merge every one of them into a single "undefined"/"null" bucket.
+  // All internal navigation (row/tile click, popup prev/next, hash restore)
+  // goes through bySlug. byNumber stays around, keyed ONLY by the 722 real
+  // FM numbers, so an existing bookmarked "?la=<number>" link keeps resolving
+  // exactly as before.
+  var bySlug = {};
+  CARDS.forEach(function (c) { bySlug[c.slug] = c; });
   var byNumber = {};
-  CARDS.forEach(function (c) { byNumber[c.number] = c; });
+  CARDS.forEach(function (c) { if (c.number !== null && c.number !== undefined) byNumber[c.number] = c; });
+
+  // Per-card identifier used everywhere a card needs to travel through a
+  // string (a data-* attribute, the "?la=" hash param): an FM card's plain
+  // number, unchanged, so every existing link/attribute value keeps meaning
+  // exactly what it meant before D10; an outside-FM card's slug, since it
+  // has no number. resolveCardByKey is the matching read side -- a
+  // digits-only key resolves through byNumber, anything else through
+  // bySlug, so both shapes always resolve back to the right single card.
+  function cardKey(card) {
+    if (!card) return "";
+    return card.number !== null && card.number !== undefined ? String(card.number) : card.slug;
+  }
+  function resolveCardByKey(key) {
+    if (key === null || key === undefined || key === "") return null;
+    if (/^\d+$/.test(key)) return byNumber[key] || bySlug[key] || null;
+    return bySlug[key] || null;
+  }
 
   var fusionSystemsSeen = {};
   var cardTypesSeen = {};
@@ -82920,6 +82968,7 @@ window.FM_DATA = {
   var elTypeFilter = document.getElementById("type-filter");
   var elFusionFilter = document.getElementById("fusion-filter");
   var elStarFilter = document.getElementById("star-filter");
+  var elFmScopeFilter = document.getElementById("fm-scope-filter");
   var elSortOrder = document.getElementById("sort-order");
   var elTableBody = document.getElementById("card-table-body");
   var elTableWrap = document.getElementById("table-wrap");
@@ -82971,7 +83020,7 @@ window.FM_DATA = {
   var state = { page: 1, filtered: CARDS };
 
   // Card-lookup display mode: "bang" (table, default) or "luoi" (image
-  // grid) -- a view concern like openCardNumber below, not a filter/page
+  // grid) -- a view concern like openCardSlug below, not a filter/page
   // concern, so it lives outside `state` too (cell fm-guide-site-17).
   var viewMode = "bang";
 
@@ -82986,7 +83035,10 @@ window.FM_DATA = {
   // section was last jumped to via the TOC (tab "huong-dan") -- both drive
   // the hash but live outside `state` since they are UI concerns, not
   // filter/pagination concerns.
-  var openCardNumber = null;
+  // Keyed by slug, not number -- number is null for every outside-FM card
+  // (D10), so a number-keyed field would collide all 360 of them together
+  // (cell fm-guide-site-27).
+  var openCardSlug = null;
   var currentGuideSection = null;
   var hashDebounceTimer = null;
   var typingBurstOpen = false;
@@ -82999,6 +83051,19 @@ window.FM_DATA = {
 
   function fmt(value) {
     return value === null || value === undefined ? "chưa có dữ liệu" : String(value);
+  }
+
+  // The 360 outside-FM cards carry `number: null` (D10) -- "#" + null would
+  // silently print the literal text "#null", which reads as real data. Show
+  // the plain "chưa có dữ liệu" convention instead, with no leading "#".
+  function fmtNumberBadge(card) {
+    return card.number === null || card.number === undefined ? "chưa có dữ liệu" : "#" + card.number;
+  }
+
+  // Text label distinguishing an outside-FM card (D10/D11) -- never color
+  // alone. Renders nothing for the 722 real FM cards.
+  function outsideFmBadgeHtml(card) {
+    return card.outsideFm ? '<span class="badge-outside-fm">ngoài FM</span>' : "";
   }
 
   function fmtList(value) {
@@ -83574,6 +83639,7 @@ window.FM_DATA = {
     var typeQ = elTypeFilter.value;
     var fusionQ = elFusionFilter.value;
     var starQ = elStarFilter.value;
+    var fmScopeQ = elFmScopeFilter.value;
 
     state.filtered = CARDS.filter(function (c) {
       if (nameQ && c.name.toLowerCase().indexOf(nameQ) === -1) return false;
@@ -83583,22 +83649,41 @@ window.FM_DATA = {
       if (typeQ && c.type !== typeQ) return false;
       if (fusionQ && (!c.fusionSystems || c.fusionSystems.indexOf(fusionQ) === -1)) return false;
       if (starQ && (!c.guardianStars || c.guardianStars.indexOf(starQ) === -1)) return false;
+      // D10/D11 scope filter: "fm" keeps only the 722 real FM cards,
+      // "ngoai-fm" keeps only the 360 cards outside the FM spine, "" (default)
+      // keeps both.
+      if (fmScopeQ === "fm" && c.outsideFm) return false;
+      if (fmScopeQ === "ngoai-fm" && !c.outsideFm) return false;
       return true;
     });
 
     // Sort in place, straight on state.filtered -- pagination, the result
     // count, and the popup prev/next buttons all read state.filtered so they
-    // follow automatically (cell fm-guide-site-20). "" (default) keeps the
-    // existing ascending-by-number order untouched. Every comparator branch
+    // follow automatically (cell fm-guide-site-20). Every comparator branch
     // below is a full/total order on its own (never returns 0 for two
-    // distinct cards): atk/def sorts push cards with no value (null, same
-    // condition as the "only ATK/DEF" filter above) to the bottom regardless
-    // of direction, and break ties -- including that null/null tie -- by
-    // ascending number for stability, without relying on Array.sort being
-    // stable.
+    // distinct cards, never NaN): atk/def sorts push cards with no value
+    // (null, same condition as the "only ATK/DEF" filter above) to the
+    // bottom regardless of direction, and break ties by ascending number
+    // when both sides have one, else by slug, without relying on
+    // Array.sort being stable.
+    //
+    // "" (số tăng dần, default) and "so-giam" (D11, cell fm-guide-site-27):
+    // the 722 FM cards keep their 1-722 order at the top; the 360
+    // outside-FM cards (no `number`) sink to the bottom, sorted A-Z by name
+    // regardless of direction -- there is no real ordinal to reverse.
     var sortOrder = elSortOrder.value;
-    if (sortOrder === "so-giam") {
-      state.filtered.sort(function (a, b) { return b.number - a.number; });
+    if (sortOrder === "" || sortOrder === "so-giam") {
+      var descNum = sortOrder === "so-giam";
+      state.filtered.sort(function (a, b) {
+        var aHasNum = a.number !== null && a.number !== undefined;
+        var bHasNum = b.number !== null && b.number !== undefined;
+        if (aHasNum !== bHasNum) return aHasNum ? -1 : 1;
+        if (aHasNum) return descNum ? b.number - a.number : a.number - b.number;
+        var aName = a.name.toLowerCase();
+        var bName = b.name.toLowerCase();
+        if (aName !== bName) return aName < bName ? -1 : 1;
+        return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
+      });
     } else if (
       sortOrder === "atk-giam" || sortOrder === "atk-tang" ||
       sortOrder === "def-giam" || sortOrder === "def-tang"
@@ -83612,7 +83697,11 @@ window.FM_DATA = {
         var bNull = bVal === null;
         if (aNull !== bNull) return aNull ? 1 : -1;
         if (!aNull && aVal !== bVal) return desc ? bVal - aVal : aVal - bVal;
-        return a.number - b.number;
+        var aHasNum = a.number !== null && a.number !== undefined;
+        var bHasNum = b.number !== null && b.number !== undefined;
+        if (aHasNum !== bHasNum) return aHasNum ? -1 : 1;
+        if (aHasNum) return a.number - b.number;
+        return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0;
       });
     }
 
@@ -83634,9 +83723,9 @@ window.FM_DATA = {
   function rowHtml(card) {
     var typeLabel = card.cardType ? card.cardType + (card.type ? " · " + card.type : "") : "chưa có dữ liệu";
     return (
-      '<tr data-number="' + escapeHtml(card.number) + '">' +
-        '<td class="col-num">#' + escapeHtml(card.number) + "</td>" +
-        '<td class="col-name">' + escapeHtml(card.name) + "</td>" +
+      '<tr data-number="' + escapeHtml(cardKey(card)) + '">' +
+        '<td class="col-num">' + escapeHtml(fmtNumberBadge(card)) + "</td>" +
+        '<td class="col-name">' + escapeHtml(card.name) + outsideFmBadgeHtml(card) + "</td>" +
         '<td class="col-type">' + escapeHtml(typeLabel) + "</td>" +
         '<td class="col-atk">' + fmt(card.atk) + "</td>" +
         '<td class="col-def">' + fmt(card.def) + "</td>" +
@@ -83649,11 +83738,12 @@ window.FM_DATA = {
 
   function gridTileHtml(card) {
     return (
-      '<button type="button" class="grid-tile" data-number="' + escapeHtml(card.number) + '">' +
+      '<button type="button" class="grid-tile" data-number="' + escapeHtml(cardKey(card)) + '">' +
         imgCellHtml(card, "tile") +
         '<span class="grid-tile-info">' +
-          '<span class="grid-tile-num">#' + escapeHtml(card.number) + "</span>" +
+          '<span class="grid-tile-num">' + escapeHtml(fmtNumberBadge(card)) + "</span>" +
           '<span class="grid-tile-name">' + escapeHtml(card.name) + "</span>" +
+          outsideFmBadgeHtml(card) +
         "</span>" +
       "</button>"
     );
@@ -83751,7 +83841,7 @@ window.FM_DATA = {
   elCardGrid.addEventListener("click", function (ev) {
     var btn = ev.target.closest("button[data-number]");
     if (!btn) return;
-    var card = byNumber[btn.dataset.number];
+    var card = resolveCardByKey(btn.dataset.number);
     if (card) {
       showDetail(card);
       scheduleHashWrite(true);
@@ -83996,11 +84086,16 @@ window.FM_DATA = {
   function renderCoverage() {
     var meta = DATA.meta || {};
     var rows = [
-      ["Tổng số lá bài (spine data/cards.json)", meta.totalCards],
-      ["Lá có ATK/DEF", meta.cardsWithAtkDef],
-      ["Lá có Type", meta.cardsWithType],
-      ["Lá có danh sách Equip", meta.cardsWithEquips],
-      ["Lá có hệ fusion (mục Dung hợp xung đột)", meta.cardsWithFusionSystems],
+      // D10/D11 (cell fm-guide-site-27): the bảng tra cứu now spans two
+      // sources -- read the FM/ngoài-FM/tổng split straight from
+      // DATA.meta.fmCards/outsideFmCards/totalCards, never hard-coded.
+      ["Lá trong Forbidden Memories (spine data/cards.json)", meta.fmCards],
+      ["Lá ngoài Forbidden Memories (data/CardFusionExplorer)", meta.outsideFmCards],
+      ["Tổng số lá trong bảng tra cứu (FM + ngoài FM)", meta.totalCards],
+      ["Lá FM có ATK/DEF", meta.cardsWithAtkDef],
+      ["Lá FM có Type", meta.cardsWithType],
+      ["Lá FM có danh sách Equip", meta.cardsWithEquips],
+      ["Lá FM có hệ fusion (mục Dung hợp xung đột)", meta.cardsWithFusionSystems],
       ["Khối equip mined từ docs/guide (equipLists)", meta.equipListsCount],
       ["Công thức dung hợp cơ bản (fusionBasic)", meta.fusionBasicCount],
       ["Công thức dung hợp chính xác (fusionExact)", meta.fusionExactCount],
@@ -84008,8 +84103,8 @@ window.FM_DATA = {
       ["Nhóm hệ fusion có danh sách thành viên (fusionGroups)", (meta.fusionGroupsWithMembers || []).length],
       ["Tên riêng biệt xuất hiện trong mục xung đột hệ", (meta.fusionConflictMemberNames || []).length],
       [
-        "Lá có lore tiếng Việt trên tổng " + fmt(meta.totalCards) +
-          " lá (bản dịch máy, không trích từ nguồn tiếng Việt nào)",
+        "Lá FM có lore tiếng Việt trên tổng " + fmt(meta.fmCards) +
+          " lá FM (bản dịch máy, không trích từ nguồn tiếng Việt nào)",
         meta.cardsWithLoreVi,
       ],
     ];
@@ -84069,7 +84164,7 @@ window.FM_DATA = {
   function setDetailOpen(open) {
     elDetail.hidden = !open;
     document.body.classList.toggle("modal-open", open);
-    if (!open) openCardNumber = null;
+    if (!open) openCardSlug = null;
   }
 
   // A user-driven close (× button, backdrop, Escape) -- unlike the
@@ -84104,12 +84199,20 @@ window.FM_DATA = {
 
   // Index of `card` inside the currently filtered list -- -1 when the open
   // card fell out of state.filtered (filters changed while the popup stayed
-  // open). Compares by number, not by reference, since state.filtered is a
-  // fresh array from every applyFilters() call.
+  // open). Compares by number when both sides have one (unique across the
+  // 722 FM cards, unchanged from before D10) and falls back to slug (unique
+  // across all 1082 cards) whenever either side has no number -- every
+  // outside-FM card (D10) has `number: null`, so comparing those by number
+  // alone would treat any two of them as the same card; not by reference,
+  // since state.filtered is a fresh array from every applyFilters() call.
   function getFilteredIndex(card) {
     if (!card) return -1;
     for (var i = 0; i < state.filtered.length; i++) {
-      if (state.filtered[i].number === card.number) return i;
+      var bothHaveNumber = state.filtered[i].number !== null && card.number !== null;
+      var isMatch = bothHaveNumber
+        ? state.filtered[i].number === card.number
+        : state.filtered[i].slug === card.slug;
+      if (isMatch) return i;
     }
     return -1;
   }
@@ -84137,8 +84240,8 @@ window.FM_DATA = {
   // change made while the popup stays open (background control reached by
   // Tab) never leaves the buttons pointing past the new state.filtered.
   function updateDetailNavButtons() {
-    if (elDetail.hidden || openCardNumber === null) return;
-    var idx = getFilteredIndex(byNumber[openCardNumber]);
+    if (elDetail.hidden || openCardSlug === null) return;
+    var idx = getFilteredIndex(bySlug[openCardSlug]);
     var prevBtn = elDetail.querySelector(".detail-nav-prev");
     var nextBtn = elDetail.querySelector(".detail-nav-next");
     if (prevBtn) prevBtn.disabled = !(idx > 0);
@@ -84153,8 +84256,8 @@ window.FM_DATA = {
   // itself for the popup rebuild and the existing scheduleHashWrite(true)
   // path for history, so Back steps back through the cards one at a time.
   function navigateDetail(delta) {
-    if (elDetail.hidden || openCardNumber === null) return;
-    var idx = getFilteredIndex(byNumber[openCardNumber]);
+    if (elDetail.hidden || openCardSlug === null) return;
+    var idx = getFilteredIndex(bySlug[openCardSlug]);
     if (idx === -1) return;
     var targetIdx = idx + delta;
     if (targetIdx < 0 || targetIdx >= state.filtered.length) return;
@@ -84169,7 +84272,7 @@ window.FM_DATA = {
   }
 
   function showDetail(card) {
-    openCardNumber = card.number;
+    openCardSlug = card.slug;
     var equipsHtml = "chưa có dữ liệu";
     if (card.equips && card.equips.length) {
       equipsHtml =
@@ -84193,9 +84296,10 @@ window.FM_DATA = {
           '<div class="detail-img-wrap">' + imgCellHtml(card, "detail") + "</div>" +
           '<div class="detail-info">' +
             "<h3><span class=\"detail-title-text\">" + escapeHtml(card.name) + "</span>" +
+              outsideFmBadgeHtml(card) +
               detailNavHtml(card) + "</h3>" +
             "<dl>" +
-              "<dt>Số thứ tự</dt><dd>#" + escapeHtml(card.number) + "</dd>" +
+              "<dt>Số thứ tự</dt><dd>" + escapeHtml(fmtNumberBadge(card)) + "</dd>" +
               "<dt>Loại lá</dt><dd>" + filterLinkHtml("loai", card.cardType) + "</dd>" +
               "<dt>Type</dt><dd>" + filterLinkHtml("type", card.type) + "</dd>" +
               "<dt>Level</dt><dd>" + fmt(card.level) + "</dd>" +
@@ -84235,7 +84339,7 @@ window.FM_DATA = {
   elTableBody.addEventListener("click", function (ev) {
     var tr = ev.target.closest("tr[data-number]");
     if (!tr) return;
-    var card = byNumber[tr.dataset.number];
+    var card = resolveCardByKey(tr.dataset.number);
     if (card) {
       showDetail(card);
       scheduleHashWrite(true);
@@ -84253,6 +84357,7 @@ window.FM_DATA = {
     elTypeFilter.value = "";
     elFusionFilter.value = "";
     elStarFilter.value = "";
+    elFmScopeFilter.value = "";
     applyFilters();
     showDetail(card);
     scheduleHashWrite(true);
@@ -84275,6 +84380,7 @@ window.FM_DATA = {
     elTypeFilter.value = filterKey === "type" ? value : "";
     elFusionFilter.value = filterKey === "he" ? value : "";
     elStarFilter.value = filterKey === "sao" ? value : "";
+    elFmScopeFilter.value = "";
     applyFilters();
     setDetailOpen(false);
     scheduleHashWrite(true);
@@ -84337,6 +84443,7 @@ window.FM_DATA = {
   elTypeFilter.addEventListener("change", applyFilters);
   elFusionFilter.addEventListener("change", applyFilters);
   elStarFilter.addEventListener("change", applyFilters);
+  elFmScopeFilter.addEventListener("change", applyFilters);
   elSortOrder.addEventListener("change", applyFilters);
   elSearchName.addEventListener("input", function () { scheduleHashWrite(false); });
   elSearchNumber.addEventListener("input", function () { scheduleHashWrite(false); });
@@ -84345,6 +84452,7 @@ window.FM_DATA = {
   elTypeFilter.addEventListener("change", function () { scheduleHashWrite(true); });
   elFusionFilter.addEventListener("change", function () { scheduleHashWrite(true); });
   elStarFilter.addEventListener("change", function () { scheduleHashWrite(true); });
+  elFmScopeFilter.addEventListener("change", function () { scheduleHashWrite(true); });
   elSortOrder.addEventListener("change", function () { scheduleHashWrite(true); });
 
   // Clear (x): a discrete action like a dropdown change, not typing -- it
@@ -84445,11 +84553,22 @@ window.FM_DATA = {
     return out;
   }
 
+  // Hash value for the open popup's "la" param (cell fm-guide-site-27):
+  // cardKey() writes an FM card's plain number, unchanged, so a link
+  // bookmarked before this cell still resolves to the same "?la=<number>"
+  // shape (D10/D11); an outside-FM card has no number, so it writes its
+  // slug instead -- resolveCardByKey() (readStateFromHash/applyState below)
+  // is the matching read side for both shapes.
+  function laHashValue() {
+    if (openCardSlug === null || openCardSlug === undefined) return "";
+    return cardKey(bySlug[openCardSlug]);
+  }
+
   // Reads the DOM controls of whichever tab is active and builds this
   // page's hash-shape for it. Single source of truth is the DOM itself
   // (never a second copy of the same values) -- see also the shapes
   // documented on cell fm-guide-site-7:
-  //   #tra-cuu?q=..&so=..&loai=..&type=..&he=..&sao=..&sap=atk-giam&chiso=1&trang=..&xem=luoi&cot=4&la=..
+  //   #tra-cuu?q=..&so=..&loai=..&type=..&he=..&sao=..&pham-vi=fm&sap=atk-giam&chiso=1&trang=..&xem=luoi&cot=4&la=..
   //   #fusion?q=..&he=..
   //   #huong-dan  or  #sec-N (bare TOC anchors keep working, see D-note below)
   //   #do-phu
@@ -84476,12 +84595,13 @@ window.FM_DATA = {
       ["type", elTypeFilter.value],
       ["he", elFusionFilter.value],
       ["sao", elStarFilter.value],
+      ["pham-vi", elFmScopeFilter.value],
       ["sap", elSortOrder.value],
       ["chiso", elOnlyAtkDef.checked ? "1" : ""],
       ["trang", state.page > 1 ? String(state.page) : ""],
       ["xem", viewMode === "luoi" ? "luoi" : ""],
       ["cot", viewMode === "luoi" && gridSize !== "tu-dong" ? gridSize : ""],
-      ["la", openCardNumber !== null && openCardNumber !== undefined ? String(openCardNumber) : ""],
+      ["la", laHashValue()],
     ]);
   }
 
@@ -84593,6 +84713,8 @@ window.FM_DATA = {
         type: params.type || "",
         he: params.he || "",
         sao: params.sao || "",
+        // D10/D11 scope filter (cell fm-guide-site-27).
+        phamVi: params["pham-vi"] === "fm" || params["pham-vi"] === "ngoai-fm" ? params["pham-vi"] : "",
         sap: ["so-giam", "atk-giam", "atk-tang", "def-giam", "def-tang"].indexOf(params.sap) !== -1
           ? params.sap
           : "",
@@ -84618,6 +84740,7 @@ window.FM_DATA = {
       elTypeFilter.value = st.type || "";
       elFusionFilter.value = st.he || "";
       elStarFilter.value = st.sao || "";
+      elFmScopeFilter.value = st.phamVi || "";
       elSortOrder.value = st.sap || "";
       elOnlyAtkDef.checked = !!st.chiso;
       // The two values above were set programmatically, so no "input" event
@@ -84631,7 +84754,12 @@ window.FM_DATA = {
       var pageCount = Math.max(1, Math.ceil(state.filtered.length / PAGE_SIZE));
       state.page = Math.min(Math.max(1, st.trang || 1), pageCount);
       render();
-      var card = st.la ? byNumber[st.la] : null;
+      // ?la= accepts either shape (D10/D11, cell fm-guide-site-27) via the
+      // same resolveCardByKey() the row/tile click handlers use: a
+      // digits-only value is an FM card's plain number (keeps every link
+      // bookmarked before this cell resolving the same way), anything else
+      // is an outside-FM card's slug.
+      var card = resolveCardByKey(st.la);
       if (card) {
         showDetail(card);
       } else {
