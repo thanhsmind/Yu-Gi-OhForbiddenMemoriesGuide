@@ -1,0 +1,60 @@
+{
+  "id": "fm-guide-site-22",
+  "feature": "fm-guide-site",
+  "title": "Nới cỡ ô ảnh trong Fusion List và bỏ ngắt chữ giữa tên hệ",
+  "lane": "tiny",
+  "deps": [
+    "fm-guide-site-21"
+  ],
+  "files": [
+    "index.html"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "main (feature close)",
+  "action": "Chỉnh CSS Fusion List sau khi xem ảnh chụp thật: ô công thức từ 76x58px cố định đổi sang chiều rộng co giãn clamp(84px, 27%, 168px), .img-wrap.recipe và .recipe-badge lấy width 100% + aspect-ratio 5/4 để ba ô luôn lấp đủ chiều ngang panel; badge hệ bỏ word-break: break-word (đang cắt 'AngelWinged' thành 'AngelWinge/d'), dùng overflow-wrap: normal + hyphens: none và cỡ chữ clamp; tăng nhẹ cỡ chữ tên lá và dòng ★level · ATK.",
+  "must_haves": {
+    "truths": [
+      "Ảnh trong công thức đủ lớn để nhìn ra lá bài trên màn rộng",
+      "Tên hệ trong badge không bị ngắt giữa từ",
+      "Màn 390px: ba ô vẫn nằm một hàng, trang không cuộn ngang, không có vùng cuộn lồng",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "CSS .recipe-cell/.img-wrap.recipe/.recipe-badge co giãn theo panel"
+      }
+    ],
+    "key_links": [
+      "Cùng khối CSS Fusion List của cell fm-guide-site-21"
+    ],
+    "prohibitions": [
+      "Không đổi markup hay hàm render",
+      "Không thêm ảnh ngoài images/cards/"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "tier": "generation",
+  "trace": {
+    "worker": "fusionviz",
+    "outcome": null,
+    "files_changed": [],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T06:01:13.876Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "390f070a-a328-4714-b96c-5a09d2bb1a80",
+    "claimed_at": "2026-08-14T06:01:02.987Z",
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T06:01:13.043Z"
+  }
+}

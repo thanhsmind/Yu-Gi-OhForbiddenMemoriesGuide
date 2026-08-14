@@ -70,8 +70,8 @@ Chọn một dòng — hoặc một ô trong lưới — thì mở
 bảng chi tiết của lá đó dưới dạng hộp thoại nổi: ảnh mặt bài, số thứ tự, tên,
 loại lá, Type, cấp độ,
 ATK, DEF, cặp Guardian Star, mã password, giá StarChip, cách lấy được lá,
-tên tiếng Nhật, lore, danh sách trang bị dùng được cho lá đó, và các công thức
-fusion liên quan.
+tên tiếng Nhật, lore, danh sách trang bị dùng được cho lá đó, và Fusion List —
+mọi công thức liên quan, bày bằng ảnh mặt bài.
 
 Lore có hai bản: bản dịch tiếng Việt (nếu có) hiện làm nội dung chính, và
 ngay dưới nó luôn hiện nguyên văn tiếng Anh kèm nhãn "Nguyên văn" ở cỡ chữ
@@ -79,9 +79,30 @@ nhỏ hơn, màu nhạt hơn — bản dịch là sản phẩm phái sinh, khôn
 thế hay che nguyên văn. Lá chưa có bản dịch chỉ hiện nguyên văn tiếng Anh,
 không có ô trống.
 
-Hộp thoại chi tiết bày ảnh và khối thông tin cạnh nhau khi bề ngang đủ chỗ,
-hai khối bắt đầu cùng mép trên; màn hình hẹp thì xếp dọc, ảnh trên thông tin
-dưới.
+Hộp thoại chi tiết chia hai panel khi bề ngang đủ chỗ: panel trái là ảnh mặt
+bài, khối thông tin và danh sách trang bị; panel phải là **Fusion List** —
+mọi công thức liên quan tới lá đó, kể bằng ảnh chứ không bằng câu chữ. Màn
+hình hẹp thì hai panel xếp dọc, panel trái trên, Fusion List dưới, và Fusion
+List không có vùng cuộn riêng lồng trong hộp thoại.
+
+Fusion List mở đầu bằng số công thức đếm được, rồi hai nhóm giữ nguyên hướng
+tra cứu hai chiều: "Ghép ra lá này" và "Lá này tham gia". Mỗi công thức là một
+hàng ba ô cùng cỡ — nguyên liệu, nguyên liệu, kết quả — ngăn bằng `+` và `=`
+(công thức xung đột dùng `<` như bảng fusion). Mỗi ô là ảnh mặt bài, dưới ảnh
+là tên lá và một dòng phụ ghi cấp độ với ATK; lá không có cấp độ/ATK (phép,
+bẫy, nghi lễ) để trống dòng phụ chứ không hiện `0`. Bấm ảnh hoặc tên lá mở
+chi tiết lá đó.
+
+Vế nào của công thức là một **hệ** ([Hệ]) chứ không phải một lá cụ thể thì
+không có ảnh để bày: chỗ đó là một ô cùng kích thước ghi tên hệ, bấm vào
+chuyển sang tab tra cứu đã lọc sẵn đúng hệ đó. Ba ô co giãn theo bề ngang
+panel — màn rộng thì ảnh đủ lớn để nhận ra lá, màn hẹp thì thu nhỏ chứ không
+bẻ hàng và không đẩy trang cuộn ngang.
+
+Ghi chú riêng của từng công thức ("có thể ra thêm — cần điều kiện riêng",
+"công thức xung đột, ghi đè …") nằm ngay dưới hàng ảnh của công thức đó. Lá
+chưa có công thức nào thì Fusion List hiện đúng một câu nói vậy, không bày
+khung rỗng.
 
 Trong hộp thoại có hai nút mũi tên "lá trước" / "lá sau" để đi nhanh qua các lá
 mà không phải đóng hộp thoại. Chúng đi theo **danh sách đang lọc**, đúng thứ tự
