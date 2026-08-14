@@ -108,21 +108,34 @@ không có ô trống.
 Trang có hai bộ ảnh cho cùng một lá: **bản vẽ minh hoạ** hiện đại (khổ dọc,
 nét) và **ảnh chụp trong game** (khổ ngang, đúng thứ người chơi thấy khi chơi).
 
-Bản vẽ minh hoạ là ảnh mặc định ở **mọi chỗ** — bảng, lưới, Fusion List, hộp
-thoại chi tiết. Lá không có bản vẽ (một số ít lá Ritual) rơi về ảnh chụp trong
-game; chỉ khi thiếu cả hai mới hiện ô giữ chỗ, và ô đó ghi đường dẫn của ảnh
-mà lá ấy đáng lẽ phải có, không ghi bừa một trong hai.
+Người đọc chọn bộ nào làm mặc định bằng **một ô chọn duy nhất** trong hàng bộ
+lọc, và lựa chọn đó áp cho **cả trang** — bảng, lưới, Fusion List và mặt mở đầu
+của hộp thoại chi tiết cùng đổi theo. Mặc định là bản vẽ minh hoạ. Đổi ô chọn
+không đóng hộp thoại đang mở, không đổi kết quả lọc, không nhảy trang: ảnh đang
+hiện đổi tại chỗ.
 
-Kích thước ô ảnh khắp trang theo tỉ lệ của bản vẽ minh hoạ. Ảnh chụp trong game
-có tỉ lệ khác hẳn nên khi nó hiện trong ô đó phải **thu vừa khung, không bị
-cắt** — thà chừa lề còn hơn mất một phần lá bài.
+Lá thiếu mặt đang chọn thì rơi về mặt còn lại — một số lá Ritual không có bản
+vẽ, còn nhóm lá ngoài game không có ảnh in-game. Chỉ khi thiếu cả hai mới hiện
+ô giữ chỗ, và ô đó ghi đường dẫn của ảnh mà lá ấy đáng lẽ phải có, không ghi
+bừa một trong hai.
 
-Riêng trong hộp thoại chi tiết, ảnh có **hai mặt**: mở ra là bản vẽ minh hoạ,
-bấm thẳng vào ảnh thì đảo về ảnh chụp trong game, bấm lần nữa quay lại. Một chỉ
-báo nhỏ cho biết ảnh bấm được và đang xem mặt nào. Lá không có bản vẽ thì ảnh
-**không bấm được và không có chỉ báo** — không bày nút chết. Trạng thái đảo
-thuộc về riêng lá đang mở: đóng hộp thoại rồi mở lại, hoặc chuyển sang lá khác,
-đều quay về mặt mặc định. Ảnh ngoài hộp thoại chi tiết không đảo được.
+Kích thước ô ảnh **đi theo mặt đang chọn**: chọn bản vẽ thì ô khổ dọc, chọn ảnh
+in-game thì ô khổ ngang. Nếu không đổi khung theo, ảnh sẽ teo lại giữa hai vệt
+lề và việc chọn coi như vô nghĩa. Ảnh rơi về mặt còn lại có tỉ lệ khác khung
+thì **thu vừa khung, không bị cắt** — thà chừa lề còn hơn mất một phần lá bài.
+
+Riêng trong hộp thoại chi tiết, ảnh có **hai mặt**: mở ra là mặt đang chọn,
+bấm thẳng vào ảnh thì đảo sang mặt kia, bấm lần nữa quay lại. Một chỉ báo nhỏ
+cho biết ảnh bấm được và đang xem mặt nào — chỉ báo gọi đúng tên hai mặt theo
+cả hai chiều, không ghi cứng một chiều.
+
+Lá chỉ có **một** mặt tồn tại thì ảnh **không bấm được và không có chỉ báo** —
+không bày nút chết dẫn tới một ô giữ chỗ. Điều này không phụ thuộc mặt nào đang
+được chọn: lá thiếu bản vẽ và lá ngoài game đều rơi vào nhóm này.
+
+Trạng thái đảo thuộc về riêng lá đang mở: đóng hộp thoại rồi mở lại, hoặc
+chuyển sang lá khác, đều quay về mặt đang chọn. Ảnh ngoài hộp thoại chi tiết
+không đảo được.
 
 Ô ảnh đảo được là một nút thật với người dùng bàn phím và trình đọc màn hình:
 nhận Enter và Space, có nhãn đọc được, và nói rõ đang ở mặt nào.

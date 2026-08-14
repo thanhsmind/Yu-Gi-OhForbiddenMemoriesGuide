@@ -1,0 +1,58 @@
+{
+  "id": "fm-guide-site-33",
+  "feature": "fm-guide-site",
+  "title": "Ô chọn ảnh mặc định áp cho cả trang",
+  "lane": "small",
+  "deps": [],
+  "files": [
+    "index.html"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Xem prompt dispatch.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "select#img-face + data-img-face + CSS hai ti le"
+      }
+    ],
+    "key_links": [
+      "Quyet dinh o chon anh mac dinh 2026-08-14"
+    ],
+    "prohibitions": [
+      "Khong doc lai khoi du lieu JSON nhung",
+      "Khong sua tools/*.py"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "img-face",
+    "outcome": "Added a site-wide img-face selector (art vs in-game default) with fallback-aware imgCellHtml/detailImgCellHtml, CSS ratio overrides, and hash address support",
+    "files_changed": [
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T09:39:23.444Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T09:22:50.765Z",
+    "warnings": [
+      "advisory: this cap's commit changes 162 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T09:39:20.717Z"
+  }
+}
