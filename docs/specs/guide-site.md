@@ -32,7 +32,21 @@ Bảng liệt kê mọi lá bài. Người dùng lọc bằng:
 - chọn Type quái vật,
 - bật tùy chọn chỉ hiện lá có chỉ số.
 
-Kết quả hiện theo trang, kèm số lượng khớp trên tổng số. Chọn một dòng thì mở
+Kết quả hiện theo trang, kèm số lượng khớp trên tổng số.
+
+Cùng một kết quả xem được bằng hai chế độ, đổi qua lại bằng cụm hai nút
+"Bảng" / "Lưới" nằm ngay trong hàng bộ lọc; chế độ bảng là mặc định, chế độ
+đang chọn nhận biết được cả bằng mắt lẫn bằng công nghệ trợ năng:
+
+- **Bảng** — mỗi lá một dòng, đủ cột số, tên, loại, ATK, DEF, Guardian Star,
+  hệ fusion và ảnh nhỏ.
+- **Lưới** — mỗi lá một ô ảnh mặt bài kèm số thứ tự và tên, số cột tự co theo
+  bề rộng màn hình (điện thoại tới màn hình rộng đều dùng được).
+
+Hai chế độ dùng chung một bộ lọc, một số đếm và một cách chia trang: đổi chế độ
+không đổi kết quả, không đổi trang đang xem, và không đóng lá đang mở chi tiết.
+
+Chọn một dòng — hoặc một ô trong lưới — thì mở
 bảng chi tiết của lá đó: ảnh mặt bài, số thứ tự, tên, loại lá, Type, cấp độ,
 ATK, DEF, cặp Guardian Star, mã password, giá StarChip, cách lấy được lá,
 tên tiếng Nhật, lore, danh sách trang bị dùng được cho lá đó, và các công thức
@@ -108,15 +122,19 @@ dung là vi phạm: khi dữ liệu đổi mà con số không đổi thì trang
 
 Mọi trạng thái xem được đều có địa chỉ riêng nằm trong phần hash của URL: tab
 đang mở, và ở tab tra cứu bài là từ khóa, bộ lọc loại lá, bộ lọc Type, tùy chọn
-chỉ hiện lá có chỉ số, số trang, lá đang mở chi tiết; ở tab Fusion là từ khóa
-tra cứu và bộ lọc hệ.
+chỉ hiện lá có chỉ số, số trang, chế độ xem (bảng hay lưới), lá đang mở chi
+tiết; ở tab Fusion là từ khóa tra cứu và bộ lọc hệ.
 
 Hệ quả bắt buộc:
 
 - Nút Back của trình duyệt đưa người dùng về đúng trạng thái trước đó, kể cả
   trạng thái bộ lọc trung gian — không phải nhảy thẳng về trạng thái rỗng.
   Forward đi tới lại.
-- Dán một địa chỉ vào tab mới dựng lại đúng trạng thái đó, kể cả lá đang mở.
+- Dán một địa chỉ vào tab mới dựng lại đúng trạng thái đó, kể cả lá đang mở và
+  chế độ xem đang dùng.
+- Đổi chế độ xem là hành động dứt khoát nên nó tạo một mục lịch sử thật: Back
+  trả lại chế độ trước. Chế độ mặc định (bảng) không để lại tham số nào trong
+  địa chỉ.
 - Gõ một chuỗi ký tự vào ô tìm kiếm chỉ tạo **một** mục lịch sử, và Back từ đó
   quay về trạng thái trước khi bắt đầu gõ — kể cả khi chuỗi gõ bắt đầu hoặc kết
   thúc bằng khoảng trắng.
