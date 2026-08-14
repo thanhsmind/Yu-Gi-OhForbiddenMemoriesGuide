@@ -28,6 +28,8 @@ EXTRACTOR = REPO_ROOT / "tools" / "extract_cards.py"
 INDEX_HTML = REPO_ROOT / "index.html"
 CARDS_JSON = REPO_ROOT / "data" / "cards.json"
 IMAGES_DIR = REPO_ROOT / "images" / "cards"
+ART_DIR = REPO_ROOT / "images" / "art"
+ART_BUDGET_BYTES = 40 * 1024 * 1024  # D12: images/art/ must stay under 40MB
 
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 import extract_cards  # noqa: E402  (import after sys.path tweak, by design)
@@ -1455,6 +1457,58 @@ def main() -> int:
         and "updateDetailNavButtons();" in re.search(
             r"function applyFilters\(\) \{.*?\n  \}\n", html_text, re.S
         ).group(0),
+    )
+
+    # --- D12: the second (Rush Duel-style) art image set, images/art/ ---
+    # Never trust tools/build_art_images.py's own printed numbers -- recount
+    # from disk here, the same way every other "no fabricated data" check
+    # in this file recounts from its own source.
+    cards_with_art_image = [c for c in cards if c["artImage"]]
+    missing_art_files = [
+        c["slug"] for c in cards_with_art_image
+        if not (REPO_ROOT / c["artImage"]).is_file()
+    ]
+    check(
+        "mọi lá khai artImage đều có file thật trên đĩa (không bịa đường dẫn)",
+        not missing_art_files,
+        f"{len(missing_art_files)} missing, e.g. {missing_art_files[:5]}",
+    )
+
+    art_files_on_disk = {f.stem for f in ART_DIR.glob("*.webp")} if ART_DIR.is_dir() else set()
+    slugs_with_art_image = {c["slug"] for c in cards_with_art_image}
+    unclaimed_art_files = sorted(art_files_on_disk - slugs_with_art_image)
+    check(
+        "không lá nào khai artImage trỏ tới file thiếu, và không file images/art/ nào bị bỏ sót "
+        "(mọi *.webp trên đĩa đều được một lá nào đó khai artImage)",
+        not unclaimed_art_files,
+        f"{len(unclaimed_art_files)} orphan file(s), e.g. {unclaimed_art_files[:5]}",
+    )
+
+    art_total_bytes = sum(f.stat().st_size for f in ART_DIR.glob("*.webp")) if ART_DIR.is_dir() else 0
+    check(
+        "tổng dung lượng images/art/ dưới 40MB (đo lại từ đĩa, D12)",
+        art_total_bytes < ART_BUDGET_BYTES,
+        f"{art_total_bytes / 1024 / 1024:.2f} MB",
+    )
+
+    check(
+        "meta.cardsWithArtImage khớp số lá có artImage != null đếm lại trực tiếp trên `cards` "
+        "(722 FM + 360 ngoài FM -- cả hai nhóm cùng nguồn ảnh, D12)",
+        data["meta"]["cardsWithArtImage"] == len(cards_with_art_image),
+        f"meta={data['meta']['cardsWithArtImage']}, recounted={len(cards_with_art_image)}",
+    )
+
+    # 26 FM Ritual cards absent from the CardFusionExplorer source get no
+    # second art image at all (CONTEXT.md D12) -- assert that stays a null
+    # field, never an invented path.
+    ritual_without_art = [
+        c for c in fm_cards
+        if c["artImage"] is None and (ART_DIR / f"{c['slug']}.webp").is_file()
+    ]
+    check(
+        "không lá nào có file images/art/<slug>.webp thật trên đĩa mà artImage vẫn là null",
+        not ritual_without_art,
+        f"{[c['name'] for c in ritual_without_art][:5]}",
     )
 
     print()

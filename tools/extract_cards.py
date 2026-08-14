@@ -44,6 +44,13 @@ Sources (read-only, never edited by this script):
       as `loreVi` alongside the untouched English `lore`. A card with no
       translation gets `loreVi: null`, never an empty string. This text is
       a machine translation, not sourced from any Vietnamese original.
+  - "images/art/<slug>.webp" (D12) -- the second, Rush Duel-style art set
+      tools/build_art_images.py pre-builds from the (uncommitted)
+      CardFusionExplorer PNG source. This script only checks which of
+      those files exist on disk; it never builds them. A card with a file
+      gets `artImage: "images/art/<slug>.webp"`; a card without one
+      (measured: 1,056/1,082 have a file -- the other 26 are Ritual cards
+      absent from that source) gets `artImage: null`, never a guessed path.
 
 D4 (docs/history/fm-guide-site/CONTEXT.md): a field with no source is
 `None` (-> JSON null). Never 0, never guessed. D7 keeps this rule, only
@@ -68,6 +75,7 @@ GUIDE_DIR = REPO_ROOT / "docs" / "guide"
 CARDS_JSON = REPO_ROOT / "data" / "cards.json"
 LORE_VI_DIR = REPO_ROOT / "data" / "lore-vi"
 CARD_FUSION_EXPLORER_DIR = REPO_ROOT / "data" / "CardFusionExplorer" / "Card-Fusion-Explorer-Assets"
+ART_DIR = REPO_ROOT / "images" / "art"
 
 EQUIP_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories Quân Bài Phụ trợ.md"
 FUSION_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories fusion.md"
@@ -574,6 +582,15 @@ def slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
+def art_image_path(slug: str) -> str | None:
+    """D12: the second, Rush Duel-style art path for a card, or None if
+    tools/build_art_images.py never produced one for this slug (checked
+    against the real file on disk, never guessed from the source
+    cartas_runtime.json list -- a card whose file build_art_images.py
+    happened to skip must fall back to None here too)."""
+    return f"images/art/{slug}.webp" if (ART_DIR / f"{slug}.webp").is_file() else None
+
+
 def _parse_stat_int(value: str | None) -> int | None:
     """cartas_runtime.json stores ATK/DEF/Level as strings: "" for "this
     card has no such stat" (traps, spells, equips) and the literal "????"
@@ -773,6 +790,15 @@ def extract_all() -> dict:
     # every meta count below that says "FM" is computed from.
     cards = fm_cards + outside_cards
 
+    # D12: the second (Rush Duel-style) art image, checked against the
+    # real images/art/<slug>.webp files tools/build_art_images.py already
+    # built -- applied to the full 1,082-card table (both FM and
+    # outside-FM cards get this field; the source that produces the files,
+    # cartas_runtime.json, covers both groups, unlike the FM-only sources
+    # every other join in this function pulls from).
+    for card in cards:
+        card["artImage"] = art_image_path(card["slug"])
+
     # D9 sub-counts, all recounted from fusion_exact_triples (the same
     # deduped set fusionPairs is encoded from) -- never hardcoded, so a
     # source change moves these numbers automatically instead of silently
@@ -804,6 +830,12 @@ def extract_all() -> dict:
         "totalCards": len(cards),
         "fmCards": len(fm_cards),
         "outsideFmCards": len(outside_cards),
+        # D12: unlike the "FM-only source" counts below, artImage's source
+        # (cartas_runtime.json's IMG-CARD field, via
+        # tools/build_art_images.py) covers both FM and outside-FM cards --
+        # so this denominator is deliberately the full 1,082-card `cards`,
+        # not the 722-card `fm_cards` every other cardsWith* count here uses.
+        "cardsWithArtImage": sum(1 for c in cards if c["artImage"]),
         "cardsWithAtkDef": sum(1 for c in fm_cards if c["atk"] is not None),
         "cardsWithType": sum(1 for c in fm_cards if c["type"] is not None),
         "cardsWithEquips": sum(1 for c in fm_cards if c["equips"]),
