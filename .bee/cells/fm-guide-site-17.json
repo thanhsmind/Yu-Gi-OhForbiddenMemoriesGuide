@@ -1,0 +1,80 @@
+{
+  "id": "fm-guide-site-17",
+  "feature": "fm-guide-site",
+  "title": "Chế độ xem lưới ảnh cho tab tra cứu bài",
+  "lane": "small",
+  "deps": [],
+  "decisions": [
+    "D1",
+    "D2",
+    "D3",
+    "D4"
+  ],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "main (feature close) — the worker never runs this",
+  "action": "Thêm chế độ xem thứ hai cho tab tra cứu bài: lưới ảnh, bên cạnh bảng đang có. Trong hàng .controls thêm cụm nút chuyển chế độ gồm hai nút thật (<button type=\"button\">): 'Bảng' và 'Lưới', nút đang chọn có trạng thái rõ ràng bằng mắt và bằng aria (aria-pressed hoặc role=radiogroup + aria-checked), bấm được bằng bàn phím. Mặc định là Bảng. Thêm một khối #card-grid đặt cạnh .table-wrap; đúng một trong hai khối hiện tại một lúc (dùng thuộc tính hidden, không xoá khối kia khỏi DOM). Hàm render() rẽ nhánh theo chế độ nhưng DÙNG CHUNG state.filtered, PAGE_SIZE (50) và renderPager: cùng bộ lọc, cùng số 'x / y lá', cùng số trang cho cả hai chế độ — tuyệt đối không tạo đường lọc hay đường phân trang thứ hai. Mỗi ô lưới là một <button type=\"button\" data-number=...> chứa ảnh lá bài (dùng lại imgCellHtml với size mới 'tile', giữ nguyên đường ảnh images/cards/<slug>.png, giữ nguyên loading=lazy và placeholder 'chưa có ảnh — cần' khi thiếu ảnh — D3), kèm số thứ tự và tên lá. Bấm hoặc Enter trên ô lưới mở ĐÚNG popup chi tiết hiện có bằng cách gọi showDetail(card), qua một delegate click gắn trên #card-grid giống hệt delegate của tbody — không nhân bản logic mở popup. CSS: lưới tự co theo bề rộng (grid-template-columns: repeat(auto-fill, minmax(...)) ) để chạy được từ điện thoại tới màn hình rộng, ô không vỡ khi tên dài, có trạng thái hover và focus thấy được. Router: chế độ xem là trạng thái xem được nên phải có địa chỉ riêng — thêm tham số 'xem' vào hash tab tra cứu (xem=luoi khi đang ở lưới, bỏ hẳn tham số khi đang ở bảng để hash mặc định không dài thêm), đọc trong readStateFromHash, dựng lại trong applyState, ghi trong currentHash; đổi chế độ là một hành động dứt khoát nên đẩy một mục lịch sử thật (như đổi dropdown) để Back quay lại chế độ trước. Đổi chế độ KHÔNG đổi trang đang xem và KHÔNG đóng popup đang mở. Giữ nguyên cỡ chữ 16px cho ô nhập trên màn hình cảm ứng. Thêm khẳng định vào tools/check.py: có hai nút chuyển chế độ (button thật, có nhãn tiếng Việt và thuộc tính aria), có khối #card-grid, ô lưới dựng đường ảnh từ card.slug, và hash đọc-ghi được tham số 'xem'.",
+  "must_haves": {
+    "truths": [
+      "Bấm 'Lưới' thì bảng ẩn, lưới ảnh hiện; bấm 'Bảng' thì ngược lại",
+      "Bấm một ô trong lưới mở đúng popup chi tiết như bấm một dòng trong bảng",
+      "Lọc và tìm kiếm cho ra cùng số lá và cùng số trang ở cả hai chế độ",
+      "Lá thiếu ảnh trong lưới hiện placeholder 'chưa có ảnh — cần', không vỡ layout",
+      "Dán lại URL có xem=luoi mở thẳng ra chế độ lưới; Back sau khi đổi chế độ trả về chế độ trước",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "nút chuyển chế độ, khối lưới, CSS lưới, nhánh render lưới, delegate mở popup, tham số hash 'xem'"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định nút chuyển chế độ, khối lưới, đường ảnh theo slug, hash 'xem'"
+      }
+    ],
+    "key_links": [
+      "Lưới dùng lại showDetail() và imgCellHtml() sẵn có, không tạo bản sao",
+      "Lưới dùng chung state.filtered, PAGE_SIZE và renderPager với bảng",
+      "Chế độ xem đi qua đúng đường ghi hash sẵn có, không tạo đường thứ hai"
+    ],
+    "prohibitions": [
+      "Không tạo bộ lọc, bộ đếm hay phân trang riêng cho lưới",
+      "Không nhân bản logic mở popup chi tiết",
+      "Không thêm URL http/https, script src, fetch (D1/D2)",
+      "Không sửa tay bên trong khối FM_DATA",
+      "Không phá cỡ chữ 16px trên màn hình cảm ứng"
+    ]
+  },
+  "status": "capped",
+  "trace": {
+    "worker": "gridder",
+    "outcome": "Added an image-grid view mode (Bảng/Lưới toggle) to the card lookup tab, sharing filter/pagination state and the detail popup, addressable via a new xem= hash param",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T03:27:39.904Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "e2c64747-e632-47b7-8c31-66344dae5ab8",
+    "claimed_at": "2026-08-14T03:13:44.916Z",
+    "warnings": [
+      "advisory: this cap's commit changes 278 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T03:27:39.070Z"
+  },
+  "tier": "generation"
+}
