@@ -47,7 +47,8 @@ Hai chế độ dùng chung một bộ lọc, một số đếm và một cách 
 không đổi kết quả, không đổi trang đang xem, và không đóng lá đang mở chi tiết.
 
 Chọn một dòng — hoặc một ô trong lưới — thì mở
-bảng chi tiết của lá đó: ảnh mặt bài, số thứ tự, tên, loại lá, Type, cấp độ,
+bảng chi tiết của lá đó dưới dạng hộp thoại nổi: ảnh mặt bài, số thứ tự, tên,
+loại lá, Type, cấp độ,
 ATK, DEF, cặp Guardian Star, mã password, giá StarChip, cách lấy được lá,
 tên tiếng Nhật, lore, danh sách trang bị dùng được cho lá đó, và các công thức
 fusion liên quan.
@@ -57,6 +58,23 @@ ngay dưới nó luôn hiện nguyên văn tiếng Anh kèm nhãn "Nguyên văn"
 nhỏ hơn, màu nhạt hơn — bản dịch là sản phẩm phái sinh, không bao giờ thay
 thế hay che nguyên văn. Lá chưa có bản dịch chỉ hiện nguyên văn tiếng Anh,
 không có ô trống.
+
+Hộp thoại chi tiết bày ảnh và khối thông tin cạnh nhau khi bề ngang đủ chỗ,
+hai khối bắt đầu cùng mép trên; màn hình hẹp thì xếp dọc, ảnh trên thông tin
+dưới.
+
+Trong hộp thoại có hai nút mũi tên "lá trước" / "lá sau" để đi nhanh qua các lá
+mà không phải đóng hộp thoại. Chúng đi theo **danh sách đang lọc**, đúng thứ tự
+người dùng đang thấy — không phải toàn bộ kho lá. Hệ quả:
+
+- Lá kế tiếp nằm ở trang khác thì trang phía sau nhảy theo, danh sách và số
+  trang trong địa chỉ luôn khớp với lá đang mở.
+- Ở lá đầu danh sách thì nút "lá trước" tắt hẳn; ở lá cuối thì nút "lá sau" tắt
+  hẳn — tắt thật, không bấm được, chứ không chỉ làm mờ.
+- Đổi bộ lọc trong lúc hộp thoại đang mở, mà lá đang xem rơi khỏi danh sách,
+  thì cả hai nút tắt: không tự nhảy sang lá nào khác.
+- Phím mũi tên trái/phải làm đúng việc của hai nút khi hộp thoại đang mở, trừ
+  khi con trỏ đang ở trong một ô nhập chữ. Phím Escape vẫn đóng hộp thoại.
 
 **Quy tắc trung thực khi hiển thị** (ràng buộc trung tâm của cả khu vực):
 
@@ -135,6 +153,8 @@ Hệ quả bắt buộc:
 - Đổi chế độ xem là hành động dứt khoát nên nó tạo một mục lịch sử thật: Back
   trả lại chế độ trước. Chế độ mặc định (bảng) không để lại tham số nào trong
   địa chỉ.
+- Chuyển sang lá trước/lá sau cũng là hành động dứt khoát: mỗi lần chuyển ghi
+  một mục lịch sử, Back lùi lại đúng lá vừa xem.
 - Gõ một chuỗi ký tự vào ô tìm kiếm chỉ tạo **một** mục lịch sử, và Back từ đó
   quay về trạng thái trước khi bắt đầu gõ — kể cả khi chuỗi gõ bắt đầu hoặc kết
   thúc bằng khoảng trắng.
