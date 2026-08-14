@@ -1,0 +1,61 @@
+{
+  "id": "fm-guide-site-30",
+  "feature": "fm-guide-site",
+  "title": "Lấy ảnh Rush Duel làm mặt mặc định của ảnh trong popup chi tiết",
+  "lane": "tiny",
+  "deps": [],
+  "files": [
+    "index.html"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Đảo mặt mặc định theo quyết định thay mệnh đề mặt mặc định của D12. Trong detailImgCellHtml: src ban đầu trỏ card.artImage thay vì ảnh in-game, aria-pressed đổi thành true, aria-label mở đầu bằng 'Ảnh thứ hai của', chỉ báo ghi 'Ảnh thứ hai · bấm để đảo'. Ô giữ chỗ vẫn ghi đường dẫn ảnh in-game vì đó mới là ảnh có thể thiếu. Trong wireDetailImgToggle: trạng thái khởi đầu là đang xem art, nên lần bấm đầu tiên phải đảo VỀ ảnh in-game — đặt dataset.showingArt = '1' ngay lúc dựng markup hoặc lúc wire, đừng để hàm toggle đọc nhầm. 26 lá không có artImage giữ nguyên nhánh cũ imgCellHtml(card, 'detail') — mở bằng ảnh in-game, không đảo được, không chỉ báo. Ảnh trong bảng, lưới và Fusion List KHÔNG đổi, vẫn là ảnh in-game.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "Mở popup một lá có artImage: src ban đầu trỏ images/art/, không phải images/cards/",
+      "Bấm lần đầu đảo về ảnh in-game, bấm lần nữa quay lại ảnh Rush Duel",
+      "Lá không có artImage vẫn mở bằng ảnh in-game và không bấm được",
+      "Ảnh trong bảng, lưới và Fusion List không đổi hành vi"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "detailImgCellHtml mở bằng artImage, trạng thái đảo khởi đầu khớp"
+      }
+    ],
+    "key_links": [
+      "Quyết định supersede D12 ngày 2026-08-14"
+    ],
+    "prohibitions": [
+      "Không đọc lại khối dữ liệu JSON nhúng",
+      "Không đụng ô ảnh ngoài popup chi tiết",
+      "Không sửa tools/*.py"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "art-default",
+    "outcome": "Popup chi tiết mở bằng ảnh Rush Duel, bấm để đảo về ảnh in-game (D13 thay mệnh đề mặt mặc định của D12)",
+    "files_changed": [
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T08:52:14.238Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T08:49:46.512Z",
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T08:52:11.555Z"
+  }
+}
