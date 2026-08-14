@@ -370,7 +370,6 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
 ## Open Gaps
 
 - Bảng công thức Ritual (triệu hồi hiến tế) chưa có nguồn nào trong dự án.
-- Bảng khắc đầy đủ giữa 10 Guardian Star: nguồn chỉ cho một ví dụ cặp.
 - Bảng drop bài theo từng đối thủ: chưa có nguồn.
 - Danh sách password đầy đủ: nguồn chỉ có khoảng 13 dòng.
 - 11 trong 37 nhóm hệ fusion không có danh sách thành viên trong nguồn, nên

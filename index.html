@@ -933,13 +933,14 @@
     margin: 0.75rem 0 1rem;
   }
 
-  .star-wheel svg { max-width: 320px; height: auto; }
-  .star-wheel .star-node circle { fill: var(--panel); stroke: var(--accent-dim); stroke-width: 1.5; }
-  .star-wheel .star-node text { fill: var(--text); font-size: 10.5px; font-family: inherit; text-anchor: middle; }
-  .star-wheel .hub circle { fill: var(--panel-alt); stroke: var(--accent); stroke-width: 1.5; }
-  .star-wheel .hub text { fill: var(--accent); font-size: 10px; font-family: inherit; text-anchor: middle; }
-  .star-wheel .wheel-ring { fill: none; stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 4; }
-  .star-wheel .highlight-pair line { stroke: var(--accent); stroke-width: 1.5; }
+  .star-wheel img {
+    max-width: 380px;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: block;
+  }
 
   .star-example { flex: 1 1 220px; min-width: 220px; }
 
@@ -1130,8 +1131,9 @@
           để đưa lá đó vào bộ bài.</li>
       </ul>
       <div class="guide-note">
-        Luật cộng ATK theo Guardian Star và theo môi trường (Field) — hai cơ chế ảnh hưởng
-        trực tiếp tới một lượt đánh — nằm ở mục 3 và mục 4 bên dưới.
+        Luật cộng cả ATK lẫn DEF theo khắc hệ Guardian Star, và luật cộng riêng ATK theo môi
+        trường (Field) — hai cơ chế ảnh hưởng trực tiếp tới một lượt đánh — nằm ở mục 3 và mục 4
+        bên dưới.
       </div>
     </section>
 
@@ -1174,53 +1176,54 @@
       <h2>3. Guardian Star — vòng khắc hệ</h2>
       <p>
         Game có hệ thống khắc hệ lẫn nhau gọi là <strong>Guardian Star</strong>, đại diện cho
-        các ngôi sao trên bầu trời. Thuộc lòng hệ này sẽ rất có lợi thế trong trận đấu. Nguồn
-        liệt kê đủ 10 Guardian Star, theo đúng thứ tự sau:
+        các ngôi sao trên bầu trời. Thuộc lòng hệ này sẽ rất có lợi thế trong trận đấu. 10
+        Guardian Star chia thành <strong>hai vòng khắc hệ độc lập</strong> — sơ đồ dưới đây vẽ
+        cả hai vòng, chiều mũi tên là chiều khắc:
       </p>
       <div class="star-wheel-wrap">
         <div class="star-wheel">
-          <svg viewBox="0 0 260 260" role="img" aria-label="Vòng 10 Guardian Star, ví dụ Sun đối Moon cộng 500 ATK">
-            <circle class="wheel-ring" cx="130" cy="130" r="105"></circle>
-            <g class="highlight-pair">
-              <line x1="130" y1="25" x2="229.9" y2="162.4"></line>
-            </g>
-            <g class="hub">
-              <circle cx="130" cy="130" r="34"></circle>
-              <text x="130" y="126">Khắc hệ</text>
-              <text x="130" y="140">+500 ATK</text>
-            </g>
-            <g class="star-node"><circle cx="130" cy="25" r="24"></circle><text x="130" y="29">Sun</text></g>
-            <g class="star-node"><circle cx="191.7" cy="45.1" r="24"></circle><text x="191.7" y="49.1">Mercury</text></g>
-            <g class="star-node"><circle cx="229.9" cy="97.6" r="24"></circle><text x="229.9" y="101.6">Venus</text></g>
-            <g class="star-node"><circle cx="229.9" cy="162.4" r="24"></circle><text x="229.9" y="166.4">Moon</text></g>
-            <g class="star-node"><circle cx="191.7" cy="214.9" r="24"></circle><text x="191.7" y="218.9">Mars</text></g>
-            <g class="star-node"><circle cx="130" cy="235" r="24"></circle><text x="130" y="239">Jupiter</text></g>
-            <g class="star-node"><circle cx="68.3" cy="214.9" r="24"></circle><text x="68.3" y="218.9">Saturn</text></g>
-            <g class="star-node"><circle cx="30.1" cy="162.4" r="24"></circle><text x="30.1" y="166.4">Uranus</text></g>
-            <g class="star-node"><circle cx="30.1" cy="97.6" r="24"></circle><text x="30.1" y="101.6">Neptune</text></g>
-            <g class="star-node"><circle cx="68.3" cy="45.1" r="24"></circle><text x="68.3" y="49.1">Pluto</text></g>
-          </svg>
+          <img src="images/guide/guardian-star-wheel.png" alt="Sơ đồ hai vòng khắc hệ Guardian Star. Vòng bốn sao: Sun khắc Moon, Moon khắc Venus, Venus khắc Mercury, Mercury khắc Sun. Vòng sáu sao: Neptune khắc Mars, Mars khắc Jupiter, Jupiter khắc Saturn, Saturn khắc Uranus, Uranus khắc Pluto, Pluto khắc Neptune. Hai vòng độc lập với nhau.">
         </div>
         <div class="star-example">
           <p>
-            <strong>Luật:</strong> khi bạn chọn đúng hệ khắc hệ của đối phương, bài của bạn
-            được <strong>+500 ATK</strong> trong lượt đó.
+            <strong>Luật:</strong> khi bạn chọn đúng Guardian Star khắc hệ của đối phương, bài
+            của bạn được cộng <strong>+500 cả ATK lẫn DEF</strong> trong lượt đó — và ngược lại,
+            nếu đối phương chọn đúng Guardian Star khắc hệ của bạn thì đối phương được cộng.
           </p>
-          <p>
-            Ví dụ nguồn đưa ra: nếu bạn chọn <strong>Sun</strong> còn đối phương chọn
-            <strong>Moon</strong> thì bạn được +500 ATK — và ngược lại (đối phương chọn Sun,
-            bạn chọn Moon thì đối phương được +500 ATK).
-          </p>
+          <p><strong>Vòng bốn sao</strong> (đọc theo chiều mũi tên là "khắc"):</p>
+          <ul>
+            <li>Sun khắc Moon</li>
+            <li>Moon khắc Venus</li>
+            <li>Venus khắc Mercury</li>
+            <li>Mercury khắc Sun</li>
+          </ul>
+          <p><strong>Vòng sáu sao</strong> (đọc theo chiều mũi tên là "khắc"):</p>
+          <ul>
+            <li>Neptune khắc Mars</li>
+            <li>Mars khắc Jupiter</li>
+            <li>Jupiter khắc Saturn</li>
+            <li>Saturn khắc Uranus</li>
+            <li>Uranus khắc Pluto</li>
+            <li>Pluto khắc Neptune</li>
+          </ul>
           <div class="guide-note">
-            Nguồn chỉ đưa đúng một cặp khắc hệ cụ thể (Sun/Moon) làm ví dụ, và ghi nguyên văn
-            "Cụ thể về khắc chế khắc hệ AE xem Hình sẽ trực quan hơn" — nghĩa là bảng đầy đủ các
-            cặp khắc hệ còn lại chỉ nằm trong một hình ảnh không có trong tài liệu nguồn. Vòng
-            bên cạnh vẽ lại đúng 10 Guardian Star theo thứ tự nguồn liệt kê và làm nổi bật ví dụ
-            Sun/Moon; nó <strong>không</strong> khẳng định quy luật khắc hệ cho các cặp sao còn
-            lại vì nguồn không cung cấp.
+            Hai vòng độc lập với nhau: không có Guardian Star nào của vòng bốn sao khắc hệ
+            Guardian Star của vòng sáu sao, và ngược lại — chỉ các cặp liệt kê ở trên mới khắc
+            nhau.
           </div>
         </div>
       </div>
+      <p>
+        Mỗi quái vật có <strong>hai</strong> Guardian Star; khi triệu hồi, người chơi chọn
+        <strong>một</strong> trong hai để dùng cho quái vật đó trong trận. Trong lúc đấu, màu
+        chữ Guardian Star hiển thị trên quái vật cho biết ai đang có lợi thế khắc hệ:
+        <strong>chữ vàng</strong> là bạn đang lợi, <strong>chữ đỏ</strong> là đối phương đang
+        lợi. CPU luôn chọn Guardian Star <strong>đầu tiên</strong> (thứ nhất) của quái vật khi
+        triệu hồi, nên có thể đoán trước được Guardian Star đối phương sẽ dùng. Không có
+        Guardian Star <strong>Trái Đất (Earth)</strong> trong hệ thống này — chỉ đúng 10 sao ở
+        hai vòng trên. Nếu xem trận ở chế độ 3D, đòn tấn công hiển thị khác nhau tuỳ theo
+        Guardian Star đã chọn cho quái vật đó.
+      </p>
     </section>
 
     <section id="sec-4" class="guide-section">
