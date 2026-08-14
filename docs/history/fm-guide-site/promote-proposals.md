@@ -146,3 +146,24 @@ Deep-link hash router cho tab, bo loc, phan trang va la dang mo; Back/Forward du
 Candidate only. `bee knowledge promote` proposes; naming the pattern, generalizing it beyond this cell, and moving `bee.lifecycle` to `active` are a human or agent decision.
 
 knowledge promote: 16 capped cell(s) mined, 1 delivery draft, 12 area bullet(s), 2 pattern candidate(s), 0 file(s) written.
+---
+
+## Review outcome (2026-08-14)
+
+Đã soi từng phần của đề xuất trên. Kết quả:
+
+- **(a) Delivery draft → không áp.** Đề xuất ghi vào `docs/knowledge/work/…`,
+  nhưng repo này không có bundle `docs/knowledge/`; state layer là
+  `docs/specs/`. Nội dung delivery là bản kể lại 16 cell trace — git log và
+  `.bee/cells/` đã giữ đúng thông tin đó, chép lại chỉ tạo bản sao dễ mục.
+- **(b) 12 area bullet → đã có sẵn.** Đối chiếu từng bullet với
+  `docs/specs/guide-site.md`: mọi hành vi được nêu (bộ lọc, router hash, tab
+  Fusion, tab độ phủ, lore hai bản, nút xoá nhanh, Guardian Star) đều đã nằm
+  trong spec bằng ngôn ngữ nghiệp vụ. Không bullet nào thêm nghĩa mới.
+- **(c) 2 pattern candidate → không nâng lên.** Cả hai là chữ ký lỗi của một
+  cell cụ thể (alias tên công thức ở cell 5; checkpoint burst gõ phím và hash
+  hỏng ở cell 7), đã sửa và đã có khẳng định trong `tools/check.py` canh giữ.
+  Không đạt bar "tái diễn ở nhiều feature".
+
+Đã ghi thay vào đó: `docs/history/learnings/2026-08-14-fm-guide-site.md` (bài
+học của cell 17-20) và hai mục trong `docs/history/learnings/critical-patterns.md`.
