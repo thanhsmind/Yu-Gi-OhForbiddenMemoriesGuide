@@ -326,7 +326,7 @@
   /* Fusion List recipe cell image (cell fm-guide-site-21) -- sized to match
      .recipe-badge below so an ingredient/result image cell and a Type/names
      badge cell line up in the same formula row. */
-  .img-wrap.recipe { width: 76px; height: 58px; flex-shrink: 0; }
+  .img-wrap.recipe { width: 100%; height: auto; aspect-ratio: 5 / 4; flex-shrink: 0; }
   .img-wrap.recipe img {
     width: 100%;
     height: 100%;
@@ -337,7 +337,7 @@
 
   .img-wrap.recipe .img-placeholder { padding: 0.1rem; }
   .img-wrap.recipe .ph-label { display: none; }
-  .img-wrap.recipe .ph-filename { font-size: 0.5rem; width: 74px; padding: 0; }
+  .img-wrap.recipe .ph-filename { font-size: 0.5rem; width: 96%; padding: 0; }
 
   .img-placeholder {
     display: none;
@@ -690,14 +690,18 @@
 
   .recipe-row:last-child { border-bottom: none; margin-bottom: 0; }
 
+  /* One formula cell (ingredient, ingredient, result). The width is fluid so
+     three cells plus the two operators always fill the Fusion List panel:
+     wide popup -> near-poster size like the rest of the page's card art,
+     narrow popup -> shrinks to a thumbnail instead of wrapping the row. */
   .recipe-cell {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 76px;
-    gap: 0.15rem;
+    width: clamp(84px, 27%, 168px);
+    gap: 0.2rem;
     text-align: center;
-    flex-shrink: 0;
+    flex-shrink: 1;
   }
 
   .recipe-cell-text {
@@ -707,19 +711,22 @@
   }
 
   .recipe-cell-name {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     overflow-wrap: break-word;
-    word-break: break-word;
   }
 
   .recipe-cell-stat {
-    font-size: 0.66rem;
+    font-size: 0.72rem;
     color: var(--text-dim);
   }
 
+  /* Stands in for the card image on a [Type] / name-list side, so it takes
+     the same box the image would. Type names are single words -- break-word
+     would split them mid-word ("AngelWinge / d"), so they only wrap at real
+     word boundaries and shrink instead. */
   .recipe-badge {
-    width: 76px;
-    height: 58px;
+    width: 100%;
+    aspect-ratio: 5 / 4;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -728,10 +735,10 @@
     background: var(--panel-alt);
     border: 1px dashed var(--border);
     border-radius: 6px;
-    font-size: 0.68rem;
+    font-size: clamp(0.6rem, 1.6vw, 0.82rem);
     line-height: 1.15;
-    overflow-wrap: break-word;
-    word-break: break-word;
+    overflow-wrap: normal;
+    hyphens: none;
   }
 
   .recipe-op {

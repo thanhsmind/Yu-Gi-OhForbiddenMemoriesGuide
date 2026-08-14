@@ -1,0 +1,78 @@
+{
+  "id": "fm-guide-site-21",
+  "feature": "fm-guide-site",
+  "title": "Fusion List dạng ảnh bài trong popup chi tiết lá",
+  "lane": "small",
+  "deps": [],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "main (feature close) — the worker never runs this",
+  "action": "Đổi popup chi tiết lá (hàm showDetail, index.html ~dòng 75665) sang bố cục hai panel và thay danh sách chữ fusion bằng danh sách công thức dạng ảnh bài. (1) BỐ CỤC: .detail-body hiện là flex row chứa .detail-img-wrap + .detail-info. Bọc hai thứ đó vào MỘT panel trái mới (vd .detail-main, giữ nguyên cấu trúc con bên trong: ảnh trên/cạnh, <dl> thông số, mục Equip), và thêm panel phải mới .detail-fusion. .detail-body vẫn là flex row + flex-wrap; .detail-main nhận flex basis vừa phải (vd flex: 1 1 360px; min-width: 0), .detail-fusion nhận flex: 1 1 420px; min-width: 0 và có vùng cuộn riêng trên màn rộng (max-height khoảng 70vh + overflow-y: auto), KHÔNG cuộn riêng trong nhánh @media (max-width: 640px) sẵn có — ở đó .detail-body đã flex-direction: column nên hai panel xếp chồng dọc, phải reset flex-basis: auto và bỏ max-height/overflow giống cách .detail-info đang được reset (index.html ~dòng 814-826). Nới .detail-panel width từ min(100%, 880px) lên khoảng min(100%, 1180px) để hai panel đủ chỗ. (2) TIÊU ĐỀ PANEL: panel phải mở đầu bằng dòng 'Fusion List · N công thức' với N = tổng số dòng công thức thật sự vẽ ra (produced + participates); không có công thức nào thì hiện đúng một câu guide-note tiếng Việt, không vẽ khung rỗng. (3) HAI NHÓM: giữ hai nhóm sẵn có, tiêu đề 'Ghép ra lá này' (findProducedBy) và 'Lá này tham gia' (findParticipatesIn) — cùng hai hàm đang có ở index.html ~dòng 75015 và ~75035, KHÔNG viết hàm tìm công thức thứ hai. (4) MỘT DÒNG CÔNG THỨC: ba ô cùng kích thước theo hàng ngang, ngăn bằng dấu '+' giữa hai nguyên liệu và '=' trước kết quả (công thức xung đột dùng '<' đúng như danh sách chữ cũ đang dùng). Mỗi ô: ảnh lá vẽ bằng imgCellHtml(card, <size mới>) — thêm đúng MỘT nhánh size mới trong imgCellHtml (index.html ~dòng 75111, vd size 'recipe' → class .img-wrap.recipe) chứ không viết đường dựng ảnh thứ hai; dưới ảnh là tên lá (dùng lại nameLinkHtml để bấm mở chi tiết lá đó qua wireCardLinks sẵn có) và một dòng phụ '★<level> · <ATK>' đọc từ bảng tra cứu byNameLower; lá không có level/ATK (phép, bẫy, nghi lễ) thì bỏ trống dòng phụ, KHÔNG hiện số 0 (D4). Tên lá không khớp bảng tra cứu thì ô chỉ hiện tên dạng chữ, không gọi ảnh (giữ đúng luật nameLinkHtml hiện tại). (5) Ô THEO HỆ: vế nào là kind 'type' ([Hệ]) thì thay ảnh bằng một badge cùng kích thước ô ảnh ghi tên hệ (vd '[Dragon]'), dùng lại filterLinkHtml/wireFilterLinks với filterKey 'he' để bấm vào nhảy sang tab tra cứu đã lọc đúng hệ đó qua goToCardFilter sẵn có — không thêm cơ chế điều hướng thứ hai. Vế kind 'names' (danh sách tên) vẽ badge tương tự ghi số lượng + tên rút gọn, bấm vào không bắt buộc có hành vi. (6) GHI CHÚ DÒNG: dòng từ entry.possible ghi 'có thể ra thêm — cần điều kiện riêng'; dòng conflict ghi 'công thức xung đột, ghi đè: <công thức chung>' như bản chữ cũ; dòng basic có possible thì liệt kê ở ghi chú, không thành ô ảnh riêng. (7) BỎ BẢN CHỮ: xoá hàm fusionRelatedHtml và lời gọi của nó trong showDetail, xoá luôn tiêu đề 'Fusion liên quan'. GIỮ NGUYÊN renderProducedByItem/renderParticipatesInItem/statHtml/statListHtml/describeSide vì tab Fusion (onFusionSearchInput, ~dòng 75369) vẫn dùng chúng — cell này KHÔNG đụng tab Fusion. CSS .fusion-related-label/.fusion-related-list (index.html ~dòng 625-639) hết chỗ dùng thì xoá luôn. (8) HIỆU NĂNG: ảnh trong danh sách công thức giữ loading=\"lazy\" như imgCellHtml đang làm; không tải trước, không thêm ảnh ngoài images/cards/<slug>.png (D3). (9) tools/check.py: khẳng định 'panel chi tiết một lá có mục Fusion liên quan' (dòng ~741) hết đúng — đổi thành khẳng định cho markup mới: popup chi tiết có panel .detail-fusion với nhãn 'Fusion List', có hai tiêu đề nhóm 'Ghép ra lá này' và 'Lá này tham gia', imgCellHtml có nhánh size công thức, badge hệ đi qua filterLinkHtml, và chuỗi 'Fusion liên quan' + 'function fusionRelatedHtml(' KHÔNG còn trong index.html. Giữ nguyên mọi khẳng định khác.",
+  "must_haves": {
+    "truths": [
+      "Mở chi tiết một quái vật: panel trái là ảnh + thông số + equip, panel phải là Fusion List dạng ảnh bài với số công thức đúng",
+      "Mỗi dòng công thức hiện ba ô ảnh theo hàng: nguyên liệu + nguyên liệu = kết quả, dưới mỗi ô có tên lá và dòng ★level · ATK",
+      "Công thức theo hệ hiện badge tên hệ thay cho ảnh, bấm vào nhảy sang tab tra cứu đã lọc đúng hệ",
+      "Bấm ảnh hoặc tên lá trong công thức mở chi tiết lá đó",
+      "Lá phép/bẫy trong công thức không hiện ATK 0, chỉ để trống",
+      "Lá không có công thức nào hiện một câu tiếng Việt, không có khung rỗng",
+      "Màn hình hẹp: hai panel xếp chồng dọc, ảnh không tràn ngang, không có vùng cuộn lồng",
+      "Tab Fusion giữ nguyên hành vi cũ",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "showDetail hai panel, hàm render công thức dạng ảnh dùng lại imgCellHtml/findProducedBy/findParticipatesIn/nameLinkHtml/filterLinkHtml, badge hệ, CSS .detail-fusion + .img-wrap.recipe + reset trong @media 640px, xoá fusionRelatedHtml"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định markup Fusion List mới và khẳng định chuỗi 'Fusion liên quan'/fusionRelatedHtml đã biến mất"
+      }
+    ],
+    "key_links": [
+      "Công thức lấy từ findProducedBy/findParticipatesIn sẵn có",
+      "Ảnh vẽ qua imgCellHtml sẵn có, chỉ thêm một nhánh size",
+      "Bấm tên lá đi qua nameLinkHtml/wireCardLinks; badge hệ đi qua filterLinkHtml/goToCardFilter"
+    ],
+    "prohibitions": [
+      "Không viết hàm tìm công thức thứ hai hay đường dựng ảnh thứ hai",
+      "Không đụng tab Fusion (onFusionSearchInput) và các hàm render bản chữ mà tab đó dùng",
+      "Không hiện 0 cho lá không có level/ATK",
+      "Không thêm URL http/https, script src, fetch (D1/D2)",
+      "Không sửa tay bên trong khối FM_DATA",
+      "Không thêm ảnh ngoài images/cards/<slug>.png"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "tier": "generation",
+  "trace": {
+    "worker": "fusionviz",
+    "outcome": "Fusion List trong popup chi tiết chuyển sang dạng ảnh bài, xoá bản chữ cũ",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T05:56:44.012Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "390f070a-a328-4714-b96c-5a09d2bb1a80",
+    "claimed_at": "2026-08-14T05:44:32.197Z",
+    "commit_pending": "Worked from the main checkout per dispatch instruction (feature worktree carries a stale cross-worktree reservation mirror from a dead session; cells 19/20 already capped there) — commit b446d97 lives on main, not on the wt/fm-guide-site branch the finish trailer check inspects.",
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T05:56:43.180Z"
+  }
+}
