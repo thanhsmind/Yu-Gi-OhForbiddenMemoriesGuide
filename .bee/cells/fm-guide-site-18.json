@@ -1,0 +1,84 @@
+{
+  "id": "fm-guide-site-18",
+  "feature": "fm-guide-site",
+  "title": "Popup chi tiết: bố cục hai cột và nút chuyển lá trước/lá sau",
+  "lane": "small",
+  "deps": [],
+  "decisions": [
+    "D1",
+    "D2",
+    "D3",
+    "D4"
+  ],
+  "files": [
+    "index.html",
+    "tools/check.py"
+  ],
+  "read_first": [
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "main (feature close) — the worker never runs this",
+  "action": "Hai việc trên cùng popup chi tiết lá bài. (1) BỐ CỤC: hiện tại .detail-body là flex có wrap, .detail-img-wrap rộng tới 420px còn .detail-info không có bề rộng cơ sở nên bị đẩy xuống hàng dưới, để trống một mảng lớn bên phải ảnh. Cho .detail-info một bề rộng cơ sở co giãn (ví dụ flex: 1 1 320px kèm min-width: 0) để trên panel rộng thì ảnh nằm trái, khối thông tin nằm phải, hai khối bắt đầu cùng mép trên; panel hẹp (điện thoại) vẫn tự xuống dòng như hiện tại, không hồi quy khối @media sẵn có ở ~dòng 700. Tên lá (h3) và bảng dl không được tràn hay vỡ khi giá trị dài. (2) CHUYỂN LÁ: thêm hai nút mũi tên thật (<button type=\"button\">) '‹' và '›' trong popup, đặt cạnh tên lá, có aria-label tiếng Việt ('Lá trước' / 'Lá sau'), bấm được bằng bàn phím, focus thấy được. Chúng đi theo THỨ TỰ CỦA state.filtered — danh sách đang lọc, không phải toàn bộ CARDS. Nếu lá kế tiếp nằm ở trang khác thì state.page phải nhảy theo và bảng/lưới phía sau render lại cho khớp (dùng lại render(), không tạo đường phân trang thứ hai). Ở đầu danh sách thì nút '‹' disabled, ở cuối danh sách thì nút '›' disabled — disabled thật (thuộc tính disabled) chứ không chỉ làm mờ bằng CSS. Phím mũi tên trái/phải làm đúng việc của hai nút khi popup đang mở; Escape vẫn đóng như cũ, và phím mũi tên không được cướp phím khi con trỏ đang trong ô nhập chữ. Mỗi lần chuyển lá gọi lại showDetail(card) sẵn có (không nhân bản logic dựng popup) và ghi một mục lịch sử thật qua đường scheduleHashWrite(true) sẵn có, để Back lùi về lá vừa xem. Nếu lá đang mở không còn nằm trong danh sách đang lọc (người dùng đổi bộ lọc khi popup mở) thì hai nút disabled cả hai, không được nhảy lung tung. Thêm khẳng định vào tools/check.py: hai nút mũi tên là button thật có aria-label, .detail-info có bề rộng cơ sở flex, việc chuyển lá đi qua showDetail() và scheduleHashWrite() sẵn có, và điều hướng đọc state.filtered chứ không đọc thẳng CARDS.",
+  "must_haves": {
+    "truths": [
+      "Trên màn hình rộng, ảnh và khối thông tin nằm cạnh nhau, cùng mép trên, không còn khoảng trống lớn bên phải ảnh",
+      "Trên màn hình hẹp, hai khối vẫn xếp dọc như trước",
+      "Bấm '›' mở lá kế tiếp trong danh sách đang lọc; bấm '‹' mở lá liền trước",
+      "Chuyển qua biên trang thì số trang phía sau nhảy theo và danh sách khớp",
+      "Lá đầu danh sách thì '‹' disabled; lá cuối danh sách thì '›' disabled",
+      "Phím mũi tên trái/phải chuyển lá khi popup mở; Escape vẫn đóng",
+      "Back sau vài lần chuyển lá lùi lại từng lá vừa xem",
+      "python3 tools/check.py xanh"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "CSS bố cục hai cột cho .detail-info, hai nút mũi tên, xử lý chuyển lá theo state.filtered, phím mũi tên"
+      },
+      {
+        "path": "tools/check.py",
+        "substantive": "khẳng định nút mũi tên, bề rộng cơ sở của .detail-info, đường chuyển lá dùng lại showDetail/scheduleHashWrite"
+      }
+    ],
+    "key_links": [
+      "Chuyển lá dùng lại showDetail() và render() sẵn có, không tạo bản sao",
+      "Chuyển lá đi qua đúng đường ghi hash sẵn có, không tạo đường thứ hai",
+      "Điều hướng đọc state.filtered — cùng một danh sách với bảng và lưới"
+    ],
+    "prohibitions": [
+      "Không điều hướng theo toàn bộ CARDS khi đang có bộ lọc",
+      "Không tạo phân trang hay bộ lọc thứ hai",
+      "Không nhân bản logic dựng popup chi tiết",
+      "Không để phím mũi tên cướp phím khi con trỏ đang trong ô nhập chữ",
+      "Không thêm URL http/https, script src, fetch (D1/D2)",
+      "Không sửa tay bên trong khối FM_DATA",
+      "Không phá khối @media (pointer: coarse) và cỡ chữ 16px"
+    ]
+  },
+  "status": "capped",
+  "trace": {
+    "worker": "navver",
+    "outcome": "Two-column detail popup layout plus real prev/next card navigation through state.filtered",
+    "files_changed": [
+      "index.html",
+      "tools/check.py"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T03:58:38.696Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "e2c64747-e632-47b7-8c31-66344dae5ab8",
+    "claimed_at": "2026-08-14T03:49:01.718Z",
+    "warnings": [
+      "advisory: this cap's commit changes 215 line(s) (over the 150-line finish.advisory_untested_lines threshold) but touches no test-shaped path — consider adding test coverage."
+    ],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T03:58:37.847Z"
+  },
+  "tier": "generation"
+}
