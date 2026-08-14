@@ -95,22 +95,93 @@ def main() -> int:
     check("the emitted window.FM_DATA block parses as JSON", parses)
 
     data = extract_cards.extract_all()
-    cards = data["cards"]
-    by_number = {c["number"]: c for c in cards}
-    by_name_lower = {c["name"].lower(): c for c in cards}
+    cards = data["cards"]  # D10: 722 FM cards + 360 outside-FM cards (1,082 total)
+    fm_cards = [c for c in cards if not c.get("outsideFm")]
+    outside_fm_cards = [c for c in cards if c.get("outsideFm")]
+    by_number = {c["number"]: c for c in fm_cards}
+    # FM-only on purpose: every check below built on top of `by_name_lower`
+    # (fusionExactAllFmCount, EQUIP_NAME_ALIASES, nameAliases, the BEWS
+    # worked example) predates D10 and must keep meaning "one of the 722
+    # FM cards" -- see `by_name_lower_all` further down for the few checks
+    # that do need to see all 1,082 cards by name.
+    by_name_lower = {c["name"].lower(): c for c in fm_cards}
 
-    # --- D7: spine is the 722-card data/cards.json ---
+    # --- D7: spine is the 722-card data/cards.json; D10 adds 360 more
+    # outside-FM cards on top without disturbing that count. ---
     spine_raw = json.loads(CARDS_JSON.read_text(encoding="utf-8"))
-    check("đúng 722 lá (spine data/cards.json)", len(cards) == 722, f"got {len(cards)}")
     check(
-        "spine không bị sửa (số lá trích xuất == số lá trong data/cards.json)",
-        len(cards) == spine_raw["count"] == len(spine_raw["cards"]),
-        f"extracted {len(cards)}, data/cards.json count={spine_raw['count']}, cards={len(spine_raw['cards'])}",
+        "đúng 722 lá FM (spine data/cards.json, D10 giữ nguyên ràng buộc D7)",
+        len(fm_cards) == spine_raw["count"] == len(spine_raw["cards"]) == 722,
+        f"fm_cards {len(fm_cards)}, data/cards.json count={spine_raw['count']}, cards={len(spine_raw['cards'])}",
+    )
+    check(
+        "spine FM không bị sửa (số lá FM trích xuất == số lá trong data/cards.json)",
+        len(fm_cards) == spine_raw["count"] == len(spine_raw["cards"]),
+        f"extracted {len(fm_cards)}, data/cards.json count={spine_raw['count']}, cards={len(spine_raw['cards'])}",
     )
 
-    with_atk_def = [c for c in cards if c["atk"] is not None]
+    # --- D10/D11: 360 outside-FM cards from cartas_runtime.json, recounted
+    # straight from the source (never trusting the extractor's own count
+    # twice) via the same normalize+alias join extract_cards.py uses. ---
+    runtime_raw = json.loads(extract_cards.CARTAS_RUNTIME_JSON.read_text(encoding="utf-8"))
+    fm_name_norms = {extract_cards.normalize_match_name(c["name"]) for c in fm_cards}
+
+    def _runtime_is_outside_fm(entry: dict) -> bool:
+        lookup_name = extract_cards.EQUIP_NAME_ALIASES.get(
+            entry["Card"].strip().lower(), entry["Card"]
+        )
+        return extract_cards.normalize_match_name(lookup_name) not in fm_name_norms
+
+    recounted_outside = [e for e in runtime_raw if _runtime_is_outside_fm(e)]
     check(
-        "621 lá quái vật có ATK/DEF (từ spine, không mine lại từ fusion.md)",
+        "đúng 360 lá ngoài FM (đếm lại độc lập từ cartas_runtime.json, không gõ cứng)",
+        len(recounted_outside) == len(outside_fm_cards) == data["meta"]["outsideFmCards"] == 360,
+        f"recounted {len(recounted_outside)}, extractor {len(outside_fm_cards)}, "
+        f"meta {data['meta']['outsideFmCards']}",
+    )
+    check(
+        "tổng số lá == lá FM + lá ngoài FM (meta.totalCards/fmCards/outsideFmCards khớp nhau)",
+        len(cards) == len(fm_cards) + len(outside_fm_cards)
+        == data["meta"]["totalCards"] == data["meta"]["fmCards"] + data["meta"]["outsideFmCards"]
+        == 1082,
+        f"len(cards)={len(cards)}, fm+outside={len(fm_cards) + len(outside_fm_cards)}, "
+        f"meta totalCards={data['meta']['totalCards']}",
+    )
+    bad_outside_number_star = [
+        c for c in outside_fm_cards if c["number"] is not None or c["guardianStars"] is not None
+    ]
+    check(
+        "không lá ngoài FM nào có number hay guardianStars khác null (D11: không bịa số thứ tự/Guardian Star)",
+        not bad_outside_number_star,
+        f"{[c['name'] for c in bad_outside_number_star][:5]}",
+    )
+    bad_outside_other_fields = [
+        c
+        for c in outside_fm_cards
+        if c["password"] is not None
+        or c["starChipCost"] is not None
+        or c["obtainedBy"] is not None
+        or c["equips"] is not None
+        or c["fusionSystems"] is not None
+        or c["japaneseName"] is not None
+        or c["romajiName"] is not None
+    ]
+    check(
+        "lá ngoài FM: password/starChipCost/obtainedBy/equips/fusionSystems/japaneseName/romajiName đều null "
+        "thật (chưa có nguồn, không bịa)",
+        not bad_outside_other_fields,
+        f"{[c['name'] for c in bad_outside_other_fields][:5]}",
+    )
+    check(
+        "mọi lá ngoài FM mang outsideFm: true; lá FM không mang trường này (quy ước nhất quán)",
+        all(c.get("outsideFm") is True for c in outside_fm_cards)
+        and all("outsideFm" not in c for c in fm_cards),
+    )
+
+    with_atk_def = [c for c in fm_cards if c["atk"] is not None]
+    check(
+        "621 lá FM quái vật có ATK/DEF (từ spine, không mine lại từ fusion.md; mẫu số là 722 lá FM, "
+        "không phải tổng 1.082 lá)",
         len(with_atk_def) == 621,
         f"got {len(with_atk_def)}",
     )
@@ -163,7 +234,7 @@ def main() -> int:
         not duplicate_lore_vi_keys,
         f"{duplicate_lore_vi_keys[:5]}",
     )
-    real_numbers = {str(c["number"]) for c in cards}
+    real_numbers = {str(c["number"]) for c in fm_cards}  # only FM cards have a real number (D11)
     fake_lore_vi_keys = [k for k in lore_vi_raw if k not in real_numbers]
     check(
         "mọi khóa trong bốn file data/lore-vi/part-*.json là số thứ tự của một lá có thật",
@@ -176,7 +247,7 @@ def main() -> int:
         not empty_lore_vi,
         f"{empty_lore_vi[:5]}",
     )
-    en_lore_by_number = {str(c["number"]): c["lore"] for c in cards}
+    en_lore_by_number = {str(c["number"]): c["lore"] for c in fm_cards}  # data/lore-vi/ is FM-only, keyed by number
     identical_lore_vi = [
         k for k, v in lore_vi_raw.items() if v == en_lore_by_number.get(k)
     ]
@@ -189,6 +260,9 @@ def main() -> int:
     # lore tiếng Anh của một lá, nó phải xuất hiện y nguyên (tiếng Anh) trong
     # loreVi của cùng lá đó. Chỉ xét tên nhiều từ để tránh báo giả với các từ
     # thường (Dragon, Forest, Umi...) vốn cũng trùng tên một lá bài khác.
+    # D10: the name pool spans all 1,082 cards (FM + outside FM) -- a
+    # multiword name only introduced by the 360 outside-FM cards must still
+    # guard both groups' translations.
     multiword_card_names = [c["name"] for c in cards if " " in c["name"]]
     dissolved_card_names_in_lore_vi = [
         (num, name)
@@ -205,19 +279,70 @@ def main() -> int:
     )
     recounted_lore_vi = sum(1 for num in real_numbers if lore_vi_raw.get(num))
     check(
-        "meta.cardsWithLoreVi khớp số đếm lại trực tiếp từ bốn file data/lore-vi/part-*.json",
-        data["meta"]["cardsWithLoreVi"] == recounted_lore_vi == sum(1 for c in cards if c["loreVi"]),
+        "meta.cardsWithLoreVi khớp số đếm lại trực tiếp từ bốn file data/lore-vi/part-*.json "
+        "(mẫu số là 722 lá FM, không phải tổng 1.082 lá -- lá ngoài FM lấy loreVi từ Descricao-VI, "
+        "một nguồn khác, xem check bên dưới)",
+        data["meta"]["cardsWithLoreVi"] == recounted_lore_vi == sum(1 for c in fm_cards if c["loreVi"]),
         f"meta={data['meta']['cardsWithLoreVi']}, recounted={recounted_lore_vi}, "
-        f"spine={sum(1 for c in cards if c['loreVi'])}",
+        f"spine={sum(1 for c in fm_cards if c['loreVi'])}",
     )
     loreVi_null_mismatch = [
-        c["number"] for c in cards
+        c["number"] for c in fm_cards
         if bool(c["loreVi"]) != bool(lore_vi_raw.get(str(c["number"])))
     ]
     check(
-        "lá thiếu bản dịch có loreVi là null (không phải chuỗi rỗng); lá có bản dịch giữ đúng giá trị đó",
+        "lá FM thiếu bản dịch có loreVi là null (không phải chuỗi rỗng); lá có bản dịch giữ đúng giá trị đó",
         not loreVi_null_mismatch,
         f"{loreVi_null_mismatch[:5]}",
+    )
+
+    # --- D5/D10: outside-FM loreVi (Descricao-VI, joined per-card rather
+    # than by number) must not dissolve a multiword card name either.
+    # extract_cards.apply_outside_fm_lore_vi_name_guard() already nulls any
+    # violating card's loreVi during extraction -- this recounts the
+    # violation set independently, straight from a *fresh* (un-nulled) call
+    # to load_outside_fm_cards(), and checks three things: the extracted
+    # data has no remaining violation, the extractor nulled exactly the
+    # cards that violate (not more, not fewer), and meta reports the same
+    # count. ---
+    outside_raw_for_guard = extract_cards.load_outside_fm_cards(fm_cards)
+    outside_raw_by_name = {c["name"]: c for c in outside_raw_for_guard}
+    expected_nulled_names = {
+        c["name"]
+        for c in outside_raw_for_guard
+        if c["lore"]
+        and c["loreVi"]
+        and any(name in c["lore"] and name not in c["loreVi"] for name in multiword_card_names)
+    }
+    check(
+        "meta.outsideFmLoreViNulled khớp đúng số lá ngoài FM đếm lại độc lập vi phạm quy tắc D5 (đếm lại từ "
+        "cartas_runtime.json chưa qua guard, không gõ cứng)",
+        data["meta"]["outsideFmLoreViNulled"] == len(expected_nulled_names),
+        f"meta={data['meta']['outsideFmLoreViNulled']}, recounted={len(expected_nulled_names)}",
+    )
+    outside_guard_mismatch = [
+        c["name"]
+        for c in outside_fm_cards
+        if (c["name"] in expected_nulled_names and c["loreVi"] is not None)
+        or (c["name"] not in expected_nulled_names and c["loreVi"] != outside_raw_by_name[c["name"]]["loreVi"])
+    ]
+    check(
+        "extract_cards.py chỉ null hoá loreVi của đúng những lá ngoài FM vi phạm D5 -- lá vi phạm có loreVi "
+        "null trong dữ liệu trích xuất, lá không vi phạm giữ nguyên bản dịch gốc",
+        not outside_guard_mismatch,
+        f"{outside_guard_mismatch[:5]}",
+    )
+    outside_dissolved_remaining = [
+        (c["name"], name)
+        for c in outside_fm_cards
+        if c["lore"] and c["loreVi"]
+        for name in multiword_card_names
+        if name in c["lore"] and name not in c["loreVi"]
+    ]
+    check(
+        "sau khi guard chạy, không lá ngoài FM nào còn loreVi vi phạm D5 (tên lá bị hòa tan vào bản dịch)",
+        not outside_dissolved_remaining,
+        f"{outside_dissolved_remaining[:5]}",
     )
 
     # --- meta counts backing tab "Độ phủ dữ liệu" (cell fm-guide-site-5) ---
@@ -226,11 +351,12 @@ def main() -> int:
     # value is the real count from the same extraction run (never a number
     # baked in by hand on either side).
     required_meta_fields = (
-        "totalCards", "cardsWithAtkDef", "cardsWithType", "cardsWithEquips",
-        "cardsWithFusionSystems", "equipListsCount", "fusionBasicCount",
+        "totalCards", "fmCards", "outsideFmCards", "cardsWithAtkDef", "cardsWithType",
+        "cardsWithEquips", "cardsWithFusionSystems", "equipListsCount", "fusionBasicCount",
         "fusionExactCount", "fusionExactAllFmCount", "fusionExactTypeRangeCount",
         "fusionExactMultiResultPairs", "fusionSourceRows", "fusionConflictCount",
         "fusionConflictMemberNames", "fusionGroupsWithMembers", "cardsWithLoreVi",
+        "outsideFmLoreViNulled",
     )
     check(
         "FM_DATA.meta có đủ các trường số đếm phục vụ tab Độ phủ dữ liệu",
@@ -238,14 +364,16 @@ def main() -> int:
         f"meta keys: {sorted(data['meta'].keys())}",
     )
     check(
-        "meta.cardsWithType đúng bằng số lá có type != null trong spine",
-        data["meta"]["cardsWithType"] == sum(1 for c in cards if c["type"] is not None) == 621,
+        "meta.cardsWithType đúng bằng số lá FM có type != null trong spine (mẫu số 722 lá FM, không phải "
+        "1.082 -- lá ngoài FM cũng có type nhưng không tính vào mốc này)",
+        data["meta"]["cardsWithType"] == sum(1 for c in fm_cards if c["type"] is not None) == 621,
         f"got {data['meta']['cardsWithType']}",
     )
     check(
-        "meta.cardsWithFusionSystems (258, hiện trên tab Độ phủ dữ liệu) đúng bằng số lá "
-        "có fusionSystems != null trong spine đếm lại (khác 261 — số tên riêng biệt, không phải số lá)",
-        data["meta"]["cardsWithFusionSystems"] == sum(1 for c in cards if c["fusionSystems"]) == 258,
+        "meta.cardsWithFusionSystems (258, hiện trên tab Độ phủ dữ liệu) đúng bằng số lá FM "
+        "có fusionSystems != null trong spine đếm lại (khác 261 — số tên riêng biệt, không phải số lá; "
+        "mẫu số là 722 lá FM -- lá ngoài FM luôn có fusionSystems null)",
+        data["meta"]["cardsWithFusionSystems"] == sum(1 for c in fm_cards if c["fusionSystems"]) == 258,
         f"got {data['meta']['cardsWithFusionSystems']}",
     )
     check(
@@ -479,18 +607,27 @@ def main() -> int:
         f"{glued_names}",
     )
 
+    # D10: slug uniqueness is a whole-table rule -- checked across all 1,082
+    # cards (722 FM + 360 outside FM), not just the FM subset, since a slug
+    # collision would break images/cards/<slug>.png lookups regardless of
+    # which group either card belongs to. Measured: 0 collisions between
+    # the two groups.
     slugs = [c["slug"] for c in cards]
     check(
-        "không slug nào trùng nhau trên toàn bộ 722 lá",
+        "không slug nào trùng nhau trên toàn bộ lá (722 lá FM + 360 lá ngoài FM = 1.082 lá, D10)",
         len(set(slugs)) == len(slugs),
         f"{len(slugs) - len(set(slugs))} duplicate(s)",
     )
     bad_slugs = [s for s in slugs if not SLUG_RE.match(s)]
     check("slug chỉ chứa a-z0-9 và dấu gạch", not bad_slugs, f"bad: {bad_slugs[:5]}")
 
-    missing_images = [s for s in slugs if not (IMAGES_DIR / f"{s}.png").is_file()]
+    # D10: images/cards/ only has art for the 722 FM cards so far -- the 360
+    # outside-FM cards get their images in Slice 3 (D12/build_art_images.py),
+    # not this cell -- so this check stays scoped to fm_cards only.
+    fm_slugs = [c["slug"] for c in fm_cards]
+    missing_images = [s for s in fm_slugs if not (IMAGES_DIR / f"{s}.png").is_file()]
     check(
-        "cả 722 slug đều có ảnh thật trong images/cards/<slug>.png",
+        "cả 722 slug lá FM đều có ảnh thật trong images/cards/<slug>.png (lá ngoài FM chưa có ảnh cho tới Slice 3)",
         not missing_images,
         f"{len(missing_images)} missing, e.g. {missing_images[:5]}",
     )
@@ -514,11 +651,14 @@ def main() -> int:
         and all(c["def"] is None or isinstance(c["def"], int) for c in cards),
     )
 
-    # D9: fusionNames entries with no matching spine card (a fusion-system
-    # badge like "[Machine]0-2000", or one of the 360 non-FM cards not yet
-    # joined onto `cards` -- Slice 2) must stay plain name-only strings,
-    # never crash the extractor and never get an invented spine entry.
-    fusion_names_missing_spine = [n for n in data["fusionNames"] if n.lower() not in by_name_lower]
+    # D9/D10: fusionNames entries with no matching card anywhere in `cards`
+    # (a fusion-system badge like "[Machine]0-2000" is the only kind left
+    # after Slice 2 joined the 360 outside-FM cards onto `cards` too) must
+    # stay plain name-only strings, never crash the extractor and never get
+    # an invented spine entry. Deliberately checked against all 1,082 cards
+    # here (by_name_lower_all), not the FM-only by_name_lower used above.
+    by_name_lower_all = {c["name"].lower(): c for c in cards}
+    fusion_names_missing_spine = [n for n in data["fusionNames"] if n.lower() not in by_name_lower_all]
     check(
         "fusionNames trỏ tới tên không có trong spine vẫn giữ dạng chỉ-có-tên, không crash",
         isinstance(fusion_names_missing_spine, list),
@@ -1008,10 +1148,19 @@ def main() -> int:
             embedded_parses,
         )
         if embedded_parses:
+            embedded_cards = embedded.get("cards", [])
+            embedded_fm_count = sum(1 for c in embedded_cards if not c.get("outsideFm"))
             check(
-                "khối FM_DATA nhúng trong index.html chứa đúng 722 lá (dữ liệu thật, không rỗng)",
-                len(embedded.get("cards", [])) == 722,
-                f"got {len(embedded.get('cards', []))}",
+                "khối FM_DATA nhúng trong index.html chứa đúng 722 lá FM (dữ liệu thật, không rỗng)",
+                embedded_fm_count == 722,
+                f"got {embedded_fm_count}",
+            )
+            check(
+                "tổng số lá khớp giữa data (extract_cards.py trích xuất tươi) và khối FM_DATA nhúng trong "
+                "index.html (index.html không bị lệch khỏi lần chạy --inject gần nhất)",
+                len(embedded_cards) == len(cards) == data["meta"]["totalCards"],
+                f"embedded {len(embedded_cards)}, freshly extracted {len(cards)}, "
+                f"meta.totalCards {data['meta']['totalCards']}",
             )
 
     # --inject run twice in a row on a scratch copy of index.html (never the

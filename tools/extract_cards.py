@@ -73,6 +73,7 @@ EQUIP_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories Quân Bài Phụ tr�
 FUSION_FILE = GUIDE_DIR / "Game Yu-Gi-Oh! Forbidden Memories fusion.md"
 LORE_VI_FILES = [LORE_VI_DIR / f"part-{i}.json" for i in range(1, 5)]
 FUSION_UNIQUE_JSON = CARD_FUSION_EXPLORER_DIR / "fusion_unique.json"
+CARTAS_RUNTIME_JSON = CARD_FUSION_EXPLORER_DIR / "cartas_runtime.json"
 
 # docs/guide's equip roster spells 15 names (13 monster headers, 2 equip
 # items) differently than Yugipedia (data/cards.json). Fixed table, never
@@ -549,6 +550,139 @@ def load_lore_vi() -> dict[str, str]:
     return merged
 
 
+# ---------------------------------------------------------------------------
+# D10/D11 -- the 360 cartas_runtime.json cards outside Forbidden Memories
+# ---------------------------------------------------------------------------
+
+
+def normalize_match_name(name: str) -> str:
+    """The join key used to match a cartas_runtime.json `Card` name against
+    a data/cards.json spine `name`: lowercase, every character outside
+    a-z0-9 dropped (not collapsed to '-' -- this is a match key, not a
+    slug). Coarser than slugify() on purpose so punctuation/spacing
+    differences ("Twin Long Rods #2" vs "Twin Long Rods 2") still collide."""
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def slugify(name: str) -> str:
+    """D3, applied to the 360 outside-FM cards, which arrive with no slug
+    of their own: lowercase, every run of characters outside a-z0-9
+    collapses to one '-', leading/trailing '-' stripped. Audited against
+    all 722 data/cards.json `slug` values with this exact rule: 0
+    mismatches, so the same rule is reused verbatim here rather than
+    re-derived."""
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def _parse_stat_int(value: str | None) -> int | None:
+    """cartas_runtime.json stores ATK/DEF/Level as strings: "" for "this
+    card has no such stat" (traps, spells, equips) and the literal "????"
+    for "stat unknown" on 9 monsters (Copycat, Slifer the Sky Dragon, The
+    Wicked Avatar, ...). Neither is a real number and D4 forbids inventing
+    one, so both fold to None exactly like a genuinely missing field."""
+    if value is None:
+        return None
+    value = value.strip()
+    if not value or not value.isdigit():
+        return None
+    return int(value)
+
+
+# Fields kept on the 360 outside-FM cards. Deliberately mirrors SPINE_FIELDS'
+# vocabulary (same key names as the 722-card spine) so index.html's rendering
+# code can treat every entry in `cards` uniformly; every field this source
+# has no data for is `None` (D4), never invented -- see D11 for `number`/
+# `guardianStars` specifically (no card outside FM has either).
+OUTSIDE_FM_FIELDS_ALWAYS_NULL = (
+    "guardianStars", "password", "starChipCost", "japaneseName",
+    "romajiName", "obtainedBy", "equips", "fusionSystems",
+)
+
+
+def _normalize_outside_fm_lore_vi_terms(text: str) -> str:
+    """cartas_runtime.json's Descricao-VI translation predates cell
+    fm-guide-site-15's site-wide "quái vật" glossary decision and uses the
+    synonym "quái thú" throughout instead (measured, all three casings that
+    occur: "quái thú" x305, "Quái thú" x35, "QUÁI THÚ" x4, 0 other
+    casings) -- a straight synonym substitution to the term the rest of the
+    page already committed to, never a translation change or invented
+    text."""
+    return (
+        text.replace("QUÁI THÚ", "QUÁI VẬT")
+        .replace("Quái thú", "Quái vật")
+        .replace("quái thú", "quái vật")
+    )
+
+
+def load_outside_fm_cards(fm_cards: list[dict]) -> list[dict]:
+    """D8/D10/D11: the cartas_runtime.json entries with no match among the
+    722-card data/cards.json spine (measured: 696 match, 360 do not) --
+    appended to the end of `cards` with a reduced field set. Matched by
+    normalize_match_name() (case/punctuation only), consulting
+    EQUIP_NAME_ALIASES first exactly like the equip join in extract_all()
+    does -- audited: none of that table's 13 differing spellings ever
+    occurs as a cartas_runtime.json `Card` value (the match count is
+    identical with or without it), but it is applied anyway so a future
+    edit to either source can't silently reintroduce a drift the alias
+    table already fixed once for the equip join.
+
+    A card with `number: None` (every card here, D11) never carries an
+    `outsideFm` key set to anything but True; FM cards from load_spine_cards()
+    never carry the key at all -- callers use `card.get("outsideFm")` to
+    tell the two groups apart."""
+    raw = json.loads(CARTAS_RUNTIME_JSON.read_text(encoding="utf-8"))
+    spine_norms = {normalize_match_name(c["name"]) for c in fm_cards}
+
+    outside: list[dict] = []
+    for entry in raw:
+        name = entry["Card"]
+        lookup_name = EQUIP_NAME_ALIASES.get(name.strip().lower(), name)
+        if normalize_match_name(lookup_name) in spine_norms:
+            continue  # one of the 696 that already has a real spine card
+
+        card = {
+            "number": None,
+            "name": name,
+            "slug": slugify(name),
+            "cardType": entry.get("Card type") or None,
+            "type": entry.get("Type") or None,
+            "level": _parse_stat_int(entry.get("Level")),
+            "atk": _parse_stat_int(entry.get("ATK")),
+            "def": _parse_stat_int(entry.get("DEF")),
+            "lore": entry.get("Description") or None,
+            "loreVi": (
+                _normalize_outside_fm_lore_vi_terms(entry["Descricao-VI"])
+                if entry.get("Descricao-VI")
+                else None
+            ),
+            "outsideFm": True,
+        }
+        for field in OUTSIDE_FM_FIELDS_ALWAYS_NULL:
+            card[field] = None
+        outside.append(card)
+    return outside
+
+
+def apply_outside_fm_lore_vi_name_guard(outside_cards: list[dict], name_pool: list[str]) -> int:
+    """D5 ("card names are never translated") extended to the outside-FM
+    cards' `loreVi` (Descricao-VI -- a different, less-audited machine
+    translation than data/lore-vi/'s). Rather than fail the whole build the
+    first time a multiword card name gets swallowed by this translation
+    (measured: 1/360, "Machine King" inside Robotic Knight's lore), null
+    out just that card's loreVi -- D4 treats an untrustworthy value the
+    same as a missing one -- and return how many were nulled so meta can
+    report the count instead of the check being silently dropped."""
+    nulled = 0
+    for card in outside_cards:
+        lore_en, lore_vi = card["lore"], card["loreVi"]
+        if not lore_en or not lore_vi:
+            continue
+        if any(name in lore_en and name not in lore_vi for name in name_pool):
+            card["loreVi"] = None
+            nulled += 1
+    return nulled
+
+
 def extract_all() -> dict:
     numbered_names, equip_lists = parse_equip_file(read_lines(EQUIP_FILE))
 
@@ -570,8 +704,15 @@ def extract_all() -> dict:
         lo, hi = (a, b) if a <= b else (b, a)
         fusion_exact_triples.add((lo, hi, result))
 
-    cards = load_spine_cards()
-    cards_by_lower = {c["name"].lower(): c for c in cards}
+    # D10 renames this to `fm_cards`: every join below (equips, fusion
+    # systems, data/lore-vi) is FM-only, and must stay that way -- the 360
+    # outside-FM cards (below) never had a docs/guide equip header, a
+    # fusion.md system membership, or a data/lore-vi/ number to join. All of
+    # `cards_by_lower`, `fusion_exact_all_fm_count` and friends further down
+    # deliberately keep meaning "one of the 722 FM cards", unaffected by the
+    # 360 outside-FM cards appended at the very end of this function.
+    fm_cards = load_spine_cards()
+    cards_by_lower = {c["name"].lower(): c for c in fm_cards}
 
     # Equip lists (621 monster headers mined from docs/guide) join onto the
     # spine by name, case-insensitive, resolving the 15 spots docs/guide
@@ -580,7 +721,7 @@ def extract_all() -> dict:
     # ghost row -- surfaced in meta.equipNameMisses instead of silently
     # dropped or invented.
     equip_name_misses: list[str] = []
-    for card in cards:
+    for card in fm_cards:
         card["equips"] = None
     for block in equip_lists:
         header_key = block["name"].strip().lower()
@@ -598,7 +739,7 @@ def extract_all() -> dict:
     for tag, names in groups.items():
         for nm in names:
             name_to_tags.setdefault(nm.lower(), set()).add(tag)
-    for card in cards:
+    for card in fm_cards:
         tags = name_to_tags.get(card["name"].lower())
         card["fusionSystems"] = sorted(tags) if tags else None
 
@@ -608,13 +749,36 @@ def extract_all() -> dict:
     # `None`, never an empty string (same D4 "missing is null" rule as
     # every other field here).
     lore_vi = load_lore_vi()
-    for card in cards:
+    for card in fm_cards:
         card["loreVi"] = lore_vi.get(str(card["number"])) or None
+
+    # D10/D11: the 360 cartas_runtime.json cards outside Forbidden Memories,
+    # appended only after every FM-only join above so they can never pick up
+    # an FM-only field by accident (load_outside_fm_cards() already sets
+    # equips/fusionSystems/etc. to None itself -- this ordering is just
+    # belt-and-suspenders). Their loreVi (Descricao-VI) gets the same D5
+    # name-preservation guard as the FM cards, checked against every card
+    # name (FM + outside FM) that appears in more than one word.
+    outside_cards = load_outside_fm_cards(fm_cards)
+    lore_guard_name_pool = [
+        c["name"] for c in (fm_cards + outside_cards) if " " in c["name"]
+    ]
+    outside_fm_lore_vi_nulled = apply_outside_fm_lore_vi_name_guard(
+        outside_cards, lore_guard_name_pool
+    )
+
+    # D10: 722 FM cards first (keeps their 1..722 order, D11), then the 360
+    # outside-FM cards. `cards` from here on is the full 1,082-card table
+    # index.html renders; `fm_cards` above stays the 722-card FM-only view
+    # every meta count below that says "FM" is computed from.
+    cards = fm_cards + outside_cards
 
     # D9 sub-counts, all recounted from fusion_exact_triples (the same
     # deduped set fusionPairs is encoded from) -- never hardcoded, so a
     # source change moves these numbers automatically instead of silently
-    # going stale.
+    # going stale. `cards_by_lower` above is FM-only (D10 does not touch
+    # this: fusionExactAllFmCount keeps meaning "all 3 names are one of the
+    # 722 FM cards", not one of the 1,082).
     def _is_type_badge(name: str) -> bool:
         return name.startswith("[") and "]" in name
 
@@ -632,12 +796,24 @@ def extract_all() -> dict:
     fusion_exact_multi_result_pairs = sum(1 for results in pair_results.values() if len(results) > 1)
 
     meta = {
+        # D10: totalCards is now the full FM + outside-FM count; fmCards/
+        # outsideFmCards split it back out. Every "cardsWith*" count below
+        # keeps its pre-D10 meaning -- denominator is the 722 FM cards
+        # (fm_cards), never the 1,082-card total -- because equips,
+        # fusionSystems and data/lore-vi/'s loreVi are FM-only sources.
         "totalCards": len(cards),
-        "cardsWithAtkDef": sum(1 for c in cards if c["atk"] is not None),
-        "cardsWithType": sum(1 for c in cards if c["type"] is not None),
-        "cardsWithEquips": sum(1 for c in cards if c["equips"]),
-        "cardsWithFusionSystems": sum(1 for c in cards if c["fusionSystems"]),
-        "cardsWithLoreVi": sum(1 for c in cards if c["loreVi"]),
+        "fmCards": len(fm_cards),
+        "outsideFmCards": len(outside_cards),
+        "cardsWithAtkDef": sum(1 for c in fm_cards if c["atk"] is not None),
+        "cardsWithType": sum(1 for c in fm_cards if c["type"] is not None),
+        "cardsWithEquips": sum(1 for c in fm_cards if c["equips"]),
+        "cardsWithFusionSystems": sum(1 for c in fm_cards if c["fusionSystems"]),
+        "cardsWithLoreVi": sum(1 for c in fm_cards if c["loreVi"]),
+        # D5/D10: how many of the 360 outside-FM cards' loreVi got nulled by
+        # apply_outside_fm_lore_vi_name_guard() above for dissolving a
+        # multiword card name -- reported, never hidden by skipping the
+        # guard or the check that verifies it ran.
+        "outsideFmLoreViNulled": outside_fm_lore_vi_nulled,
         "equipListsCount": len(equip_lists),
         "equipNameMisses": equip_name_misses,
         # Per-section recipe counts (tab "Độ phủ dữ liệu", cell fm-guide-site-5):
