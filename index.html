@@ -323,6 +323,22 @@
     image-rendering: pixelated;
   }
 
+  /* Fusion List recipe cell image (cell fm-guide-site-21) -- sized to match
+     .recipe-badge below so an ingredient/result image cell and a Type/names
+     badge cell line up in the same formula row. */
+  .img-wrap.recipe { width: 76px; height: 58px; flex-shrink: 0; }
+  .img-wrap.recipe img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    image-rendering: pixelated;
+  }
+
+  .img-wrap.recipe .img-placeholder { padding: 0.1rem; }
+  .img-wrap.recipe .ph-label { display: none; }
+  .img-wrap.recipe .ph-filename { font-size: 0.5rem; width: 74px; padding: 0; }
+
   .img-placeholder {
     display: none;
     flex-direction: column;
@@ -496,7 +512,7 @@
   .detail-panel {
     position: relative;
     margin: auto;
-    width: min(100%, 880px);
+    width: min(100%, 1180px);
     background: var(--panel);
     border: 1px solid var(--accent-dim);
     border-radius: 10px;
@@ -520,10 +536,33 @@
 
   .detail-close:hover { color: var(--text); }
 
+  /* Two-panel detail popup (cell fm-guide-site-21): .detail-main (image +
+     info, same internal row layout the single-panel version always had) on
+     the left, .detail-fusion (Fusion List) on the right. */
   .detail-body {
     display: flex;
     gap: 1.25rem;
     flex-wrap: wrap;
+  }
+
+  .detail-main {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    flex: 1 1 360px;
+    min-width: 0;
+  }
+
+  /* Scrolls on its own on a wide screen so a long Fusion List never grows
+     the whole popup taller than the viewport; the max-width:640px override
+     below removes this (and the flex-basis) once .detail-body stacks the
+     two panels into one already-scrollable column (point 1 of the cell
+     action -- no nested scroll region on narrow screens). */
+  .detail-fusion {
+    flex: 1 1 420px;
+    min-width: 0;
+    max-height: 70vh;
+    overflow-y: auto;
   }
 
   /* Gives .detail-info a base main-size on the row so the flex line-packing
@@ -533,8 +572,8 @@
      below the image, leaving a big empty gap to the image's right (cell
      fm-guide-site-18). min-width: 0 lets it actually shrink/wrap instead of
      forcing the row wider than the panel. Only applies to the row main axis
-     (width) while .detail-body is a row; the max-width:640px override below
-     resets it back to a plain block once .detail-body switches to a column,
+     (width) while .detail-main is a row; the max-width:640px override below
+     resets it back to a plain block once .detail-main switches to a column,
      where flex-basis would otherwise size height instead of width. */
   .detail-info {
     flex: 1 1 320px;
@@ -622,21 +661,92 @@
 
   .equip-list li { margin-bottom: 0.2rem; }
 
-  .fusion-related-label {
+  /* Fusion List (detail popup right panel, cell fm-guide-site-21): a heading,
+     two groups of image-based formula rows. */
+  .detail-fusion-title {
+    margin: 0 0 0.6rem;
+    font-size: 0.95rem;
     color: var(--text-dim);
-    font-size: 0.82rem;
-    margin: 0.5rem 0 0.25rem;
   }
 
-  .fusion-related-list {
-    margin: 0 0 0.3rem;
-    padding-left: 1.1rem;
+  .fusion-group { margin: 0 0 1rem; }
+  .fusion-group:last-child { margin-bottom: 0; }
+
+  .fusion-group-title {
+    margin: 0 0 0.5rem;
     font-size: 0.85rem;
-    max-height: 220px;
-    overflow-y: auto;
+    color: var(--accent);
   }
 
-  .fusion-related-list li { margin-bottom: 0.25rem; }
+  .recipe-row {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0 0 0.7rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .recipe-row:last-child { border-bottom: none; margin-bottom: 0; }
+
+  .recipe-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 76px;
+    gap: 0.15rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .recipe-cell-text {
+    justify-content: center;
+    min-height: 58px;
+    font-size: 0.78rem;
+  }
+
+  .recipe-cell-name {
+    font-size: 0.72rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .recipe-cell-stat {
+    font-size: 0.66rem;
+    color: var(--text-dim);
+  }
+
+  .recipe-badge {
+    width: 76px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.2rem;
+    background: var(--panel-alt);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    font-size: 0.68rem;
+    line-height: 1.15;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .recipe-op {
+    align-self: center;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    padding: 0 0.1rem;
+  }
+
+  .recipe-note {
+    flex-basis: 100%;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
 
   .fusion-lookup-card {
     margin-top: 0.9rem;
@@ -815,7 +925,14 @@
     :root { font-size: 15px; }
     .result-count { margin-left: 0; width: 100%; }
     .detail-body { flex-direction: column; }
-    /* .detail-body is now a column, so main-axis size (flex-basis) is
+    /* .detail-body is now a column, so .detail-main and .detail-fusion stack
+       -- reset their row flex-basis back to auto (main-axis size is now
+       height, not width) and drop .detail-fusion's own scroll region: the
+       already-scrollable .card-detail overlay is the only scroll container
+       needed once everything is one column (point 1 of the cell action). */
+    .detail-main { flex-direction: column; flex-basis: auto; }
+    .detail-fusion { flex-basis: auto; max-height: none; overflow-y: visible; }
+    /* .detail-main is now a column, so main-axis size (flex-basis) is
        height, not width -- reset .detail-info's 320px basis back to auto so
        it takes its natural content height instead of a forced minimum. */
     .detail-info { flex-basis: auto; }
@@ -75090,27 +75207,215 @@ window.FM_DATA = {
     return "";
   }
 
-  function fusionRelatedHtml(card) {
-    var producedBy = findProducedBy(card);
-    var participatesIn = findParticipatesIn(card);
-    if (!producedBy.length && !participatesIn.length) return "chưa có dữ liệu";
-    var html = "";
-    if (producedBy.length) {
-      html +=
-        '<p class="fusion-related-label">Ghép ra lá này:</p>' +
-        '<ul class="fusion-related-list">' + producedBy.map(renderProducedByItem).join("") + "</ul>";
+  // --- Fusion List (detail popup, cell fm-guide-site-21) --------------------
+  // Card-image formula rows for the detail popup's right panel. Every lookup
+  // reuses findProducedBy/findParticipatesIn (the source of the recipes) and
+  // every image reuses imgCellHtml's new "recipe" size branch -- no second
+  // formula search, no second image path. Names still resolve/link through
+  // the existing resolveCardByName/nameLinkHtml/wireCardLinks, and a "type"
+  // operand still navigates through the existing filterLinkHtml/wireFilterLinks
+  // ("he") -> goToCardFilter, same as every other filter link in this popup.
+  // renderProducedByItem/renderParticipatesInItem/statHtml/statListHtml/
+  // describeSide stay untouched below -- tab Fusion (onFusionSearchInput)
+  // still renders its plain-text lists through them.
+
+  // One operand/result cell that IS a real card name: image + name (both
+  // clickable through the same .card-link/data-cardname/wireCardLinks
+  // mechanism as nameLinkHtml -- a click anywhere in the cell, image or
+  // name, bubbles to whichever span the click landed in) plus a "★level ·
+  // ATK" line read from byNameLower via resolveCardByName. A name with no
+  // match in the lookup table draws no image at all -- just the plain-text
+  // fallback nameLinkHtml() already renders (D4: never fabricate an image
+  // for an unmatched name).
+  function recipeCardCellHtml(name) {
+    var card = resolveCardByName(name);
+    if (!card) {
+      return '<span class="recipe-cell recipe-cell-text">' + nameLinkHtml(name) + "</span>";
     }
-    if (participatesIn.length) {
+    var statLine =
+      card.level !== null && card.level !== undefined
+        ? "★" + card.level + " · " + card.atk
+        : "";
+    return (
+      '<span class="recipe-cell">' +
+        '<span class="card-link" data-cardname="' + escapeHtml(name) + '">' +
+          imgCellHtml(card, "recipe") +
+        "</span>" +
+        '<span class="recipe-cell-name">' + nameLinkHtml(name) + "</span>" +
+        (statLine ? '<span class="recipe-cell-stat">' + escapeHtml(statLine) + "</span>" : "") +
+      "</span>"
+    );
+  }
+
+  // One operand cell for a fusionBasic/fusionConflict "side": a real card
+  // name draws through recipeCardCellHtml above; a fusion-system type or a
+  // pinned name list draws a same-size badge instead of an image (there is
+  // no single card to show a picture of). The type badge reuses
+  // filterLinkHtml("he", …) -> wireFilterLinks -> goToCardFilter, the exact
+  // navigation every other Type/hệ link in this popup already uses.
+  function recipeSideCellHtml(side) {
+    if (!side) return '<span class="recipe-cell"><span class="recipe-badge">?</span></span>';
+    if (side.kind === "type") {
+      return (
+        '<span class="recipe-cell"><span class="recipe-badge">[' +
+          filterLinkHtml("he", side.value) +
+        "]</span></span>"
+      );
+    }
+    if (side.kind === "name") return recipeCardCellHtml(side.value);
+    if (side.kind === "names") {
+      var names = side.value || [];
+      return (
+        '<span class="recipe-cell"><span class="recipe-badge">' +
+          escapeHtml(names.length + " tên: " + names.join(", ")) +
+        "</span></span>"
+      );
+    }
+    return '<span class="recipe-cell"><span class="recipe-badge">?</span></span>';
+  }
+
+  // One formula row: left + right = result (or "<" for a conflict override),
+  // three same-size cells in a row, plus an optional note line underneath.
+  function recipeRowHtml(leftCellHtml, rightCellHtml, resultCellHtml, operator, noteHtml) {
+    return (
+      '<div class="recipe-row">' +
+        leftCellHtml +
+        '<span class="recipe-op">+</span>' +
+        rightCellHtml +
+        '<span class="recipe-op">' + operator + "</span>" +
+        resultCellHtml +
+        (noteHtml ? '<span class="recipe-note">' + noteHtml + "</span>" : "") +
+      "</div>"
+    );
+  }
+
+  function conflictNoteHtml(entry) {
+    return (
+      "công thức xung đột, ghi đè: " + describeSide(entry.generalLeft) + " + " +
+      describeSide(entry.generalRight) + " = " + nameLinkHtml(entry.generalResult)
+    );
+  }
+
+  // "Ghép ra lá này" -- every findProducedBy() match already pins the exact
+  // result stat/name, so it is exactly one row each.
+  function producedByRows(card) {
+    return findProducedBy(card).map(function (item) {
+      if (item.kind === "basic-result" || item.kind === "basic-possible") {
+        var note = item.kind === "basic-possible" ? "có thể ra thêm — cần điều kiện riêng" : "";
+        return recipeRowHtml(
+          recipeSideCellHtml(item.entry.left),
+          recipeSideCellHtml(item.entry.right),
+          recipeCardCellHtml(item.stat.name),
+          "=",
+          note
+        );
+      }
+      if (item.kind === "exact") {
+        return recipeRowHtml(
+          recipeCardCellHtml(item.entry.a),
+          recipeCardCellHtml(item.entry.b),
+          recipeCardCellHtml(item.entry.result),
+          "=",
+          ""
+        );
+      }
+      // item.kind === "conflict"
+      return recipeRowHtml(
+        recipeSideCellHtml(item.entry.overrideLeft),
+        recipeSideCellHtml(item.entry.overrideRight),
+        recipeCardCellHtml(item.entry.overrideResult),
+        "&lt;",
+        conflictNoteHtml(item.entry)
+      );
+    });
+  }
+
+  // "Lá này tham gia" -- a fusionBasic entry can carry more than one result
+  // stat for the same left+right pair (up to 4 in the data); each result is
+  // its own row (same operands, different result cell) so every row still
+  // reads as one complete three-cell formula. entry.possible lists as a
+  // text note on the entry's last row instead of becoming its own image
+  // cells (point 6 of the cell action).
+  function participatesInRows(card) {
+    var rows = [];
+    findParticipatesIn(card).forEach(function (item) {
+      if (item.kind === "basic") {
+        var results = item.entry.results || [];
+        var possibleNote =
+          item.entry.possible && item.entry.possible.length
+            ? "có thể ra thêm: " + statListHtml(item.entry.possible)
+            : "";
+        results.forEach(function (stat, i) {
+          rows.push(
+            recipeRowHtml(
+              recipeSideCellHtml(item.entry.left),
+              recipeSideCellHtml(item.entry.right),
+              recipeCardCellHtml(stat.name),
+              "=",
+              i === results.length - 1 ? possibleNote : ""
+            )
+          );
+        });
+        return;
+      }
+      if (item.kind === "exact") {
+        rows.push(
+          recipeRowHtml(
+            recipeCardCellHtml(item.entry.a),
+            recipeCardCellHtml(item.entry.b),
+            recipeCardCellHtml(item.entry.result),
+            "=",
+            ""
+          )
+        );
+        return;
+      }
+      // item.kind === "conflict"
+      rows.push(
+        recipeRowHtml(
+          recipeSideCellHtml(item.entry.overrideLeft),
+          recipeSideCellHtml(item.entry.overrideRight),
+          recipeCardCellHtml(item.entry.overrideResult),
+          "&lt;",
+          conflictNoteHtml(item.entry)
+        )
+      );
+    });
+    return rows;
+  }
+
+  // The Fusion List panel: a "Fusion List · N công thức" heading (N = rows
+  // actually drawn, produced + participates) followed by the two existing
+  // groups -- or, with zero rows, exactly one guide-note sentence and no
+  // empty frame at all.
+  function fusionListHtml(card) {
+    var producedRows = producedByRows(card);
+    var participatesRows = participatesInRows(card);
+    var total = producedRows.length + participatesRows.length;
+    if (!total) {
+      return '<p class="guide-note">Lá này chưa có công thức fusion nào được ghi nhận.</p>';
+    }
+    var html = '<h4 class="detail-fusion-title">Fusion List · ' + total + " công thức</h4>";
+    if (producedRows.length) {
       html +=
-        '<p class="fusion-related-label">Lá này tham gia:</p>' +
-        '<ul class="fusion-related-list">' + participatesIn.map(renderParticipatesInItem).join("") + "</ul>";
+        '<div class="fusion-group"><h5 class="fusion-group-title">Ghép ra lá này</h5>' +
+        producedRows.join("") + "</div>";
+    }
+    if (participatesRows.length) {
+      html +=
+        '<div class="fusion-group"><h5 class="fusion-group-title">Lá này tham gia</h5>' +
+        participatesRows.join("") + "</div>";
     }
     return html;
   }
 
   function imgCellHtml(card, size) {
     var path = "images/cards/" + card.slug + ".png";
-    var wrapClass = size === "detail" ? "detail-img" : size === "tile" ? "tile" : "thumb";
+    var wrapClass =
+      size === "detail" ? "detail-img" :
+      size === "tile" ? "tile" :
+      size === "recipe" ? "recipe" :
+      "thumb";
     return (
       '<span class="img-wrap ' + wrapClass + '">' +
         '<img src="' + path + '" alt="' + escapeHtml(card.name) + '" loading="lazy" ' +
@@ -75683,29 +75988,30 @@ window.FM_DATA = {
       '<div class="detail-panel" role="dialog" aria-modal="true" aria-label="Chi tiết lá bài">' +
       '<button type="button" class="detail-close" aria-label="Đóng">×</button>' +
       '<div class="detail-body">' +
-        '<div class="detail-img-wrap">' + imgCellHtml(card, "detail") + "</div>" +
-        '<div class="detail-info">' +
-          "<h3><span class=\"detail-title-text\">" + escapeHtml(card.name) + "</span>" +
-            detailNavHtml(card) + "</h3>" +
-          "<dl>" +
-            "<dt>Số thứ tự</dt><dd>#" + escapeHtml(card.number) + "</dd>" +
-            "<dt>Loại lá</dt><dd>" + filterLinkHtml("loai", card.cardType) + "</dd>" +
-            "<dt>Type</dt><dd>" + filterLinkHtml("type", card.type) + "</dd>" +
-            "<dt>Level</dt><dd>" + fmt(card.level) + "</dd>" +
-            "<dt>ATK / DEF</dt><dd>" + fmt(card.atk) + " / " + fmt(card.def) + "</dd>" +
-            "<dt>Guardian Star</dt><dd>" + fmtStarsHtml(card) + "</dd>" +
-            "<dt>Hệ fusion</dt><dd>" + fmtFusionHtml(card) + "</dd>" +
-            "<dt>Password</dt><dd>" + escapeHtml(fmt(card.password)) + "</dd>" +
-            "<dt>Star Chip Cost</dt><dd>" + fmtStarChipCost(card) + "</dd>" +
-            "<dt>Cách lấy</dt><dd>" + escapeHtml(fmtList(card.obtainedBy)) + "</dd>" +
-            "<dt>Tên Nhật</dt><dd>" + escapeHtml(fmt(card.japaneseName)) + (card.romajiName ? " (" + escapeHtml(card.romajiName) + ")" : "") + "</dd>" +
-            "<dt>Lore</dt><dd>" + fmtLoreHtml(card) + "</dd>" +
-          "</dl>" +
-          "<h4>Equip</h4>" +
-          equipsHtml +
-          "<h4>Fusion liên quan</h4>" +
-          fusionRelatedHtml(card) +
+        '<div class="detail-main">' +
+          '<div class="detail-img-wrap">' + imgCellHtml(card, "detail") + "</div>" +
+          '<div class="detail-info">' +
+            "<h3><span class=\"detail-title-text\">" + escapeHtml(card.name) + "</span>" +
+              detailNavHtml(card) + "</h3>" +
+            "<dl>" +
+              "<dt>Số thứ tự</dt><dd>#" + escapeHtml(card.number) + "</dd>" +
+              "<dt>Loại lá</dt><dd>" + filterLinkHtml("loai", card.cardType) + "</dd>" +
+              "<dt>Type</dt><dd>" + filterLinkHtml("type", card.type) + "</dd>" +
+              "<dt>Level</dt><dd>" + fmt(card.level) + "</dd>" +
+              "<dt>ATK / DEF</dt><dd>" + fmt(card.atk) + " / " + fmt(card.def) + "</dd>" +
+              "<dt>Guardian Star</dt><dd>" + fmtStarsHtml(card) + "</dd>" +
+              "<dt>Hệ fusion</dt><dd>" + fmtFusionHtml(card) + "</dd>" +
+              "<dt>Password</dt><dd>" + escapeHtml(fmt(card.password)) + "</dd>" +
+              "<dt>Star Chip Cost</dt><dd>" + fmtStarChipCost(card) + "</dd>" +
+              "<dt>Cách lấy</dt><dd>" + escapeHtml(fmtList(card.obtainedBy)) + "</dd>" +
+              "<dt>Tên Nhật</dt><dd>" + escapeHtml(fmt(card.japaneseName)) + (card.romajiName ? " (" + escapeHtml(card.romajiName) + ")" : "") + "</dd>" +
+              "<dt>Lore</dt><dd>" + fmtLoreHtml(card) + "</dd>" +
+            "</dl>" +
+            "<h4>Equip</h4>" +
+            equipsHtml +
+          "</div>" +
         "</div>" +
+        '<div class="detail-fusion">' + fusionListHtml(card) + "</div>" +
       "</div>" +
       "</div>";
     elDetail.querySelector(".detail-close").addEventListener("click", closeDetail);

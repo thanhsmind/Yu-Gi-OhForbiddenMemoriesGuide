@@ -738,8 +738,18 @@ def main() -> int:
         'id="coverage-body"' in html_text and "KHÔNG có" in html_text,
     )
     check(
-        "panel chi tiết một lá có mục 'Fusion liên quan'",
-        "Fusion liên quan" in html_text,
+        "panel chi tiết một lá có panel .detail-fusion nhãn 'Fusion List', hai tiêu đề nhóm "
+        "'Ghép ra lá này'/'Lá này tham gia', imgCellHtml có nhánh size công thức, badge hệ đi qua "
+        "filterLinkHtml, và bản chữ cũ (fusionRelatedHtml/'Fusion liên quan') đã bị xoá hẳn "
+        "(cell fm-guide-site-21)",
+        '<div class="detail-fusion">' in html_text
+        and "Fusion List" in html_text
+        and "Ghép ra lá này" in html_text
+        and "Lá này tham gia" in html_text
+        and 'size === "recipe"' in html_text
+        and 'filterLinkHtml("he", side.value)' in html_text
+        and "Fusion liên quan" not in html_text
+        and "function fusionRelatedHtml(" not in html_text,
     )
     check(
         "tab Độ phủ dữ liệu đọc số liệu qua DATA.meta.<field> (không gõ cứng số đếm vào HTML)",
