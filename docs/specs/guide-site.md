@@ -97,20 +97,26 @@ nhỏ hơn, màu nhạt hơn — bản dịch là sản phẩm phái sinh, khôn
 thế hay che nguyên văn. Lá chưa có bản dịch chỉ hiện nguyên văn tiếng Anh,
 không có ô trống.
 
-Ảnh trong hộp thoại chi tiết có **hai mặt**. Mặt mặc định là bản vẽ minh hoạ
-hiện đại — nó nét hơn hẳn ảnh chụp màn hình game, và nhóm lá ngoài game không
-có ảnh in-game nào cả, nên mở bằng mặt kia sẽ cho cả nhóm đó một ô giữ chỗ.
-Bấm thẳng vào ảnh thì đảo về ảnh chụp trong game, bấm lần nữa quay lại. Một
-chỉ báo nhỏ cho biết ảnh bấm được và đang xem mặt nào.
+### Hai bộ ảnh của một lá
 
-Ô giữ chỗ khi thiếu ảnh vẫn ghi đường dẫn của **ảnh in-game**, vì đó mới là
-mặt có thể thiếu — mọi lá có mặt vẽ minh hoạ thì file của nó chắc chắn có.
+Trang có hai bộ ảnh cho cùng một lá: **bản vẽ minh hoạ** hiện đại (khổ dọc,
+nét) và **ảnh chụp trong game** (khổ ngang, đúng thứ người chơi thấy khi chơi).
 
-Lá không có bản vẽ minh hoạ thì ảnh **không bấm được và không có chỉ báo** —
-không bày nút chết; lá đó mở thẳng bằng ảnh in-game. Trạng thái đảo thuộc về
-riêng lá đang mở: đóng hộp thoại rồi mở lại, hoặc chuyển sang lá khác, đều
-quay về mặt mặc định. Chỉ ảnh trong hộp thoại chi tiết mới đảo được; ảnh trong
-bảng, trong lưới và trong Fusion List luôn là mặt in-game.
+Bản vẽ minh hoạ là ảnh mặc định ở **mọi chỗ** — bảng, lưới, Fusion List, hộp
+thoại chi tiết. Lá không có bản vẽ (một số ít lá Ritual) rơi về ảnh chụp trong
+game; chỉ khi thiếu cả hai mới hiện ô giữ chỗ, và ô đó ghi đường dẫn của ảnh
+mà lá ấy đáng lẽ phải có, không ghi bừa một trong hai.
+
+Kích thước ô ảnh khắp trang theo tỉ lệ của bản vẽ minh hoạ. Ảnh chụp trong game
+có tỉ lệ khác hẳn nên khi nó hiện trong ô đó phải **thu vừa khung, không bị
+cắt** — thà chừa lề còn hơn mất một phần lá bài.
+
+Riêng trong hộp thoại chi tiết, ảnh có **hai mặt**: mở ra là bản vẽ minh hoạ,
+bấm thẳng vào ảnh thì đảo về ảnh chụp trong game, bấm lần nữa quay lại. Một chỉ
+báo nhỏ cho biết ảnh bấm được và đang xem mặt nào. Lá không có bản vẽ thì ảnh
+**không bấm được và không có chỉ báo** — không bày nút chết. Trạng thái đảo
+thuộc về riêng lá đang mở: đóng hộp thoại rồi mở lại, hoặc chuyển sang lá khác,
+đều quay về mặt mặc định. Ảnh ngoài hộp thoại chi tiết không đảo được.
 
 Ô ảnh đảo được là một nút thật với người dùng bàn phím và trình đọc màn hình:
 nhận Enter và Space, có nhãn đọc được, và nói rõ đang ở mặt nào.
@@ -394,7 +400,8 @@ Những điều này được kiểm tra tự động và phải luôn đúng:
 - `data/CardFusionExplorer/Card-Fusion-Explorer-Assets/` — nguồn thứ tư;
   `fusion_unique.json` (bảng Chính xác) và `cartas_runtime.json` (lá ngoài FM,
   ánh xạ tên file ảnh) được lưu trong repo, thư mục ảnh gốc thì không.
-- `images/cards/<slug>.png` — ảnh mặt bài chụp trong game, 722 lá.
-- `images/art/<slug>.webp` — ảnh mặt thứ hai đã nén.
+- `images/cards/<slug>.png` — ảnh chụp trong game, 722 lá; nay là mặt thứ hai.
+- `images/art/<slug>.webp` — bản vẽ minh hoạ đã nén; đây là ảnh mặc định của trang.
+- `images/guide/guardian-star-wheel.png` — sơ đồ hai vòng khắc hệ Guardian Star.
 - `docs/guide/*.md` — ba tài liệu hướng dẫn tiếng Việt.
-- Quyết định nền: `docs/history/fm-guide-site/CONTEXT.md` (D1–D12).
+- Quyết định nền: `docs/history/fm-guide-site/CONTEXT.md` (D1–D13) và nhật ký quyết định.

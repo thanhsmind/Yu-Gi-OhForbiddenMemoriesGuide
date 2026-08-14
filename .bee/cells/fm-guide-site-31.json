@@ -1,0 +1,64 @@
+{
+  "id": "fm-guide-site-31",
+  "feature": "fm-guide-site",
+  "title": "Ảnh Rush Duel thành ảnh mặc định khắp trang, CSS đổi sang khổ dọc",
+  "lane": "standard",
+  "deps": [],
+  "files": [
+    "index.html"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Đảo vai trò hai bộ ảnh trên TOÀN trang. (a) imgCellHtml (mọi cỡ: thumb, tile, recipe, detail) dựng src từ card.artImage; lá không có artImage (26 lá Ritual) rơi về images/cards/<slug>.png; không lá nào có cả hai thì mới ra ô giữ chỗ. Ô giữ chỗ ghi đường dẫn của ảnh mà lá đó ĐÁNG LẼ phải có, không ghi bừa một trong hai. (b) detailImgCellHtml giữ nguyên hành vi đảo của D13 — art là mặt mặc định, bấm đảo về in-game; lá không có artImage vẫn không đảo được. (c) CSS: ảnh art là 256x374 (~2/3 dọc) còn ảnh in-game là 320x256 (5/4 ngang, chỉ còn 26 lá dùng làm mặt mặc định và mọi lá dùng làm mặt đảo). Bốn ô ảnh đang đóng cứng aspect-ratio 5/4 — .img-wrap.thumb (60x48px), .img-wrap.tile, .img-wrap.recipe, .img-wrap.detail-img, cộng khối aspect-ratio ở dòng ~786 — đổi sang tỉ lệ dọc khớp ảnh art. Ảnh trong ô dùng object-fit: contain để mặt in-game 5/4 khi đảo vào ô dọc không bị cắt. Thumb trong bảng đổi sang cỡ dọc (ví dụ 44x64px) để vẫn nhận ra lá. Ô lưới và ô công thức cao lên theo tỉ lệ mới — kiểm lại màn 390px vẫn không cuộn ngang và ba ô công thức vẫn nằm một hàng. Không đổi số cột lưới hay logic chọn cỡ lưới.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "Mọi cỡ ô ảnh lấy artImage làm src mặc định; 26 lá Ritual rơi về ảnh in-game chứ không ra ô giữ chỗ",
+      "Không ô ảnh nào còn aspect-ratio 5/4 cho mặt mặc định",
+      "Ảnh in-game khi hiện trong ô dọc không bị cắt mất phần nào",
+      "Màn 390px: không cuộn ngang, ba ô công thức vẫn một hàng"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "imgCellHtml ưu tiên artImage + CSS bốn cỡ ô ảnh đổi sang khổ dọc"
+      }
+    ],
+    "key_links": [
+      "Quyết định ảnh Rush Duel mặc định toàn trang, 2026-08-14"
+    ],
+    "prohibitions": [
+      "Không đọc lại khối dữ liệu JSON nhúng",
+      "Không sửa tools/*.py",
+      "Không đổi số cột lưới hay logic chọn cỡ lưới",
+      "Không bỏ ô giữ chỗ khi thiếu cả hai ảnh"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "art-global",
+    "outcome": "Art image (Rush Duel) is now the default face in every image cell, in-game fallback only for the 26 Ritual cards, all four hardcoded 5/4 aspect-ratio rules switched to portrait 256/374",
+    "files_changed": [
+      "index.html"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T09:04:59.227Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T09:01:02.370Z",
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T09:04:56.410Z"
+  },
+  "tier": "generation"
+}

@@ -1,0 +1,73 @@
+{
+  "id": "fm-guide-site-32",
+  "feature": "fm-guide-site",
+  "title": "Vòng khắc hệ Guardian Star dùng sơ đồ thật và bổ sung cơ chế chọn sao",
+  "lane": "standard",
+  "deps": [
+    "fm-guide-site-31"
+  ],
+  "files": [
+    "index.html",
+    "images/guide/guardian-star-wheel.png"
+  ],
+  "read_first": [
+    "docs/history/fm-guide-site/CONTEXT.md",
+    "index.html"
+  ],
+  "verify": "python3 tools/check.py",
+  "verify_owner": "cell",
+  "action": "Mục 3 của phần Hướng dẫn (id sec-3, quanh dòng 1158). (a) Chép ảnh sơ đồ (đường dẫn cho trong prompt) vào images/guide/guardian-star-wheel.png và thay khối SVG tự vẽ hiện tại bằng ảnh đó, có alt mô tả đủ hai vòng. (b) Bảng khắc hệ giờ ĐÃ CÓ nguồn đầy đủ — xoá guide-note đang thú nhận 'nguồn chỉ đưa đúng một cặp Sun/Moon' và thay bằng luật thật, viết cả dạng chữ để đọc được không cần nhìn ảnh: vòng bốn sao Sun khắc Moon, Moon khắc Venus, Venus khắc Mercury, Mercury khắc Sun; vòng sáu sao Neptune khắc Mars, Mars khắc Jupiter, Jupiter khắc Saturn, Saturn khắc Uranus, Uranus khắc Pluto, Pluto khắc Neptune. Nói rõ hai vòng độc lập — không sao nào của vòng này khắc sao của vòng kia. (c) Sửa luật thưởng: khắc hệ cho +500 cả ATK LẪN DEF, không phải chỉ ATK — sửa mọi chỗ trong trang đang ghi chỉ ATK cho luật này, kể cả khối hub trong sơ đồ cũ nếu còn chữ đó ở nơi khác. (d) Bổ sung vào mục này: mỗi quái vật có hai Guardian Star, người chơi chọn MỘT khi triệu hồi; màu chữ Guardian Star trong trận cho biết lợi thế (vàng là mình lợi, đỏ là đối phương lợi); CPU luôn chọn Guardian Star ĐẦU TIÊN của quái vật nên đoán trước được; không có Guardian Star Trái Đất; xem trận ở chế độ 3D thì đòn tấn công khác nhau tuỳ Guardian Star đã chọn.",
+  "must_haves": {
+    "truths": [
+      "python3 tools/check.py xanh",
+      "Sơ đồ là ảnh trong repo, không phải SVG tự vẽ, và không gọi mạng",
+      "Luật khắc hệ đọc được bằng chữ, không phụ thuộc việc nhìn thấy ảnh",
+      "Không còn câu nào nói nguồn thiếu bảng khắc hệ đầy đủ",
+      "Luật thưởng ghi +500 cả ATK lẫn DEF ở mọi chỗ nhắc tới nó"
+    ],
+    "artifacts": [
+      {
+        "path": "index.html",
+        "substantive": "Mục 3 dùng ảnh sơ đồ, luật khắc hệ đầy đủ dạng chữ, cơ chế chọn sao"
+      },
+      {
+        "path": "images/guide/guardian-star-wheel.png",
+        "substantive": "Ảnh sơ đồ hai vòng khắc hệ"
+      }
+    ],
+    "key_links": [
+      "Quyết định vòng khắc hệ đầy đủ, 2026-08-14"
+    ],
+    "prohibitions": [
+      "Không đọc lại khối dữ liệu JSON nhúng",
+      "Không sửa tools/*.py",
+      "Không tự suy ra cặp khắc hệ nào ngoài hai vòng đã cho",
+      "Không gọi ảnh từ mạng"
+    ]
+  },
+  "status": "capped",
+  "decisions": [],
+  "trace": {
+    "worker": "gstar-guide",
+    "outcome": "Vòng khắc hệ Guardian Star dùng sơ đồ thật, luật đọc bằng chữ, +500 ATK/DEF, bổ sung cơ chế chọn sao",
+    "files_changed": [
+      "index.html",
+      "images/guide/guardian-star-wheel.png",
+      "docs/specs/guide-site.md"
+    ],
+    "deviations": [],
+    "friction": null,
+    "capped_at": "2026-08-14T09:09:38.227Z",
+    "behavior_change": false,
+    "verification_evidence": null,
+    "verify_output": null,
+    "verify_passed": null,
+    "claim_session": "1376ddc9-3ade-4cdf-b66d-021786930966",
+    "claimed_at": "2026-08-14T09:05:17.962Z",
+    "warnings": [],
+    "tests": "green",
+    "results": ".bee/logs/test-results.json",
+    "ran_at": "2026-08-14T09:09:35.530Z"
+  },
+  "tier": "generation"
+}
