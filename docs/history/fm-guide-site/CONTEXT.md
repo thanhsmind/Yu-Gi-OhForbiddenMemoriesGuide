@@ -26,6 +26,11 @@ equip và nội dung hướng dẫn lấy từ `docs/guide/*.md`; ảnh đã có
 | D5 | Nội dung trang viết bằng tiếng Việt (theo nguồn), tên lá bài và thuật ngữ game giữ nguyên tiếng Anh | Ba file nguồn đều tiếng Việt, tên bài đều tiếng Anh |
 | D6 | Repo có `tools/*.py` (Python) để sinh lại khối dữ liệu trong `index.html`. Trang giao cho người dùng vẫn zero-dependency | Gõ tay hàng trăm dòng vi phạm D4; Python là phụ thuộc của người phát triển, không phải người đọc trang |
 | D7 | **Thay phần nguồn của D4.** Bảng tra cứu bài lấy spine từ `data/cards.json` — 722 lá Yugipedia, đủ `type`/`guardianStars`/`level`/ATK/DEF/`password`/`lore`/`obtainedBy`, kèm 722 ảnh sẵn trong `images/cards/`. `docs/guide/` vẫn là nguồn cho công thức fusion, danh sách equip, và toàn bộ nội dung hướng dẫn | Mining `docs/guide/` chỉ cho 653 lá và 98 lá có chỉ số; Yugipedia phủ 722 lá với 621 lá đủ chỉ số. Nguyên tắc "không bịa" giữ nguyên, chỉ đổi nguồn |
+| D8 | **Nguồn thứ tư:** `data/CardFusionExplorer/` — cung cấp bảng công thức cặp cụ thể đầy đủ, ảnh bài thứ hai, và 360 lá ngoài Forbidden Memories. Ba nguồn cũ (D7) giữ nguyên vai trò | Nguồn này enumerate đủ mọi cặp lá, thứ `docs/guide/` chỉ mô tả bằng luật hệ; ảnh và lá ngoài FM là phần thêm |
+| D9 | **Thay bảng "Chính xác" của D7.** Bảng công thức Chính xác lấy toàn bộ từ `fusion_unique.json` (`especificas`): 150 dòng cũ bị thay bằng **25.504 công thức không phân biệt thứ tự**. Nguồn lưu mỗi công thức theo cả hai chiều (`A+B` và `B+A`) nên 50.937 dòng thô chỉ là 25.504 công thức — trang đếm theo công thức, không đếm theo dòng nguồn. Trong đó 25.168 công thức có cả 3 tên là lá FM thật; 167 công thức có một vế dạng hệ kèm khoảng ATK (`[Machine]0-2000`) → vẽ thành ô badge theo đúng quyết định badge hệ ngày 2026-08-14; 6 cặp cho nhiều hơn một kết quả đều là Elemental HERO (lá ngoài FM) → giữ tất cả kết quả. Fusion List dạng ảnh trong popup chi tiết dày lên theo cùng nguồn này | Nguồn mới phủ trọn 150 dòng cũ; giữ hai bảng chồng nhau buộc người đọc tự đoán khác nhau chỗ nào. Đếm 50.937 sẽ nói dối về độ phủ vì mỗi công thức bị đếm hai lần |
+| D10 | **Nới ràng buộc 722 lá của D7.** 360 lá ngoài Forbidden Memories vào thẳng bảng tra cứu, mang nhãn phân biệt "ngoài FM"; 722 lá FM vẫn là lõi. Ràng buộc "đúng 722 lá" trong spec và `tools/check.py` đổi thành "đúng 722 lá FM" cộng tổng số lá | Người dùng muốn dữ liệu mới mà không làm mờ ranh giới giữa bài Forbidden Memories thật và bài ngoài game |
+| D11 | Lá ngoài FM **không có số thứ tự và không có Guardian Star**: hai ô đó để trống thật (theo D4), không bịa số. Khi sắp theo số tăng/giảm dần, nhóm này xuống cuối và sắp theo tên A–Z; 722 lá FM giữ nguyên trật tự 1–722 ở đầu | Trang đã có sẵn quy ước đẩy lá thiếu chỉ số xuống cuối khi sắp theo ATK/DEF; đánh số 723 trở đi là bịa số không có trong game |
+| D12 | **Ảnh thứ hai** (art Rush Duel) nén sang WebP bề rộng ~400px, ngân sách cả thư mục dưới 40MB; ảnh gốc PNG 350MB không vào repo. Trong popup chi tiết, ảnh in-game là mặc định; **bấm thẳng vào ảnh** để đảo qua lại, có chỉ báo nhỏ. Lá không có ảnh thứ hai thì không đảo được và không hiện chỉ báo | Thư mục ảnh hiện tại chỉ 31MB — giữ nguyên gốc sẽ phình repo hơn 10 lần. Trang là guide Forbidden Memories nên ảnh in-game phải là mặt mặc định |
 
 ### Agent's Discretion
 
@@ -55,6 +60,21 @@ Repo chưa có code — đây là file nguồn đầu tiên. Chỉ có tài li�
   Phủ: 621 lá có `type`/`guardianStars`/`level`/ATK/DEF (toàn bộ quái vật), 722 lá có `lore`,
   698 có `password` và `starChipCost`, 640 có `obtainedBy`. Sinh lại bằng `scripts/fetch_yugipedia_cards.py`.
 - `images/cards/<slug>.png` — 722 ảnh, khớp 722/722 slug trong `data/cards.json`.
+- `data/CardFusionExplorer/` (per D8) — nguồn thứ tư, đã đo:
+  - `Card-Fusion-Explorer-Assets/fusion_unique.json` → khóa `especificas`, **50.937** dòng
+    dạng `{carta1, carta2, resultado}` = **25.504** công thức không phân biệt thứ tự (D9);
+    25.168 cái có cả 3 tên là lá FM thật; 167 cái có vế dạng `[Hệ]minATK-maxATK`;
+    6 cặp cho nhiều hơn một kết quả (đều Elemental HERO). Khóa `por_tipo` RỖNG — không dùng được.
+  - `Card-Fusion-Explorer-Assets/cartas_runtime.json` — **1.056** lá: 696 khớp `data/cards.json`,
+    **360 lá ngoài FM** (D10). Lá ngoài FM chỉ có `Type`/`Level`/`Attribute`/`ATK`/`DEF`/`Description`,
+    không có `#` (chỉ 8/360 lá có) và không có `G-STAR 1|2` (D11).
+  - `Card-Fusion-Explorer-Assets/images/` — **1.057 PNG** art Rush Duel (khác hẳn ảnh in-game
+    hiện tại), tổng **350MB**; thêm 99 `.webp` art rời của cùng 99 lá. Tên file dạng
+    `blue-eyes_white_dragon.png` (gạch dưới), phải map sang slug của trang.
+  - 26 lá của trang KHÔNG có trong nguồn này (Ritual: `Yamadron Ritual`, `Black Luster Ritual`…)
+    → không có ảnh thứ hai, không đảo được (D12).
+  - `Card-Fusion-Explorer-Data/*.csv|.db|.xlsx` và `Card-Fusion-Explorer-Assets/music/`
+    — CHƯA dùng tới, không thuộc phạm vi lần này.
 - `docs/guide/Game Yu-Gi-Oh! Forbidden Memories Quân Bài Phụ trợ.md` — 621 khối
   `#NNN <Tên> (N Equips)` → nguồn DUY NHẤT cho cặp số thứ tự ↔ tên bài. Cao nhất `#722`,
   thiếu `#721`.
