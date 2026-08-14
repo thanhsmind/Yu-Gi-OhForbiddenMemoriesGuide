@@ -1090,6 +1090,72 @@ def main() -> int:
         and html_text.count('elGridSize8Btn.addEventListener("click"') == 1,
     )
 
+    # --- Ô chọn sắp xếp theo số/ATK/DEF cho tab tra cứu bài (cell fm-guide-site-20) ---
+    sort_select_match = re.search(
+        r'<select id="sort-order" aria-label="Sắp xếp">(.*?)</select>', html_text, re.S
+    )
+    check(
+        'index.html có #sort-order là <select> thật, aria-label="Sắp xếp", đủ sáu mục '
+        "theo đúng thứ tự (mặc định 'Số tăng dần' value rỗng, rồi số giảm dần, "
+        "atk giảm/tăng, def giảm/tăng)",
+        sort_select_match is not None
+        and re.findall(r'<option value="([^"]*)">([^<]+)</option>', sort_select_match.group(1))
+        == [
+            ("", "Số tăng dần"),
+            ("so-giam", "Số giảm dần"),
+            ("atk-giam", "ATK giảm dần"),
+            ("atk-tang", "ATK tăng dần"),
+            ("def-giam", "DEF giảm dần"),
+            ("def-tang", "DEF tăng dần"),
+        ],
+        sort_select_match.group(0) if sort_select_match else "không tìm thấy #sort-order",
+    )
+    apply_filters_fn = re.search(r"function applyFilters\(\) \{.*?\n  \}\n", html_text, re.S)
+    apply_filters_has_sort = (
+        apply_filters_fn is not None and "state.filtered.sort" in apply_filters_fn.group(0)
+    )
+    check(
+        "bước sắp xếp nằm trong applyFilters() sẵn có, sắp xếp thẳng vào state.filtered (không "
+        "tạo mảng đã sắp xếp thứ hai), SAU khi lọc xong CARDS.filter(...) và TRƯỚC state.page = 1 / "
+        "render() -- không sắp xếp lại trong render() hay riêng từng chế độ xem",
+        apply_filters_has_sort
+        and apply_filters_fn.group(0).index("state.filtered = CARDS.filter")
+        < apply_filters_fn.group(0).index("state.filtered.sort")
+        < apply_filters_fn.group(0).index("state.page = 1;"),
+        apply_filters_fn.group(0) if apply_filters_fn else "không tìm thấy hàm applyFilters",
+    )
+    check(
+        "mọi lời gọi state.filtered.sort đều nằm trong applyFilters() (không có đường sắp xếp "
+        "thứ hai trong render() hay riêng từng chế độ xem bảng/lưới)",
+        apply_filters_fn is not None
+        and html_text.count("state.filtered.sort")
+        == apply_filters_fn.group(0).count("state.filtered.sort"),
+    )
+    check(
+        "sắp xếp theo atk/def dồn lá c.atk === null / c.def === null xuống cuối bất kể chiều "
+        "tăng hay giảm (đúng điều kiện null của bộ lọc 'Chỉ hiện lá có ATK/DEF'), và tie-break "
+        "bằng a.number - b.number cho ổn định thay vì dựa vào tính ổn định của Array.prototype.sort",
+        "aVal === null" in html_text
+        and "if (aNull !== bNull) return aNull ? 1 : -1;" in html_text
+        and "return a.number - b.number;" in html_text,
+    )
+    check(
+        "tham số hash 'sap' được GHI (currentHash, giá trị select) và ĐỌC (readStateFromHash, "
+        "chỉ nhận 5 giá trị hợp lệ so-giam/atk-giam/atk-tang/def-giam/def-tang, ngoài ra về mặc định), "
+        "applyState gán lại elSortOrder.value trước khi gọi applyFilters()",
+        '["sap", elSortOrder.value]' in html_text
+        and '["so-giam", "atk-giam", "atk-tang", "def-giam", "def-tang"].indexOf(params.sap) !== -1'
+        in html_text
+        and "elSortOrder.value = st.sap || \"\";\n      elOnlyAtkDef.checked" in html_text,
+    )
+    check(
+        "đổi #sort-order gọi applyFilters() rồi đi qua scheduleHashWrite(true) sẵn có -- "
+        "giống hệt các select lọc khác, không tạo đường ghi hash thứ hai",
+        "elSortOrder.addEventListener(\"change\", applyFilters);" in html_text
+        and 'elSortOrder.addEventListener("change", function () { scheduleHashWrite(true); });'
+        in html_text,
+    )
+
     # --- Popup chi tiết: bố cục hai cột + nút chuyển lá trước/lá sau (cell fm-guide-site-18) ---
     detail_info_css = re.search(r"\.detail-info \{(.*?)\}", html_text, re.S)
     check(

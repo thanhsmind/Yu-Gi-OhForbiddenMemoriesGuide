@@ -854,6 +854,14 @@
       <select id="type-filter"></select>
       <select id="fusion-filter"></select>
       <select id="star-filter"></select>
+      <select id="sort-order" aria-label="Sắp xếp">
+        <option value="">Số tăng dần</option>
+        <option value="so-giam">Số giảm dần</option>
+        <option value="atk-giam">ATK giảm dần</option>
+        <option value="atk-tang">ATK tăng dần</option>
+        <option value="def-giam">DEF giảm dần</option>
+        <option value="def-tang">DEF tăng dần</option>
+      </select>
       <span class="view-mode-toggle" role="group" aria-label="Chế độ xem tra cứu bài">
         <button type="button" id="view-mode-table" class="view-mode-btn" aria-pressed="true">Bảng</button>
         <button type="button" id="view-mode-grid" class="view-mode-btn" aria-pressed="false">Lưới</button>
@@ -74833,6 +74841,7 @@ window.FM_DATA = {
   var elTypeFilter = document.getElementById("type-filter");
   var elFusionFilter = document.getElementById("fusion-filter");
   var elStarFilter = document.getElementById("star-filter");
+  var elSortOrder = document.getElementById("sort-order");
   var elTableBody = document.getElementById("card-table-body");
   var elTableWrap = document.getElementById("table-wrap");
   var elCardGrid = document.getElementById("card-grid");
@@ -75161,6 +75170,37 @@ window.FM_DATA = {
       if (starQ && (!c.guardianStars || c.guardianStars.indexOf(starQ) === -1)) return false;
       return true;
     });
+
+    // Sort in place, straight on state.filtered -- pagination, the result
+    // count, and the popup prev/next buttons all read state.filtered so they
+    // follow automatically (cell fm-guide-site-20). "" (default) keeps the
+    // existing ascending-by-number order untouched. Every comparator branch
+    // below is a full/total order on its own (never returns 0 for two
+    // distinct cards): atk/def sorts push cards with no value (null, same
+    // condition as the "only ATK/DEF" filter above) to the bottom regardless
+    // of direction, and break ties -- including that null/null tie -- by
+    // ascending number for stability, without relying on Array.sort being
+    // stable.
+    var sortOrder = elSortOrder.value;
+    if (sortOrder === "so-giam") {
+      state.filtered.sort(function (a, b) { return b.number - a.number; });
+    } else if (
+      sortOrder === "atk-giam" || sortOrder === "atk-tang" ||
+      sortOrder === "def-giam" || sortOrder === "def-tang"
+    ) {
+      var isAtk = sortOrder === "atk-giam" || sortOrder === "atk-tang";
+      var desc = sortOrder === "atk-giam" || sortOrder === "def-giam";
+      state.filtered.sort(function (a, b) {
+        var aVal = isAtk ? a.atk : a.def;
+        var bVal = isAtk ? b.atk : b.def;
+        var aNull = aVal === null;
+        var bNull = bVal === null;
+        if (aNull !== bNull) return aNull ? 1 : -1;
+        if (!aNull && aVal !== bVal) return desc ? bVal - aVal : aVal - bVal;
+        return a.number - b.number;
+      });
+    }
+
     state.page = 1;
     render();
     // The filter controls stay reachable behind the modal overlay (Tab, or
@@ -75785,6 +75825,7 @@ window.FM_DATA = {
   elTypeFilter.addEventListener("change", applyFilters);
   elFusionFilter.addEventListener("change", applyFilters);
   elStarFilter.addEventListener("change", applyFilters);
+  elSortOrder.addEventListener("change", applyFilters);
   elSearchName.addEventListener("input", function () { scheduleHashWrite(false); });
   elSearchNumber.addEventListener("input", function () { scheduleHashWrite(false); });
   elOnlyAtkDef.addEventListener("change", function () { scheduleHashWrite(true); });
@@ -75792,6 +75833,7 @@ window.FM_DATA = {
   elTypeFilter.addEventListener("change", function () { scheduleHashWrite(true); });
   elFusionFilter.addEventListener("change", function () { scheduleHashWrite(true); });
   elStarFilter.addEventListener("change", function () { scheduleHashWrite(true); });
+  elSortOrder.addEventListener("change", function () { scheduleHashWrite(true); });
 
   // Clear (x): a discrete action like a dropdown change, not typing -- it
   // routes through the same scheduleHashWrite(true) commit path so Back
@@ -75895,7 +75937,7 @@ window.FM_DATA = {
   // page's hash-shape for it. Single source of truth is the DOM itself
   // (never a second copy of the same values) -- see also the shapes
   // documented on cell fm-guide-site-7:
-  //   #tra-cuu?q=..&so=..&loai=..&type=..&he=..&sao=..&chiso=1&trang=..&xem=luoi&cot=4&la=..
+  //   #tra-cuu?q=..&so=..&loai=..&type=..&he=..&sao=..&sap=atk-giam&chiso=1&trang=..&xem=luoi&cot=4&la=..
   //   #fusion?q=..&he=..
   //   #huong-dan  or  #sec-N (bare TOC anchors keep working, see D-note below)
   //   #do-phu
@@ -75922,6 +75964,7 @@ window.FM_DATA = {
       ["type", elTypeFilter.value],
       ["he", elFusionFilter.value],
       ["sao", elStarFilter.value],
+      ["sap", elSortOrder.value],
       ["chiso", elOnlyAtkDef.checked ? "1" : ""],
       ["trang", state.page > 1 ? String(state.page) : ""],
       ["xem", viewMode === "luoi" ? "luoi" : ""],
@@ -76038,6 +76081,9 @@ window.FM_DATA = {
         type: params.type || "",
         he: params.he || "",
         sao: params.sao || "",
+        sap: ["so-giam", "atk-giam", "atk-tang", "def-giam", "def-tang"].indexOf(params.sap) !== -1
+          ? params.sap
+          : "",
         chiso: params.chiso === "1",
         trang: params.trang ? parseInt(params.trang, 10) || 1 : 1,
         xem: params.xem === "luoi" ? "luoi" : "bang",
@@ -76060,6 +76106,7 @@ window.FM_DATA = {
       elTypeFilter.value = st.type || "";
       elFusionFilter.value = st.he || "";
       elStarFilter.value = st.sao || "";
+      elSortOrder.value = st.sap || "";
       elOnlyAtkDef.checked = !!st.chiso;
       // The two values above were set programmatically, so no "input" event
       // fired -- refresh the clear buttons by hand or a state restored from
