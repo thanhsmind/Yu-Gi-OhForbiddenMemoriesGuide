@@ -122,9 +122,25 @@ history.
    scoping error — it only costs a wave (auto-serialized); prefer explicit
    paths or trailing-`*` patterns, since overlap detection treats mid-path
    globs as literals.
+   **Carry the hits, not a line range.** A `read_first` entry or an action
+   that names a span inside a large file — `tests.rs:2045-2549`, or a bare
+   list of line numbers — is a read instruction, and the worker follows it
+   literally. Paste the `rg -n` output into the cell instead: the matching
+   lines verbatim, each with its number. The author already ran that search;
+   handing over the answer costs the cell a few lines and saves the worker
+   the read. Line numbers ride ALONGSIDE their anchor text, never alone —
+   they drift the moment an earlier edit lands, and a worker that can only
+   count lines cannot recover. Never instruct a worker to work by line
+   number *instead of* searching: when several sites look identical, that
+   is a reason to carry more anchor — the enclosing function, the
+   occurrence index, the neighbouring line — not a reason to abandon the
+   search. Observed both ways: a cell naming `2045-2549` in a 5516-line
+   file stalled its worker outright; the re-dispatch carried the eleven
+   `rg` hits and it ran.
 3. **Testable exit.** The cell's outcome is provable by the declared
-   suite (`commands.test`) at finish — plan the cell so its tests exist
-   by cap time. "Manually check" is not an exit.
+   suite (`commands.test`), which proves at the boundary (`bee close`/
+   `bee worktree merge`) — plan the cell so its tests exist by cap time.
+   "Manually check" is not an exit.
 4. **must_haves are contracts:** `truths` (observable behavior),
    `artifacts` (path + substantive description — no stub counts),
    `key_links` (wired, not just existing), `prohibitions` (what must NOT
@@ -183,10 +199,12 @@ never downgrade the lane to dodge validation.
 
 ## Test scoping
 
-Cells run `commands.test` — the project's ONE declared test command — at
-finish; close, `bee worktree merge`, and CI re-run that same command.
-`commands.verify` is retired. A host keeps every door fast by pointing
-`commands.test` at a suite it is willing to run on every cap. In a repo that has declared itself no-test (`commands.test` set to
+Tests prove at the boundary: `bee close` runs `commands.test` — the
+project's ONE declared test command — when the feature has no worktree;
+`bee worktree merge` runs it when it does. A cap is commit-only proof and
+records `tests: boundary`. CI runs the same command on every push.
+`commands.verify` is retired. A host keeps the boundary fast by pointing
+`commands.test` at a suite it is willing to run there. In a repo that has declared itself no-test (`commands.test` set to
 the sentinel `"none"`), cells cap with `tests: undeclared` — never invent
 a fake check to satisfy the runner.
 
@@ -197,7 +215,7 @@ onboarding, the first slice is **one init cell** — `must_haves`: setup
 succeeds from scratch, one passing test exists, standard commands recorded
 in `.bee/config.json`, clean first commit — before any feature cell. Its
 proof is the recorded test command (`commands.test`) running green at
-finish.
+the boundary (`bee close`/`bee worktree merge`).
 
 ## Tiny/small merged gate
 
@@ -298,6 +316,7 @@ cheap outcome; duplicated rows are the waste. Shape at `standard` and
 below is the triad — happy path, edge cases, error paths — at its
 smallest demonstrating size; `edge-dimensions.md`'s twelve dimensions
 apply only at `high-risk`/hard-gate. Case selection, duplication
-judgment, and red-before-green: `.bee/expertise/tests.md`. `bee cells
-finish` runs the declared suite (`commands.test`) at every cap, and
-`bee close` re-runs it for the feature.
+judgment, and red-before-green: `.bee/expertise/tests.md`. Tests prove
+at the boundary: `bee close` runs the declared suite (`commands.test`)
+when the feature has no worktree; `bee worktree merge` runs it when it
+does. A cap is commit-only proof and records `tests: boundary`.

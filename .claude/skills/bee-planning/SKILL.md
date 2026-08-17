@@ -43,7 +43,9 @@ Record: `bee route --set --class <c> --lane <l> --flags <f> --files <n>`;
 re-route upward on new evidence any time, de-escalate only on cited evidence.
 A code-touching route's next action includes creating the feature worktree
 and opening the session there (worktree-first — AGENTS.md; `docs` and a solo
-`tiny` stay in main).
+`tiny` stay in main) — the topology this opens onto: code truth changes only
+in the feature worktree, the user tests at staging once the slice is ready,
+and main receives the branch only after its uat gate.
 
 ## Research
 
@@ -92,11 +94,13 @@ surface makes slice 1 a walking skeleton: end-to-end, real behavior, no stubs.
 
 The writer owns tests TDD-style as part of each cell — coverage judgment
 first: cite existing tests by file and case, author only the gap
-(`.bee/expertise/tests.md`) — and `bee finish` runs the declared
-suite (`commands.test`) at every cap.
+(`.bee/expertise/tests.md`) — and tests prove at the boundary: `bee
+close` runs `commands.test` when the feature has no worktree; `bee
+worktree merge` runs it when it does. A cap is commit-only proof and
+records `tests: boundary`.
 
-Cells run `commands.test` at finish — the one declared command, which
-close, merge, and CI all re-run (`references/planning-reference.md`
+Tests prove at the boundary — the one declared command, which CI also
+runs on every push (`references/planning-reference.md`
 ("Test scoping")); then
 `bee state set --owner planning --phase swarming --next-action "Invoke bee-swarming."`
 

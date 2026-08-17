@@ -1,4 +1,5 @@
-{  "permissions": {
+{
+  "permissions": {
     "defaultMode": "bypassPermissions"
   },
   "hooks": {
@@ -93,6 +94,16 @@
             "type": "command",
             "command": "for b in \"$CLAUDE_PROJECT_DIR/.bee/bin/bee\" \"$CLAUDE_PROJECT_DIR/.bee/bin/bee.exe\"; do [ -x \"$b\" ] && exec \"$b\" hook state-sync; done; g=\"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)\"; [ -n \"$g\" ] && for b in \"$g/../.bee/bin/bee\" \"$g/../.bee/bin/bee.exe\"; do [ -x \"$b\" ] && exec \"$b\" hook state-sync; done; echo \"bee: hook binary missing (.bee/bin/bee)\" >&2; exit 0"
           },
+          {
+            "type": "command",
+            "command": "for b in \"$CLAUDE_PROJECT_DIR/.bee/bin/bee\" \"$CLAUDE_PROJECT_DIR/.bee/bin/bee.exe\"; do [ -x \"$b\" ] && exec \"$b\" hook session-close; done; g=\"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)\"; [ -n \"$g\" ] && for b in \"$g/../.bee/bin/bee\" \"$g/../.bee/bin/bee.exe\"; do [ -x \"$b\" ] && exec \"$b\" hook session-close; done; echo \"bee: hook binary missing (.bee/bin/bee)\" >&2; exit 0"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
           {
             "type": "command",
             "command": "for b in \"$CLAUDE_PROJECT_DIR/.bee/bin/bee\" \"$CLAUDE_PROJECT_DIR/.bee/bin/bee.exe\"; do [ -x \"$b\" ] && exec \"$b\" hook session-close; done; g=\"$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)\"; [ -n \"$g\" ] && for b in \"$g/../.bee/bin/bee\" \"$g/../.bee/bin/bee.exe\"; do [ -x \"$b\" ] && exec \"$b\" hook session-close; done; echo \"bee: hook binary missing (.bee/bin/bee)\" >&2; exit 0"

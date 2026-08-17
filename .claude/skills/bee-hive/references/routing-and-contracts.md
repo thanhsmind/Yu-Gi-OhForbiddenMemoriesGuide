@@ -22,6 +22,17 @@ Gate bypass is set from `bee-hive` (Gates); developing bee itself
 (authoring skills, the self-improvement loop) is maintainer territory in
 the bee source repo's handbook, never product routing in a host repo.
 
+## Topology
+
+Three checkouts, three jobs: main stays clean and integration-only, never where code
+truth changes; a feature worktree is the only place code truth changes, one worktree
+per independent feature; staging is the disposable mixing ground where finished
+features sit together for the user to test at one place, rebuilt from main plus every
+feature still awaiting approval. The `uat` gate is the door between staging and main —
+a feature only lands on main once its uat gate is approved. See
+`docs/knowledge/areas/worktree-parallelism/staging-mixing-ground.md` (staging-lane
+D0/D0a) for the mechanics.
+
 ## First-Skill Routing
 
 | Request type | First skill | Notes |
@@ -30,7 +41,8 @@ the bee source repo's handbook, never product routing in a host repo.
 | Research a topic/library/approach (no feature underway) | `bee-researching` | Standalone brief; suggests shaping or planning as next step |
 | (Re)generate or read a feature's implement plan or walkthrough | `bee-shaping` (Brief) | Consolidates the truth artifacts into `docs/history/<feature>/implement-plan.md`, any phase; writes `walkthrough.md` post-Gate-3 for `standard`/`high-risk`; renders nothing for `tiny`/`spike` |
 | Research inside a scoped feature | `bee-planning` | Discovery L2/L3 invokes `bee-researching` in-chain |
-| "Just fix this" / small change | `bee-planning` | Route in tiny or small mode |
+| "Just fix this" / small change, and it writes a file | `bee-shaping` (Lock) | Lock writes a SHORT `CONTEXT.md` first — the brief D1 requires before any source edit — then `bee-planning` routes in tiny or small mode; no added plan ceremony (D1) |
+| "Just fix this" / small change, and it writes nothing (a pure question) | `bee-planning` | Route in tiny or small mode; D6 — no file write, no brief, no record |
 | Review code | `bee-reviewing` | Load directly — only on an explicit review request; never automatic after execution completes |
 | Document a screen/API/job/area; keep a settled outcome (rule agreed, behavior confirmed, value tuned); spec a legacy area; capture learnings | `bee-capturing` | Load directly, any phase — capture never waits for feature close |
 | Clean up / tech debt / audit | `bee-grooming` | Load directly |
@@ -39,7 +51,8 @@ the bee source repo's handbook, never product routing in a host repo.
 | Turn gate-bypass on/off, widen it, or check it | `bee-hive` (Gates) | Any phase; the agent sets `.bee/config.json` `gate_bypass` on the user's instruction |
 | Resume session | Resume logic | Check `HANDOFF.json` first — kind-aware: pause waits, planned-next adopts only at a fresh-session boundary |
 | Explicit request to run the automatic backlog-triage pass on a `docs/backlog.md` row (a human or an external caller invoking the pipeline path directly — no auto-trigger exists yet) | `bee-shaping` (Qualify) | Pipeline path, explicit invocation only |
-| Docs/spec/README/sample-only change | docs lane | "Docs lane" under Lane ceremony in full — announce, write, format-check, capture or "nothing settled"; no pipeline |
+| Docs/spec/README/sample-only change, and it writes a file | docs lane | "Docs lane" under Lane ceremony in full — short brief, Gate 1 approval, announce, write, format-check, capture or "nothing settled" (D1); no pipeline |
+| A question about docs/spec content that writes nothing | direct answer, no lane | D6 — no file write, no brief, no record |
 | Merge/ship/release request while unreviewed or stale candidates exist | Report the candidate count + risk level, then ask ONE question: "Create a review session for this scope?" | Only an explicit yes dispatches `bee-reviewing` — never spawn a reviewer silently |
 
 **Surface-scope-earlier check** (runs before routing to `bee-shaping`): the request contains concrete acceptance criteria AND references to existing patterns → offer "Found clear requirements. Jump straight to planning, or explore alternatives first?" On approval, planning receives a one-paragraph scoping synthesis whose decisions still carry D-IDs.
@@ -73,7 +86,7 @@ If `.bee/HANDOFF.json` exists, read its `kind` (`bee state handoff show --json`;
 
 Do not auto-resume. Ever.
 
-**Planned-next** — the previous cell was finished with the declared tests green and the next cell was already claimed for this handoff. Adoption fires ONLY at a fresh-session boundary (a cleared or newly started session — never a resumed or memory-compacted one, which follows the pause path above):
+**Planned-next** — the previous cell was capped (commit-only proof; tests prove at the boundary) and the next cell was already claimed for this handoff. Adoption fires ONLY at a fresh-session boundary (a cleared or newly started session — never a resumed or memory-compacted one, which follows the pause path above):
 
 1. `bee state handoff adopt` transfers the carried claim to this session and clears the handoff record.
 2. On success, present the adopted cell, its verify command, and its lane as a start-now instruction — no wait, no confirmation prompt.
@@ -119,11 +132,15 @@ Review is on demand: no lane auto-dispatches a reviewer wave or asks Gate 3 afte
 
 | Lane | Plan | Validate (inline, inside planning) | Execute | Review | Human stops |
 |---|---|---|---|---|---|
-| `docs` | none — announce one line | format check (parse/lint if applicable) | direct, in-session | none | 0 |
-| `tiny` | none — the cell is the micro-plan | SMALLER PATH check inline, 0 ceremony subagents (I/O-offload workers exempt — Delegation contract) | inline in the orchestrator session (cap discipline and done-report unchanged), or one dispatched execution worker at the orchestrator's option (when dispatched, the execution-worker contract applies: param-carrying dispatch, model param or pinned type, never a bare marker; standard worker prompt template, no reviewers/panels/waves) | orchestrator-authored done-report (worker's verbatim diff + commit; `bee finish` ran the declared tests — the result record is the evidence; orchestrator re-runs only on smell or hard-gate) — verification, not independent review | 1 — the merged shape+execution gate |
-| `small` | logged scoping synthesis; plan.md is opt-in | SMALLER PATH check inline, 0 ceremony subagents (I/O-offload workers exempt — Delegation contract); spike only if a blocking assumption demands it | one dispatched execution worker (same contract as `tiny`'s Execute column), its 1-3 cells dispatched in PARALLEL when disjoint (see Concurrency law in full below) | orchestrator-authored done-report, self-checks only, no auto reviewer (the correctness reviewer moves inside an on-demand review session) | 2 — merged shape+execution gate, self-checks close-out |
-| `standard` | full `plan.md` | SMALLER PATH check + merged reviewer; ≤5-file diff (0 hard-gate flags): inline self-review, no dispatch | swarm workers | on user request only: session panel scaled to scope risk (4 core reviewers) | 2 — Gate 1, Gate 2 (merged shape+execution) |
-| `high-risk` | `plan.md` + brief | SMALLER PATH check + persona panel | swarm workers | on user request only: session panel scaled to scope risk (full wave + conditionals) | 2 — Gate 1, Gate 2 (merged shape+execution) |
+| `docs` | short brief (Lock writes a short `CONTEXT.md`, D1) — then announce one line | format check (parse/lint if applicable) | direct, in-session | none | 1 — Gate 1 (the brief's approval) |
+| `tiny` | short brief (Lock writes a short `CONTEXT.md`, D1) — the cell is still the micro-plan | SMALLER PATH check inline, 0 ceremony subagents (I/O-offload workers exempt — Delegation contract) | inline in the orchestrator session (cap discipline and done-report unchanged), or one dispatched execution worker at the orchestrator's option (when dispatched, the execution-worker contract applies: param-carrying dispatch, model param or pinned type, never a bare marker; standard worker prompt template, no reviewers/panels/waves) | orchestrator-authored done-report (worker's verbatim diff + commit; `bee finish` is commit-only proof, tests prove at the boundary; orchestrator re-runs only on smell or hard-gate) — verification, not independent review | 1 — Gate 1 folded into the merged shape+execution gate |
+| `small` | short brief (Lock writes a short `CONTEXT.md`, D1) + logged scoping synthesis; plan.md is opt-in | SMALLER PATH check inline, 0 ceremony subagents (I/O-offload workers exempt — Delegation contract); spike only if a blocking assumption demands it | one dispatched execution worker (same contract as `tiny`'s Execute column), its 1-3 cells dispatched in PARALLEL when disjoint (see Concurrency law in full below) | orchestrator-authored done-report, self-checks only, no auto reviewer (the correctness reviewer moves inside an on-demand review session) | 2 — Gate 1 folded into the merged shape+execution gate, self-checks close-out |
+| `standard` | full `CONTEXT.md` + `plan.md` | SMALLER PATH check + merged reviewer; ≤5-file diff (0 hard-gate flags): inline self-review, no dispatch | swarm workers | on user request only: session panel scaled to scope risk (4 core reviewers) | 2 — Gate 1, Gate 2 (merged shape+execution) |
+| `high-risk` | full `CONTEXT.md` + `plan.md` + brief | SMALLER PATH check + persona panel | swarm workers | on user request only: session panel scaled to scope risk (full wave + conditionals) | 2 — Gate 1, Gate 2 (merged shape+execution) |
+
+No added plan ceremony rides along with any of this (D1): `tiny`/`small`/`docs` gain exactly a brief and a recorded approval, never a `plan.md` requirement they didn't already have.
+
+**`gate_bypass` scopes the STOP, never the record (D2).** Every row above writes its brief and its Gate 1 approval regardless of bypass level; what bypass removes is the human pause, not the artifact — an auto-approved run stamps the approval record `actor: "auto"` plus the bypass level and reason instead of stopping for a human `actor: "user"` (`gates-and-delegation.md`, "Gate bypass mode"). **D6 boundary:** this whole table applies only to a request that writes at least one file, code or docs alike; a pure question that changes nothing on disk takes no row here — it gets no brief and no record.
 
 **Gate 3 is additive, not counted above:** it is asked once, whenever a review session actually runs for that scope — never automatically at the end of a lane's default chain.
 
@@ -135,7 +152,7 @@ Review is on demand: no lane auto-dispatches a reviewer wave or asks Gate 3 afte
 
 **THE ONLY LEGAL REASONS FOR SERIAL, exhaustive:** a declared file-set overlap (including a shared generated artifact not deferred by a wave barrier), a true data dependency (`deps`), a single scarce external resource, or an explicit human instruction. Nothing else is a reason — anything else fans out.
 
-**LANES, FIRST-CLASS:** before every feature start, check whether other ready feature work has disjoint declared paths — if so, the paved road is a lane, not a queue, whether or not another feature is already live — `bee state start-feature --feature <f> --mode <m> --as-lane --paths <declared>`; lane-scoped mutations take `--lane`. Lanes classify and coordinate; they no longer keep code in main — a code-touching feature branches into its own worktree at feature start regardless (worktree-first — `docs/knowledge/areas/worktree-parallelism/routing-and-visibility.md`), its declared paths still coordinating through the shared store; only docs-lane and solo tiny work runs directly in the main checkout. A lane refusal (holder + expiry) means the paths were not disjoint after all — pick other ready work or wait for the hold to lapse — never work around it.
+**LANES, FIRST-CLASS:** before every feature start, check whether other ready feature work has disjoint declared paths — if so, the paved road is a lane, not a queue, whether or not another feature is already live — `bee state start-feature --feature <f> --mode <m> --as-lane --paths <declared>`; lane-scoped mutations take `--lane`. Lanes classify and coordinate; they no longer keep code in main — a code-touching feature branches into its own worktree at feature start regardless (worktree-first — `docs/knowledge/areas/worktree-parallelism/routing-and-visibility.md`), its declared paths still coordinating through the shared store; only docs-lane and tiny work runs directly in the main checkout, and each only while no other session is live — with a live peer, both take a worktree like any feature. A lane refusal (holder + expiry) means the paths were not disjoint after all — pick other ready work or wait for the hold to lapse — never work around it.
 
 **TICK:** the concurrency plan emits its own progress line per the Progress ticks catalog (`scout-and-ticks.md`, "Progress ticks — worked examples") — same silent-bookkeeping rule as every other tick, never suppressed by bypass.
 
@@ -143,11 +160,13 @@ Full doctrine for the cell/wave tier — the wave-barrier regen protocol and the
 
 ### Docs lane
 
-The change is knowledge upkeep, same class as capture — announce one line ("docs lane: writing X"), write it, run a format check when one exists (JSON parses, markdown lints), then close by logging a decision/capture stub when the content encodes a settled outcome, or stating "nothing settled" when it does not — a docs-lane close with neither is not a close. No cells, no gates, no reviewers. If the target path is outside the write-guard allowlist (`.bee/, docs/, plans/, AGENTS.md`) the hook will block the idle write — fall back to the tiny fast path instead of fighting the guard.
+Before the write (D1, D6): Lock writes a short brief — `docs/history/<feature>/CONTEXT.md`, the same file full lanes use, in a short form — naming what was asked, what was found, and what will be written; then Gate 1 asks a one-line approval ("Brief: about to write X, because Y. Approve?"), recorded even when `gate_bypass` auto-approves it (D2). Only a request that writes no file skips this — a pure question is not a docs-lane change (D6).
+
+Then the change is knowledge upkeep, same class as capture — announce one line ("docs lane: writing X"), write it, run a format check when one exists (JSON parses, markdown lints), then close by logging a decision/capture stub when the content encodes a settled outcome, or stating "nothing settled" when it does not — a docs-lane close with neither is not a close. No cells, no separate execution gate, no reviewers — the brief and its Gate 1 approval are the only ceremony this lane gains. If the target path is outside the write-guard allowlist (`.bee/, docs/, plans/, AGENTS.md`) the hook will block the idle write — fall back to the tiny fast path instead of fighting the guard. And the docs lane holds main only while solo: with another live session present, worktree-first denies the main write — take the worktree it names, never wait out the peer.
 
 ### Tiny/small fast path
 
-The draft cell(s) are rendered as a **preview inside the gate message** — never persisted first — and the 2-minute reality check runs inline against that preview, before the shape and execution approvals are presented as **one merged question** — "Work shape + execution: I'm about to do X via Y, verified by Z. Approve?" — approval records both `shape` and `execution` and covers exactly the previewed work packet. `cells add` runs only **after** approval, and the cells are claimed only then — previewed before persist, never persist-then-preview. Implementation runs inline in-session for `tiny` (the merged gate, cap discipline, and done-report are unchanged; dispatching stays legal when the orchestrator prefers it), and through the one dispatched execution worker for `small`. After execution (worker return or inline finish): no separate merge gate — the orchestrator authors the done-report itself from the worker's verbatim diff plus its commit (`bee finish` ran the declared tests; a re-run only on smell or hard-gate) and that done-report (diff + commit + capture line) closes it, once `bee close` re-runs the declared tests green for the feature (`bee-swarming/references/swarming-reference.md`, "Tests at finish and close, in full"). A real problem found during the orchestrator's own review stops and asks, always.
+Before any of this (D1): Lock writes the brief first — a short `CONTEXT.md` naming what was asked, what was found, what will be done — no added plan ceremony, just the brief. Then the draft cell(s) are rendered as a **preview inside the gate message** — never persisted first — and the 2-minute reality check runs inline against that preview, before the shape and execution approvals are presented as **one merged question** — "Work shape + execution: I'm about to do X via Y, verified by Z. Approve?" — approval records both `shape` and `execution`, covers exactly the previewed work packet, and is the same call that approves the brief (Gate 1 and Gate 2 fold into this one stop at `tiny`/`small`). `cells add` runs only **after** approval, and the cells are claimed only then — previewed before persist, never persist-then-preview. Implementation runs inline in-session for `tiny` (the merged gate, cap discipline, and done-report are unchanged; dispatching stays legal when the orchestrator prefers it), and through the one dispatched execution worker for `small`. After execution (worker return or inline finish): no separate merge gate — the orchestrator authors the done-report itself from the worker's verbatim diff plus its commit (`bee finish` is commit-only proof; a smell or hard-gate still gets a spot `bee test` re-run) and that done-report (diff + commit + capture line) closes it. Tests prove at the boundary: `bee close` runs `commands.test` green for the feature when it has no worktree; `bee worktree merge` runs it when it does (`bee-swarming/references/swarming-reference.md`, "Tests at finish and close, in full"). A real problem found during the orchestrator's own review stops and asks, always.
 
 ### Capture discipline
 
@@ -162,7 +181,7 @@ Lanes scale ceremony, never memory — zero exceptions, the docs lane and non-ce
 | planning | CONTEXT.md, critical-patterns, active decisions, bee_status | `approach.md`, `plan.md` (frozen at Gate 2 — approval stamp only after approval; none for `tiny`, opt-in for `small`), current-slice cells via `bee cells add` |
 | shaping (Brief) | CONTEXT.md, approach.md, frozen plan.md + cells (drift re-render triggers on cell changes only, since the plan cannot drift after approval), test-result records (`.bee/logs/test-results.json`), state gates (render/refresh); capped cell traces, review findings, UAT (walkthrough) | `docs/history/<feature>/implement-plan.md` (projection; `high-risk` always, `standard` on-demand, `small` optional on request); `docs/history/<feature>/walkthrough.md` (post-Gate-3; `standard`/`high-risk`) |
 | swarming (orchestrate) | Gate-2-approved cells, state, reservations | worker registry in state, HANDOFF at ~65%, wave results |
-| swarming ("Execute") | assigned cell, CONTEXT.md, reservations | implementation commits (one per cell, cell id in message), finish (runs the declared tests; the result record is the evidence), report in `docs/history/<feature>/reports/` |
+| swarming ("Execute") | assigned cell, CONTEXT.md, reservations | implementation commits (one per cell, cell id in message), finish (commit-only proof; tests prove at the boundary, close/merge, where the result record is the evidence), report in `docs/history/<feature>/reports/` |
 | reviewing | user-selected immutable scope (a `bee_reviews` session — never triggered by phase or cell completion) | session findings (P1/P2/P3) and the Gate 3 decision recorded on that session, backlog items, `residual-findings.md` fallback |
 | capturing | `behavior_change` cells + test-result records, CONTEXT.md, active decisions, UAT/worker reports, feature history, traces, commits, code + user interview (harvest) | with a bundle: `docs/knowledge/areas/<area>/` concepts (BA-grade merge); with no bundle: `docs/specs/<area>.md` (BA-grade merge), `docs/specs/reading-map.md`; plus `docs/history/learnings/YYYYMMDD-<slug>.md`, critical-patterns promotions, decision log entries, backlog friction, state record |
 | grooming | entropy inputs, backlog, traces, diffs | kill proposals, tiny/small cells, outcome records |
@@ -292,6 +311,18 @@ RECOMMENDATION: <the option the evidence favors, and why in one line>
 ```
 
 One question per message. Never bundle. Never answer your own question.
+
+**Mark the wait before you send.** A turn that ends on a question —
+a gate or a freeform one — runs `bee state waiting-on set
+--kind <gate|question> --subject "<the question>"` before the message
+goes out (awaiting-human D1: the agent marks the wait when it asks).
+The mark flips `run_state` to `awaiting-approval` so an external
+reader — a dashboard, a sibling session — sees "waiting on you"
+instead of "idle"; it works with or without an active feature (D3),
+and it ends on its own: the user's next message clears it via the
+`UserPromptSubmit` hook, `bee state waiting-on clear` clears it
+explicitly, and a stale session's mark expires with its heartbeat
+(D2/D4). Never leave a question pending without its mark.
 
 ## File Quick Reference
 

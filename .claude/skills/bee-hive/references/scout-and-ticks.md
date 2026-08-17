@@ -78,7 +78,8 @@ It fires on whichever path came first, and a feature that passed through explori
 ```bash
 .bee/bin/bee decisions log \
   --decision "re-laned <from> → <to> (evidence checkpoint): <feature>" \
-  --rationale "<n> product files scouted, 0 hard-gate flags, 0 open gray areas"
+  --rationale "<n> product files scouted, 0 hard-gate flags, 0 open gray areas" \
+  --relation none
 ```
 
 Alongside the decision, `bee route --set` rewrites the same route record's `lane` in place ("Route record" above) — never a second record — so the decision log and the route record agree on the target lane.
@@ -230,5 +231,5 @@ Note the state layer in the orientation summary. Which layer that is depends on 
 
 ### Worktree routing
 
-Code-touching feature work is worktree-first (`docs/knowledge/areas/worktree-parallelism/routing-and-visibility.md`): the feature's worktree is created at feature start — `bee worktree new --feature <slug>`, then the next session opens in the printed path — by default, not only when the checkout turns out to be occupied. The MAIN checkout takes only integration, docs-lane work, release machinery, and a solo tiny fix (no other live session; with one, tiny takes a worktree too) — release always runs in main; `--in-main` at feature start is the recorded owner override, never silent. Merge-back happens from main via `bee worktree merge --id <id>`; the merge is staged uncommitted (`git merge --no-ff --no-commit`) and the configured verify runs against that staged tree as the semantic-conflict gate before any commit exists — a red verify after a textually clean merge is the alarm to investigate, and it aborts the stage, leaving main byte-untouched, not a signal to roll back a commit (none was ever made).
+Code-touching feature work is worktree-first (`docs/knowledge/areas/worktree-parallelism/routing-and-visibility.md`): the feature's worktree is created at feature start — `bee worktree new --feature <slug>`, then the next session opens in the printed path — by default, not only when the checkout turns out to be occupied. The MAIN checkout takes only integration and release machinery unconditionally, plus docs-lane work and a solo tiny fix while no other session is live (with a live peer, docs and tiny each take a worktree too) — release always runs in main; `--in-main` at feature start is the recorded owner override, never silent. Merge-back happens from main via `bee worktree merge --id <id>`; the merge is staged uncommitted (`git merge --no-ff --no-commit`) and the configured verify runs against that staged tree as the semantic-conflict gate before any commit exists — a red verify after a textually clean merge is the alarm to investigate, and it aborts the stage, leaving main byte-untouched, not a signal to roll back a commit (none was ever made).
 
