@@ -1,6 +1,6 @@
 # Implement-Plan Reference
 
-Load when shaping's Brief move renders an implement plan. The template, the section→source map, and the writing guide live here. The template is present tense, projection-ruled, D-ID-cited, drop-empty, with no fabricated validation.
+Load when shaping's Brief move renders an implement plan. The template is present tense, projection-ruled, D-ID-cited, drop-empty, with no fabricated validation.
 
 Path: `docs/history/<feature>/implement-plan.md`. One file per feature, chosen at first render, updated in place forever. Never `-v2`/`-new`/dated.
 
@@ -115,7 +115,7 @@ Phase headers only if plan.md is phase-shaped — never invent phases.>
 <Describe what WILL be checked. Link evidence from the test-result record
 (`.bee/logs/test-results.json`) once it exists. NEVER state a result that has not run.>
 
-**Automated** — `<the declared test command (commands.test)>` → expected: <target outcome>
+**Automated** — `<the proof the change type needs — code: declared test command (commands.test); docs: parity/pointer check; behavior: judge verdict>` → expected: <target outcome>
 **Manual** — [ ] <check for SEE/CALL/RUN decisions>
 **Evidence** — <link to docs/history/<feature>/reports/… once the declared tests run; "pending" before>
 
@@ -148,7 +148,7 @@ If none: "No blocking open questions. Ready for review.">
 5. **Never claim validation ran** unless a test-result record (`.bee/logs/test-results.json`) exists; the Validation Plan links evidence, it does not assert green.
 6. **Status mirrors the gate.** Never `Approved` before the gate fires; flip to `Needs Revision` when a source changes after approval.
 
-**Not restated here because bee enforces them elsewhere** (do not re-add): "do not modify files before approval" (the write-guard denies source writes before the merged Gate 2 approves execution), "inspect the codebase first" (shaping/planning own that), "always include validation steps" (tests prove at the boundary — `bee close` runs the declared suite when the feature has no worktree, `bee worktree merge` runs it when it does).
+**Not restated here because bee enforces them elsewhere** (do not re-add): "do not modify files before approval" (the write-guard denies source writes before the merged Gate 2 approves execution), "inspect the codebase first" (shaping/planning own that), "always include validation steps" (the agent owns test scope and records its proof on the cap — `bee close`/`bee worktree merge` check that recorded proof, they run nothing themselves).
 
 ## Rendering procedure (concise)
 

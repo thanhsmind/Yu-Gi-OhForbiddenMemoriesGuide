@@ -157,6 +157,12 @@ tests fail together and get rewritten together.
 
 ## Pick the cheapest level that can fail
 
+Before TDD on a new surface, confirm one question first: what is the
+public interface, and which seams do we test? Agree the seams up front,
+then test only at those seams — a test written before the interface is
+settled ends up pinned to whatever shape the first draft happened to
+take.
+
 Match the level to the failure you are trying to catch, and prefer the
 cheapest level that can actually catch it:
 
@@ -405,13 +411,16 @@ say plainly what remains unasserted.
 
 ## Running tests
 
-**The project declares its suite once, and the door runs it.** `bee test`
-executes the recorded `commands.test` and writes the record every gate
-reads; `bee cells finish` and `bee close` run it as the door. Green caps
-the work; red refuses the cap and quotes the failing excerpt, and that red
-becomes the next piece of work. Never build on a red base, and never trust
-a stale record — the door re-runs the suite rather than reading yesterday's
-answer.
+**The agent owns test scope, and proves it on the cap.** `bee test`
+executes the recorded `commands.test` and writes the record when you run
+it, but no door runs it for you: pick the proof your change type needs
+(code → related tests green; docs → parity/pointer checks; behavior →
+judge verdict), run it yourself, and record a cap proof line
+`<command> — <result> — <scope reason>`. `bee cells finish`, `bee close`,
+and `bee worktree merge` check that recorded proof; they run nothing.
+Green caps the work; a red result refuses the cap — never build on a red
+base. A scoped-green proof whose CI later goes red is a fix-first cell
+plus a captured learning on why the scope missed.
 
 **Save the output to a file, then read the file.**
 

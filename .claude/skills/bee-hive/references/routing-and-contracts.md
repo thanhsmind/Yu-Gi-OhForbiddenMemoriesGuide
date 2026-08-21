@@ -31,7 +31,9 @@ features sit together for the user to test at one place, rebuilt from main plus 
 feature still awaiting approval. The `uat` gate is the door between staging and main —
 a feature only lands on main once its uat gate is approved. See
 `docs/knowledge/areas/worktree-parallelism/staging-mixing-ground.md` (staging-lane
-D0/D0a) for the mechanics.
+D0/D0a) for the mechanics. A repo that sets `"staging_before_merge": false` skips
+staging entirely — `bee staging add`/`rebuild` refuse `STAGING_DISABLED`, and the
+feature worktree itself stands in for the mixing ground; the `uat` gate is unaffected.
 
 ## First-Skill Routing
 
@@ -86,7 +88,7 @@ If `.bee/HANDOFF.json` exists, read its `kind` (`bee state handoff show --json`;
 
 Do not auto-resume. Ever.
 
-**Planned-next** — the previous cell was capped (commit-only proof; tests prove at the boundary) and the next cell was already claimed for this handoff. Adoption fires ONLY at a fresh-session boundary (a cleared or newly started session — never a resumed or memory-compacted one, which follows the pause path above):
+**Planned-next** — the previous cell was capped (its proof line recorded, checked — never re-run — at the boundary) and the next cell was already claimed for this handoff. Adoption fires ONLY at a fresh-session boundary (a cleared or newly started session — never a resumed or memory-compacted one, which follows the pause path above):
 
 1. `bee state handoff adopt` transfers the carried claim to this session and clears the handoff record.
 2. On success, present the adopted cell, its verify command, and its lane as a start-now instruction — no wait, no confirmation prompt.
@@ -133,7 +135,7 @@ Review is on demand: no lane auto-dispatches a reviewer wave or asks Gate 3 afte
 | Lane | Plan | Validate (inline, inside planning) | Execute | Review | Human stops |
 |---|---|---|---|---|---|
 | `docs` | short brief (Lock writes a short `CONTEXT.md`, D1) — then announce one line | format check (parse/lint if applicable) | direct, in-session | none | 1 — Gate 1 (the brief's approval) |
-| `tiny` | short brief (Lock writes a short `CONTEXT.md`, D1) — the cell is still the micro-plan | SMALLER PATH check inline, 0 ceremony subagents (I/O-offload workers exempt — Delegation contract) | inline in the orchestrator session (cap discipline and done-report unchanged), or one dispatched execution worker at the orchestrator's option (when dispatched, the execution-worker contract applies: param-carrying dispatch, model param or pinned type, never a bare marker; standard worker prompt template, no reviewers/panels/waves) | orchestrator-authored done-report (worker's verbatim diff + commit; `bee finish` is commit-only proof, tests prove at the boundary; orchestrator re-runs only on smell or hard-gate) — verification, not independent review | 1 — Gate 1 folded into the merged shape+execution gate |
+| `tiny` | short brief (Lock writes a short `CONTEXT.md`, D1) — the cell is still the micro-plan | SMALLER PATH check inline, 0 ceremony subagents (I/O-offload workers exempt — Delegation contract) | inline in the orchestrator session (cap discipline and done-report unchanged), or one dispatched execution worker at the orchestrator's option (when dispatched, the execution-worker contract applies: param-carrying dispatch, model param or pinned type, never a bare marker; standard worker prompt template, no reviewers/panels/waves) | orchestrator-authored done-report (worker's verbatim diff + commit; `bee finish` requires the recorded proof line, checked — never re-run — at the boundary; orchestrator re-runs only on smell or hard-gate) — verification, not independent review | 1 — Gate 1 folded into the merged shape+execution gate |
 | `small` | short brief (Lock writes a short `CONTEXT.md`, D1) + logged scoping synthesis; plan.md is opt-in | SMALLER PATH check inline, 0 ceremony subagents (I/O-offload workers exempt — Delegation contract); spike only if a blocking assumption demands it | one dispatched execution worker (same contract as `tiny`'s Execute column), its 1-3 cells dispatched in PARALLEL when disjoint (see Concurrency law in full below) | orchestrator-authored done-report, self-checks only, no auto reviewer (the correctness reviewer moves inside an on-demand review session) | 2 — Gate 1 folded into the merged shape+execution gate, self-checks close-out |
 | `standard` | full `CONTEXT.md` + `plan.md` | SMALLER PATH check + merged reviewer; ≤5-file diff (0 hard-gate flags): inline self-review, no dispatch | swarm workers | on user request only: session panel scaled to scope risk (4 core reviewers) | 2 — Gate 1, Gate 2 (merged shape+execution) |
 | `high-risk` | full `CONTEXT.md` + `plan.md` + brief | SMALLER PATH check + persona panel | swarm workers | on user request only: session panel scaled to scope risk (full wave + conditionals) | 2 — Gate 1, Gate 2 (merged shape+execution) |
@@ -166,7 +168,7 @@ Then the change is knowledge upkeep, same class as capture — announce one line
 
 ### Tiny/small fast path
 
-Before any of this (D1): Lock writes the brief first — a short `CONTEXT.md` naming what was asked, what was found, what will be done — no added plan ceremony, just the brief. Then the draft cell(s) are rendered as a **preview inside the gate message** — never persisted first — and the 2-minute reality check runs inline against that preview, before the shape and execution approvals are presented as **one merged question** — "Work shape + execution: I'm about to do X via Y, verified by Z. Approve?" — approval records both `shape` and `execution`, covers exactly the previewed work packet, and is the same call that approves the brief (Gate 1 and Gate 2 fold into this one stop at `tiny`/`small`). `cells add` runs only **after** approval, and the cells are claimed only then — previewed before persist, never persist-then-preview. Implementation runs inline in-session for `tiny` (the merged gate, cap discipline, and done-report are unchanged; dispatching stays legal when the orchestrator prefers it), and through the one dispatched execution worker for `small`. After execution (worker return or inline finish): no separate merge gate — the orchestrator authors the done-report itself from the worker's verbatim diff plus its commit (`bee finish` is commit-only proof; a smell or hard-gate still gets a spot `bee test` re-run) and that done-report (diff + commit + capture line) closes it. Tests prove at the boundary: `bee close` runs `commands.test` green for the feature when it has no worktree; `bee worktree merge` runs it when it does (`bee-swarming/references/swarming-reference.md`, "Tests at finish and close, in full"). A real problem found during the orchestrator's own review stops and asks, always.
+Before any of this (D1): Lock writes the brief first — a short `CONTEXT.md` naming what was asked, what was found, what will be done — no added plan ceremony, just the brief. Then the draft cell(s) are rendered as a **preview inside the gate message** — never persisted first, dry-run-validated first (`bee cells add --stdin --dry-run`; `bee-planning/references/planning-reference.md`, "Pre-flight before cells add") — and the 2-minute reality check runs inline against that preview, before the shape and execution approvals are presented as **one merged question** — "Work shape + execution: I'm about to do X via Y, verified by Z. Approve?" — approval records both `shape` and `execution`, covers exactly the previewed work packet, and is the same call that approves the brief (Gate 1 and Gate 2 fold into this one stop at `tiny`/`small`). `cells add` runs only **after** approval, and the cells are claimed only then — previewed before persist, never persist-then-preview. Implementation runs inline in-session for `tiny` (the merged gate, cap discipline, and done-report are unchanged; dispatching stays legal when the orchestrator prefers it), and through the one dispatched execution worker for `small`. After execution (worker return or inline finish): no separate merge gate — the orchestrator authors the done-report itself from the worker's verbatim diff plus its commit (`bee finish` requires the recorded proof line; a smell or hard-gate still gets a spot `bee test` re-run) and that done-report (diff + commit + capture line) closes it. `bee close` and `bee worktree merge` check that recorded proof for the feature's capped cells — neither runs `commands.test` itself (`bee-swarming/references/swarming-reference.md`, "Proof at finish and close, in full"). A real problem found during the orchestrator's own review stops and asks, always.
 
 ### Capture discipline
 
@@ -181,7 +183,7 @@ Lanes scale ceremony, never memory — zero exceptions, the docs lane and non-ce
 | planning | CONTEXT.md, critical-patterns, active decisions, bee_status | `approach.md`, `plan.md` (frozen at Gate 2 — approval stamp only after approval; none for `tiny`, opt-in for `small`), current-slice cells via `bee cells add` |
 | shaping (Brief) | CONTEXT.md, approach.md, frozen plan.md + cells (drift re-render triggers on cell changes only, since the plan cannot drift after approval), test-result records (`.bee/logs/test-results.json`), state gates (render/refresh); capped cell traces, review findings, UAT (walkthrough) | `docs/history/<feature>/implement-plan.md` (projection; `high-risk` always, `standard` on-demand, `small` optional on request); `docs/history/<feature>/walkthrough.md` (post-Gate-3; `standard`/`high-risk`) |
 | swarming (orchestrate) | Gate-2-approved cells, state, reservations | worker registry in state, HANDOFF at ~65%, wave results |
-| swarming ("Execute") | assigned cell, CONTEXT.md, reservations | implementation commits (one per cell, cell id in message), finish (commit-only proof; tests prove at the boundary, close/merge, where the result record is the evidence), report in `docs/history/<feature>/reports/` |
+| swarming ("Execute") | assigned cell, CONTEXT.md, reservations | implementation commits (one per cell, cell id in message), finish (proof line recorded in `--report`, checked — never re-run — at close/merge, where the recorded proof is the evidence), report in `docs/history/<feature>/reports/` |
 | reviewing | user-selected immutable scope (a `bee_reviews` session — never triggered by phase or cell completion) | session findings (P1/P2/P3) and the Gate 3 decision recorded on that session, backlog items, `residual-findings.md` fallback |
 | capturing | `behavior_change` cells + test-result records, CONTEXT.md, active decisions, UAT/worker reports, feature history, traces, commits, code + user interview (harvest) | with a bundle: `docs/knowledge/areas/<area>/` concepts (BA-grade merge); with no bundle: `docs/specs/<area>.md` (BA-grade merge), `docs/specs/reading-map.md`; plus `docs/history/learnings/YYYYMMDD-<slug>.md`, critical-patterns promotions, decision log entries, backlog friction, state record |
 | grooming | entropy inputs, backlog, traces, diffs | kill proposals, tiny/small cells, outcome records |
@@ -194,7 +196,7 @@ Every skill ends with an explicit handoff: `[Outcome]. Invoke bee-<next-skill> s
 
 The repo artifacts are the single source of truth for what work exists and its state: **cells** (`.bee/cells/`) for in-flight execution and the **PBI rows** in `docs/backlog.md` for product intent. A session's todo list — `TaskCreate`, `TodoWrite`, and any equivalent scratch checklist — is an **ephemeral projection** of those durable records, never the reverse.
 
-The mapping is one-way: cells and PBI rows generate the session todo list, and no edit to that list ever writes back to a cell or a backlog row. When the two disagree, the repo artifact wins and the session list is regenerated from it. A todo item with no cell or PBI behind it is a projection bug, not a new unit of work — file the cell or the backlog row first, then let the list re-derive. This keeps the durable layer authoritative and the chat/session state disposable.
+The mapping is one-way: cells and PBI rows generate the session todo list, and no edit to that list ever writes back to a cell or a backlog row. When the two disagree, the repo artifact wins and the session list is regenerated from it. A todo item with no cell or PBI behind it is a projection bug, not a new unit of work — file the cell or the backlog row first, then let the list re-derive.
 
 ## Communication contract
 
@@ -248,7 +250,7 @@ leading and never as achievement statistics. Protocol and record surfaces —
 worker status tokens, cap traces, decision logs, CONTEXT.md — keep their ids,
 because that is where ids live.
 
-One example teaches this better than the list does:
+Example:
 
 ```text
 ✗  Great question! I've now completed the analysis of the authentication
@@ -314,15 +316,18 @@ One question per message. Never bundle. Never answer your own question.
 
 **Mark the wait before you send.** A turn that ends on a question —
 a gate or a freeform one — runs `bee state waiting-on set
---kind <gate|question> --subject "<the question>"` before the message
-goes out (awaiting-human D1: the agent marks the wait when it asks).
-The mark flips `run_state` to `awaiting-approval` so an external
-reader — a dashboard, a sibling session — sees "waiting on you"
-instead of "idle"; it works with or without an active feature (D3),
-and it ends on its own: the user's next message clears it via the
-`UserPromptSubmit` hook, `bee state waiting-on clear` clears it
-explicitly, and a stale session's mark expires with its heartbeat
-(D2/D4). Never leave a question pending without its mark.
+--kind <gate|question|turn-end> --subject "<the question>"` before the
+message goes out (awaiting-human D1: the agent marks the wait when it
+asks). `turn-end` is the third kind (auto-wait-mark D3) — the Stop hook
+sets it on every ordinary turn end, so the agent itself only ever passes
+`gate` or `question` here. The mark flips `run_state` to
+`awaiting-approval` so an external reader — a dashboard, a sibling
+session — sees "waiting on you" instead of "idle"; it works with or
+without an active feature (D3), and it ends on its own: the user's next
+message clears it via the `UserPromptSubmit` hook, `bee state
+waiting-on clear` clears it explicitly, and a stale session's mark
+expires with its heartbeat (D2/D4). Never leave a question pending
+without its mark.
 
 ## File Quick Reference
 

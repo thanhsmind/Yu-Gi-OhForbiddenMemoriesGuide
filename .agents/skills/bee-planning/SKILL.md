@@ -1,7 +1,7 @@
 ---
 name: bee-planning
 description: >-
-  Shape approved-scope work into an executable plan — classify the lane, research just enough, draft the smallest honest shape, gate it, and prepare current-slice cells. Use when shaping has locked CONTEXT.md, or a clear-scope task needs a lane and a work shape before execution.
+  Shape approved-scope work into an executable plan — classify the lane, research just enough, draft the smallest honest shape, gate it, and prepare current-slice cells. Use when shaping has locked CONTEXT.md, or a clear-scope task needs a lane and a work shape before execution. Not for locking product decisions (bee-shaping) or executing approved cells (bee-swarming).
 metadata:
   version: '0.3'
   ecosystem: bee
@@ -43,9 +43,9 @@ Record: `bee route --set --class <c> --lane <l> --flags <f> --files <n>`;
 re-route upward on new evidence any time, de-escalate only on cited evidence.
 A code-touching route's next action includes creating the feature worktree
 and opening the session there (worktree-first — AGENTS.md; `docs` and a solo
-`tiny` stay in main) — the topology this opens onto: code truth changes only
-in the feature worktree, the user tests at staging once the slice is ready,
-and main receives the branch only after its uat gate.
+`tiny` stay in main). Code truth changes only in the feature worktree, the
+user tests at staging once the slice is ready, and main receives the branch
+only after its uat gate.
 
 ## Research
 
@@ -87,21 +87,21 @@ full protocol: `references/planning-reference.md` ("Tiny/small merged gate").
 
 ## Prep
 
-After approval only: current-slice cells, one batched `bee cells add
---stdin` call — later slices keep one-line headlines, not cells
-(`references/planning-reference.md` ("Cell quality rules")). A user-visible
-surface makes slice 1 a walking skeleton: end-to-end, real behavior, no stubs.
+After approval only: current-slice cells, walked through pre-flight and a
+clean `--dry-run` before the one batched `bee cells add --stdin` call —
+later slices keep one-line headlines, not cells
+(`references/planning-reference.md` ("Pre-flight before cells add", "Cell
+quality rules")). A user-visible surface makes slice 1 a walking skeleton:
+end-to-end, real behavior, no stubs.
 
 The writer owns tests TDD-style as part of each cell — coverage judgment
 first: cite existing tests by file and case, author only the gap
-(`.bee/expertise/tests.md`) — and tests prove at the boundary: `bee
-close` runs `commands.test` when the feature has no worktree; `bee
-worktree merge` runs it when it does. A cap is commit-only proof and
-records `tests: boundary`.
-
-Tests prove at the boundary — the one declared command, which CI also
-runs on every push (`references/planning-reference.md`
-("Test scoping")); then
+(`.bee/expertise/tests.md`). The agent owns test scope: pick the proof
+each cap's change type needs (code → related tests green; docs →
+parity/pointer checks; behavior → judge verdict), run it, and record it
+as the cap's proof line. `bee close` and `bee worktree merge` check that
+recorded proof; CI runs the full declared command on every push
+(`references/planning-reference.md` ("Test scoping")). Then
 `bee state set --owner planning --phase swarming --next-action "Invoke bee-swarming."`
 
 ## Scope integrity

@@ -13,10 +13,13 @@ proves each step before taking the next.
 
 Use bee to build with bee. For any non-trivial code, docs, or behavior
 change, load the `bee-hive` skill and follow the bee lifecycle:
-explore, gate, plan, execute, scribe, compound. The skill routes by
-size and risk — a typo fix takes one cell and one merged question; an
-auth change takes the full chain. Independent review is a separate,
-user-invoked pass, never an automatic stage of that chain.
+explore, gate, plan, execute, scribe, compound. That lifecycle is the
+Main flow, idea to ship; a separate Discovery flow carries a
+fog-state ask from an open question to a locked decision before
+handing into it. The skill routes by size and risk — a typo fix takes
+one cell and one merged question; an auth change takes the full
+chain. Independent review is a separate, user-invoked pass, never an
+automatic stage of that chain.
 
 Four boundaries hold in every mode:
 
@@ -81,10 +84,16 @@ context before planning or executing.
 
 ## Prove, then say so
 
-- The project declares its tests once (`commands.test`); `bee cells
-  finish` runs them. Green caps the cell; red refuses the cap, quotes
-  the failing excerpt, and that red becomes the work. Never build on a
-  red base — a red is its own fix-first cell.
+- The agent owns test scope: pick the proof your change type needs
+  (code → related tests green; docs → parity/pointer checks; behavior
+  → judge verdict), run it yourself, and record it on the cap as a
+  proof line `<command> — <result> — <scope reason>`. `bee close` and
+  `bee worktree merge` check that recorded proof; they run nothing
+  themselves — CI runs the full declared command on every push, the
+  one deterministic net. A red proof refuses the cap — never build on
+  a red base, still as a principle, never a pre-claim full-suite
+  order. A scoped-green cap whose CI later goes red is a fix-first
+  cell plus a captured learning on why the scope missed.
 - Write "done", "green", or "fixed" only beside fresh command output
   in the same message, naming the command or path first.
 - Evidence is what the build already emits — red test output, a diff,
@@ -160,10 +169,13 @@ counts trail it, never lead.
 
 A turn that ends waiting on the human — a gate question or a freeform
 one — marks the wait before it ends: `bee state waiting-on set
---kind <gate|question> --subject "<what>"`. The mark is what lets a
-dashboard or a sibling session read "waiting on you" instead of
-"idle"; the user's next message clears it on its own, and a dead
-session's mark expires with its heartbeat. Never leave a question
+--kind <gate|question|turn-end> --subject "<what>"`. `turn-end` is the
+third kind (auto-wait-mark D3) — the Stop hook sets it on every
+ordinary turn end, control back with the human and nothing owed; the
+agent itself only ever passes `gate` or `question` here. The mark is
+what lets a dashboard or a sibling session read "waiting on you"
+instead of "idle"; the user's next message clears it on its own, and a
+dead session's mark expires with its heartbeat. Never leave a question
 pending without its mark.
 
 **Pre-send check**: reading only the first and last line of the

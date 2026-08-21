@@ -63,7 +63,7 @@ reads as a statement, not an oversight.
 
 Path (no bundle): `docs/specs/<area>.md`. Area name: kebab-case,
 chosen at first write, stable forever. Overwrite/merge freely — this
-file always describes *now*; history lives in git and `docs/history/`.
+file always describes *now*.
 With a bundle, these nine sections are the body contract of the area
 concept; the per-section rules below are unchanged.
 
@@ -104,6 +104,8 @@ fields in DISPLAY ORDER; inputs/outputs/config for backend areas.>
 Rules: every enum value carries its business meaning inline; a value whose
 meaning nobody can state goes to Open Gaps, not into the table. Derived,
 hidden, and config elements get a row too, marked "(not shown)" in the # column.
+A dictionary term may carry an _Avoid_ list of rejected synonyms, seeded
+from shaping's pinned terms.
 
 ## Behaviors & Operations
 

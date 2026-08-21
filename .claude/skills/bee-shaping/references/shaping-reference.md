@@ -1,6 +1,6 @@
 # Shaping Reference — interview mechanics
 
-Deep mechanics for the Explore move. The body triages the request and
+Deep mechanics for the Explore move. SKILL.md triages the request and
 shows the moves; this file carries the craft and judgment detail.
 
 ## Interview craft
@@ -91,6 +91,8 @@ imported by anything, never promoted to production.
 When an answer settles the meaning of a fuzzy domain word, confirm the term
 back and pin it like a decision; Lock writes all pinned terms into
 CONTEXT.md's `Terms` section, and the spec's Data Dictionary inherits them.
+A pinned term also lists the losing synonyms under _Avoid_, so the
+rejected words stay rejected instead of drifting back in.
 
 ## One answer, several decisions
 

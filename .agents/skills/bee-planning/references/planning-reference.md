@@ -17,8 +17,8 @@ real complexity makes a standalone file worth reading on its own.
 | `discovery.md` | a real multi-candidate comparison worth preserving alone | a `## Discovery` note inside `plan.md`, findings cited |
 | `approach.md` | high-risk, or rejected alternatives + a risk map substantial enough to stand alone | an `## Approach` section inside `plan.md` |
 
-Rule of thumb: if the separate file would just repeat what `plan.md` already
-says, it should have been a section. Fold, don't fan out.
+A separate file that would repeat what `plan.md` already says is a section.
+Fold, don't fan out.
 
 ## Artifact: plan.md
 
@@ -126,20 +126,20 @@ history.
    that names a span inside a large file — `tests.rs:2045-2549`, or a bare
    list of line numbers — is a read instruction, and the worker follows it
    literally. Paste the `rg -n` output into the cell instead: the matching
-   lines verbatim, each with its number. The author already ran that search;
-   handing over the answer costs the cell a few lines and saves the worker
-   the read. Line numbers ride ALONGSIDE their anchor text, never alone —
-   they drift the moment an earlier edit lands, and a worker that can only
-   count lines cannot recover. Never instruct a worker to work by line
+   lines verbatim, each with its number. Line numbers ride ALONGSIDE their
+   anchor text, never alone — they drift the moment an earlier edit lands,
+   and a worker that can only count lines cannot recover. Never instruct a worker to work by line
    number *instead of* searching: when several sites look identical, that
    is a reason to carry more anchor — the enclosing function, the
    occurrence index, the neighbouring line — not a reason to abandon the
    search. Observed both ways: a cell naming `2045-2549` in a 5516-line
    file stalled its worker outright; the re-dispatch carried the eleven
    `rg` hits and it ran.
-3. **Testable exit.** The cell's outcome is provable by the declared
-   suite (`commands.test`), which proves at the boundary (`bee close`/
-   `bee worktree merge`) — plan the cell so its tests exist by cap time.
+3. **Testable exit.** The cell's outcome is provable by the proof its
+   writer will run and record at cap time (related tests for code, a
+   parity/pointer check for docs, a judge verdict for behavior) — plan the
+   cell so that proof exists by cap time; `bee close`/`bee worktree merge`
+   check the recorded proof, never run anything themselves.
    "Manually check" is not an exit.
 4. **must_haves are contracts:** `truths` (observable behavior),
    `artifacts` (path + substantive description — no stub counts),
@@ -147,7 +147,7 @@ history.
    change). Required for `standard`/`high-risk`; `tiny` may omit.
 5. **behavior_change honesty.** Any cell changing observable behavior is
    `behavior_change: true`. The flag decides the capture debt and review
-   scrutiny — mislabeling is a production bug waiting to happen.
+   scrutiny — never mislabel it.
 6. **Deps are real.** `deps` lists cell ids whose output this cell needs.
    Ready = all deps capped.
 7. **Current slice only.** If the cell belongs to a later slice, it does
@@ -185,6 +185,33 @@ history.
 }
 ```
 
+## Pre-flight before cells add
+
+Walk this checklist BEFORE drafting cells — it is the map, the validator
+stays the source of truth:
+
+1. **Ids.** Match `^[A-Za-z0-9][A-Za-z0-9._-]*$` and follow the
+   `<feature-slug-abbrev>-<n>` convention (e.g. `auth-3`); collide with no
+   existing cell id — list current ids first: `bee cells list`.
+2. **Required fields.** `id`, `feature`, `title`, `action`, `verify` are all
+   non-empty strings; `verify: "none"` is legal only in a repo whose
+   `commands.test` declares itself no-test (the `"none"` sentinel).
+3. **Lane.** One of `tiny`/`small`/`standard`/`high-risk`/`spike`;
+   `standard`/`high-risk` cells carry non-empty `must_haves.truths`.
+4. **Scope-derived obligations.** Any `files` path under a release-manifest
+   or onboarding-ledger root obliges `verify` to carry `bee dev
+   release-manifest --check`, `files` to carry the manifest record, and the
+   cell to run the regen chain (`bee dev regen`) — or a reasoned
+   `regen_obligation_ack` (recognized value `"wave-barrier"` defers to wave
+   close). A guard-source path on a lane below `standard` obliges
+   `judge_obligation_ack` or a raised lane.
+5. **Deps and slice.** `deps` are acyclic; current slice only; the
+   feature's execution gate is approved.
+
+Then pipe the drafted batch through `bee cells add --stdin --dry-run` and
+run the real add only after a clean dry-run — a dirty dry-run's problems
+list is the fix list, applied before anything persists.
+
 Create the whole slice with one batched stdin call (a JSON array; a single
 object works for a one-cell slice — no per-cell scratchpad files):
 
@@ -199,14 +226,22 @@ never downgrade the lane to dodge validation.
 
 ## Test scoping
 
-Tests prove at the boundary: `bee close` runs `commands.test` — the
-project's ONE declared test command — when the feature has no worktree;
-`bee worktree merge` runs it when it does. A cap is commit-only proof and
-records `tests: boundary`. CI runs the same command on every push.
-`commands.verify` is retired. A host keeps the boundary fast by pointing
-`commands.test` at a suite it is willing to run there. In a repo that has declared itself no-test (`commands.test` set to
-the sentinel `"none"`), cells cap with `tests: undeclared` — never invent
-a fake check to satisfy the runner.
+The agent owns test scope end to end, including at the close/merge
+boundary: pick the proof each cell's change type needs (code → related
+tests green; docs → parity/pointer checks; behavior → judge verdict), run
+it, and record it as the cap's proof line, `<command> — <result> —
+<scope reason>`. `bee close` and `bee worktree merge` CHECK that recorded
+proof; neither runs `commands.test` itself — that's the project's ONE
+declared test command, and it stays what CI runs on every push, the one
+deterministic net. `commands.verify` is retired. A host keeps CI fast by
+pointing `commands.test` at a suite it is willing to run there. In a
+repo that has declared itself no-test (`commands.test` set to the
+sentinel `"none"`), cells prove with the command segment `none` and the
+reason naming the parity/docs check actually used — never invent a fake
+check to satisfy the runner. A scoped-green cap whose CI later goes red
+is a fix-first cell PLUS a mandatory captured learning on why the chosen
+scope missed — the learning loop is what keeps agent-owned scope safe
+over time.
 
 ## Greenfield init lane
 
@@ -214,8 +249,9 @@ When the repo has no build and the init-lane offer was accepted at
 onboarding, the first slice is **one init cell** — `must_haves`: setup
 succeeds from scratch, one passing test exists, standard commands recorded
 in `.bee/config.json`, clean first commit — before any feature cell. Its
-proof is the recorded test command (`commands.test`) running green at
-the boundary (`bee close`/`bee worktree merge`).
+proof is the recorded test command (`commands.test`) running green,
+recorded on the cap and checked at the boundary (`bee close`/`bee
+worktree merge`).
 
 ## Tiny/small merged gate
 
@@ -316,7 +352,6 @@ cheap outcome; duplicated rows are the waste. Shape at `standard` and
 below is the triad — happy path, edge cases, error paths — at its
 smallest demonstrating size; `edge-dimensions.md`'s twelve dimensions
 apply only at `high-risk`/hard-gate. Case selection, duplication
-judgment, and red-before-green: `.bee/expertise/tests.md`. Tests prove
-at the boundary: `bee close` runs the declared suite (`commands.test`)
-when the feature has no worktree; `bee worktree merge` runs it when it
-does. A cap is commit-only proof and records `tests: boundary`.
+judgment, and red-before-green: `.bee/expertise/tests.md`. The writer
+picks and runs the proof its cell needs and records it as the cap's
+proof line — the full rule under "Test scoping" above.

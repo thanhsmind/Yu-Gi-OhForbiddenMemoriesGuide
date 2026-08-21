@@ -17,26 +17,41 @@ metadata:
 
 ## Start
 
-Run `bee orient` — it names the phase, the blockers, and the next skill; follow it.
-A pending handoff is presented to the user and never auto-resumed. Orient is for routing,
-starting, or resuming work; plain questions are already answered by the session preamble.
+Run `bee orient` only when routing, starting, or resuming work — it names the phase,
+the blockers, and the next skill; follow it. Present a pending handoff to the user;
+never auto-resume it. A plain question is already answered by the session preamble.
 
 ## Route
 
-Lifecycle: shape → plan → swarm → capture — `bee orient`'s `next.skill` names the
-current stop. Out-of-band requests:
+Two doors; the agent picks — the user never has to name a flow.
 
-| Skill | When |
+| Flow | Membership |
 |---|---|
-| `bee-shaping` | Gray areas or unlocked decisions — lock them (also backlog triage, parking, the implement-plan brief). |
-| `bee-planning` | Decisions locked, or scope already clear ("just fix this") — route the lane, shape the work, present the gate. A code-touching route creates the feature's worktree in the same step (worktree-first — AGENTS.md). |
-| `bee-swarming` | Merged shape+execution gate approved, cells open — orchestrate workers, or execute one assigned cell, inside the feature's worktree. A `tiny` cell may run inline; `small` and up runs through a dispatched execution worker. |
-| `bee-capturing` | Execution done, an area needs documenting, or something just settled — sync specs, record learnings. |
-| `bee-reviewing` | Only on an explicit review request — never automatic. Merge/ship with unreviewed candidates: report count + risk, ask ONE question. |
-| `bee-researching` | Research a topic, library, or approach — standalone, or from planning discovery. |
-| `bee-grooming` | The user asks to clean up, audit, or hunt tech debt. |
-| `bee-herding` | The user invokes the cockpit: bootstrap, dispatch, or merge. |
-| docs-only change | No pipeline: announce, write, format-check, close with a capture line or "nothing settled". |
+| **Main flow** | idea to ship — `bee-shaping`, `bee-planning`, `bee-swarming`, `bee-capturing`, with `bee-reviewing` and the `uat` door at merge |
+| **Discovery flow** | an open question to a locked decision — `bee-wayfinding` is the spine; research, spike, and grilling resolve its tickets; exit is `bee-shaping`'s Lock consuming the map's D-IDs |
+
+A nameable outcome routes to Main flow. Fog, or an effort too big to
+name in one sitting, routes to Discovery flow.
+
+An explicit user word — wayfinding, brainstorm, discuss, discovery, in
+any language — routes straight into the Discovery flow and skips that
+classification.
+
+Lifecycle: shape → plan → swarm → capture — `bee orient`'s `next.skill` names the
+current stop. Out-of-band requests, by flow:
+
+| Skill | Flow | When |
+|---|---|---|
+| `bee-wayfinding` | Discovery | A fog-state idea, no nameable outcome yet, or an open discovery map with frontier tickets — chart or resume `docs/discovery/<effort>/MAP.md` before shaping. |
+| `bee-shaping` | Main | Gray areas or unlocked decisions — lock them (also backlog triage, parking, the implement-plan brief). |
+| `bee-planning` | Main | Decisions locked, or scope already clear ("just fix this") — route the lane, shape the work, present the gate. A code-touching route creates the feature's worktree in the same step (worktree-first — AGENTS.md). |
+| `bee-swarming` | Main | Merged shape+execution gate approved, cells open — orchestrate workers, or execute one assigned cell, inside the feature's worktree. A `tiny` cell may run inline; `small` and up runs through a dispatched execution worker. |
+| `bee-capturing` | Main | Execution done, an area needs documenting, or something just settled — sync specs, record learnings. |
+| `bee-reviewing` | Main | Only on an explicit review request — never automatic. Merge/ship with unreviewed candidates: report count + risk, ask ONE question. |
+| `bee-researching` | Both | Research a topic, library, or approach — standalone, or from planning discovery. |
+| `bee-grooming` | — | The user asks to clean up, audit, or hunt tech debt. |
+| `bee-herding` | — | The user invokes the cockpit: bootstrap, dispatch, or merge. |
+| docs-only change | — | No pipeline: announce, write, format-check, close with a capture line or "nothing settled". |
 
 ## Gates
 
@@ -72,8 +87,7 @@ A freshly onboarded project has craft (`.bee/expertise/`) but an empty
 knowledge layer of its own. Its first debt is the orientation entry —
 written by reading the tree, never by asking the user to describe it:
 `.bee/expertise/knowledge.md` ("The orientation file") sets the bar,
-`bee-capturing` owns the write. Until it exists, every session pays to
-rediscover where things are.
+`bee-capturing` owns the write.
 
 ## Go mode
 
@@ -86,7 +100,7 @@ questions become `Outstanding Questions` entries in the run's report, each carry
 the evidence a later human pass would start from — deferred, never guessed, never
 self-answered. A headless run never self-approves a gate: every gate still stops and
 reports awaiting approval (bypass is the separate, recorded exception — "Gate bypass mode").
-Recommendations are still made where the evidence supports one, labeled with confidence.
+Still make recommendations where the evidence supports one, labeled with confidence.
 Full contract: `references/gates-and-delegation.md` ("Headless mode").
 
 ## Hard rules

@@ -31,8 +31,8 @@ progress is excluded with a stated reason, never swept in or waited for.
 `bee reviews create` freezes the scope — baseline, head, included,
 excluded — and checks verification evidence before any reviewer spends
 a token; if it refuses, surface its reason instead of dispatching
-reviewers to compensate. Show the user the preview before dispatch.
-From here the diff is immutable: findings land against a fixed target.
+reviewers to compensate. Show the user the preview before dispatch;
+from here the diff is immutable.
 
 ## The wave
 
@@ -55,17 +55,22 @@ verified before filing: `.bee/expertise/review.md`. Severity here:
 - **P2** — real performance, architecture, reliability, or test gap.
 - **P3** — cleanup, docs, future debt.
 
-Synthesize only after every reviewer returns: deduplicate, independent
-corroboration promotes one level, disagreement takes the conservative
-route, uncertain lands at P2. Record each finding as it settles:
-`bee reviews record --kind finding`.
+Every finding carries an axis label — `standards` (is the code well
+made: quality, architecture, security, tests) or `spec` (does it do
+what the locked decisions promised). Synthesize only after every
+reviewer returns: deduplicate, independent corroboration promotes one
+level, disagreement takes the conservative route, uncertain lands at
+P2 — these severity rules are unchanged and apply within and across
+axes; a P1 blocks regardless of axis. The synthesis report stays ONE
+report, grouped by axis, spec-axis group first — axes are never
+collapsed back into one undifferentiated ranked list. Record each
+finding as it settles: `bee reviews record --kind finding`.
 
 ## Verify the artifacts, not the story
 
 - Every capped behavior-change cell: read the verification evidence in
   its trace. Missing or vague ("covered by existing tests", no test
-  named) is a P1 — the behavior was never proven, and the remedy is
-  re-verifying, never a backfill document.
+  named) is a P1; the remedy is re-verifying, never a backfill document.
 - A judge flag on a cell means the judge may have been moved, not
   passed: diff the flagged files for weakened assertions, skipped
   tests, softened verify commands. A weakened judge is a P1.
